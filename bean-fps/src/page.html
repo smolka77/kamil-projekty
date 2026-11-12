@@ -928,8 +928,10 @@ function frame(){
   camera.layers.set(0);renderer.render(scene,camera);
   if(player.view==='fps'){
     const vf=lerp(64,54,player.ads);if(Math.abs(vmCam.fov-vf)>.01){vmCam.fov=vf;vmCam.updateProjectionMatrix()}
+    // scene.background czyści ekran przy każdym render() – bez wyłączenia drugi przebieg zamalowałby świat samym niebem
+    const bg=scene.background;scene.background=null;
     renderer.autoClear=false;renderer.clearDepth();const au=renderer.shadowMap.autoUpdate;renderer.shadowMap.autoUpdate=false;
-    renderer.render(scene,vmCam);renderer.shadowMap.autoUpdate=au;renderer.autoClear=true}
+    renderer.render(scene,vmCam);renderer.shadowMap.autoUpdate=au;renderer.autoClear=true;scene.background=bg}
   requestAnimationFrame(frame);
 }
 setHud();
