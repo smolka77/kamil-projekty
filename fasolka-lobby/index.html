@@ -70,8 +70,7 @@ function animate(b, t, dt, st) {
 
 const lobby = createLobby({
   renderer, bean, animate,
-  mode: { name: 'Strzelnica', desc: 'Solo · zestrzel czerwone fasolki' },
-  onPlay: () => { lobby.hide(); location.href = GAME_URL; },
+  onPlay: () => { lobby.hide(); location.href = GAME_URL; },   // wybrany tryb wybiera się ponownie w lobby gry
 });
 
 const clock = new THREE.Clock();

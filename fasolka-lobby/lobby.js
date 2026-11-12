@@ -1,5 +1,5 @@
 // Lobby z fasolką: niebo, chmury, las i góry w tle, trawiasta ziemia, duży przycisk GRAJ.
-// Użycie: createLobby({renderer, bean, animate, onPlay, mode}) – bean to THREE.Object3D ~1,5 m, przodem do -Z.
+// Użycie: createLobby({renderer, bean, animate, onPlay(modeId), modes}) – bean to THREE.Object3D ~1,5 m, przodem do -Z.
 import * as THREE from 'three';
 
 const CSS = `
@@ -27,11 +27,49 @@ const CSS = `
 #lb-ui .lb-plate small{font:700 10px/1 system-ui,sans-serif;letter-spacing:.16em;color:#062a12;background:#5ff08a;border-radius:4px;padding:3px 6px;text-shadow:none}
 #lb-ui .lb-dock{position:absolute;right:max(28px,env(safe-area-inset-right));bottom:max(28px,env(safe-area-inset-bottom));
   display:flex;flex-direction:column;align-items:stretch;gap:12px;width:min(340px,calc(100vw - 32px))}
-#lb-ui .lb-mode{display:flex;align-items:center;gap:12px;padding:10px 16px 10px 10px;background:rgba(10,22,48,.62);
-  border:2px solid rgba(255,255,255,.16);clip-path:polygon(3% 0,100% 0,97% 100%,0 100%);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
-#lb-ui .lb-thumb{width:54px;height:54px;flex:none;border-radius:6px;background:radial-gradient(circle at 50% 40%,#ff9d5c,#d6452f 70%);
-  display:grid;place-items:center}
+#lb-ui .lb-mode{pointer-events:auto;cursor:pointer;width:100%;text-align:left;font:inherit;color:#fff;
+  display:flex;align-items:center;gap:14px;padding:10px 18px 10px 26px;background:rgba(10,22,48,.62);
+  border:2px solid rgba(255,255,255,.16);clip-path:polygon(3% 0,100% 0,97% 100%,0 100%);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  transition:background .15s ease,border-color .15s ease}
+#lb-ui .lb-mode:hover{background:rgba(20,40,82,.78);border-color:rgba(255,225,74,.55)}
+#lb-ui .lb-mode:focus-visible{outline:3px solid #ffe14a;outline-offset:-6px}
+#lb-ui .lb-mode .lb-chev{margin-left:auto;font:700 11px/1 system-ui,sans-serif;letter-spacing:.12em;color:#ffe14a;white-space:nowrap}
+#lb-ui .lb-thumb{width:54px;height:54px;flex:none;border-radius:6px;display:grid;place-items:center;
+  font-size:22px;letter-spacing:.02em;color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.25)}
 #lb-ui .lb-thumb svg{width:30px;height:30px}
+#lb-ui .ic-range{background:radial-gradient(circle at 50% 40%,#ff9d5c,#d6452f 70%)}
+#lb-ui .ic-duel{background:radial-gradient(circle at 50% 45%,#ff5a3c 0%,#b3127a 45%,#2b0d5c 100%);position:relative;overflow:hidden}
+#lb-ui .ic-duel::before{content:"";position:absolute;inset:-40%;background:repeating-conic-gradient(rgba(255,255,255,.13) 0 9deg,transparent 9deg 22deg);animation:lb-rays 14s linear infinite}
+@keyframes lb-rays{to{transform:rotate(360deg)}}
+#lb-ui .vs{position:relative;display:inline-block;font-family:'Bungee','Anton',Impact,sans-serif;font-weight:400;font-style:normal;line-height:1;
+  font-size:30px;letter-spacing:-.02em;transform:skewX(-12deg) rotate(-6deg);color:transparent;
+  background:linear-gradient(180deg,#fffbe0 0%,#ffe14a 42%,#ff9a1f 62%,#ff5a1f 100%);-webkit-background-clip:text;background-clip:text;
+  -webkit-text-stroke:2px #2a0a3e;filter:drop-shadow(0 3px 0 #2a0a3e) drop-shadow(0 0 10px rgba(255,170,40,.55))}
+#lb-ui .lb-tile .art b.vs{font-size:76px;-webkit-text-stroke:3px #2a0a3e;filter:drop-shadow(0 5px 0 #2a0a3e) drop-shadow(0 0 18px rgba(255,170,40,.6))}
+#lb-ui .ic-soon{background:radial-gradient(circle at 50% 40%,#5d6676,#343a46 70%)}
+#lb-ui .lb-picker{position:absolute;inset:0;pointer-events:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;
+  padding:24px 16px;background:rgba(6,14,32,.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);animation:lb-in .18s ease}
+#lb-ui .lb-picker[hidden]{display:none}
+@keyframes lb-in{from{opacity:0}to{opacity:1}}
+#lb-ui .lb-picker h2{margin:0;font-weight:400;font-size:clamp(30px,4vw,46px);letter-spacing:.04em;transform:skewX(-8deg);text-shadow:0 3px 0 #1b4fa8}
+#lb-ui .lb-tiles{display:grid;grid-template-columns:repeat(5,minmax(0,170px));gap:14px;width:100%;justify-content:center}
+#lb-ui .lb-tile{position:relative;font:inherit;color:#fff;text-align:left;border:3px solid rgba(255,255,255,.14);border-radius:8px;cursor:pointer;
+  padding:0;overflow:hidden;background:#1a2440;display:flex;flex-direction:column;min-height:230px;transition:transform .12s ease,border-color .12s ease}
+#lb-ui .lb-tile:hover{transform:translateY(-4px);border-color:rgba(255,255,255,.5)}
+#lb-ui .lb-tile.sel{border-color:#ffe14a;box-shadow:0 0 0 2px rgba(255,225,74,.35),0 10px 30px rgba(0,0,0,.35)}
+#lb-ui .lb-tile .art{flex:1;display:grid;place-items:center;min-height:130px}
+#lb-ui .lb-tile .art svg{width:56px;height:56px}
+#lb-ui .lb-tile .art b{font-weight:400;font-size:54px;letter-spacing:.02em;text-shadow:0 4px 0 rgba(0,0,0,.25)}
+#lb-ui .lb-tile .txt{padding:10px 12px 12px;background:rgba(6,12,28,.75)}
+#lb-ui .lb-tile .txt span{display:block;font-size:24px;line-height:1;letter-spacing:.03em}
+#lb-ui .lb-tile .txt em{display:block;font:500 12px/1.3 system-ui,sans-serif;font-style:normal;color:#b9c9e6;margin-top:5px}
+#lb-ui .lb-tile .tag{position:absolute;top:8px;left:8px;font:700 10px/1 system-ui,sans-serif;letter-spacing:.12em;color:#2a1c00;background:#ffe14a;border-radius:3px;padding:4px 6px}
+#lb-ui .lb-tile.soon{cursor:default;filter:saturate(.3);opacity:.75}
+#lb-ui .lb-tile.soon:hover{transform:none;border-color:rgba(255,255,255,.14)}
+#lb-ui .lb-tile.soon .txt span{font-size:20px;color:#cfd6e4}
+#lb-ui .lb-close{font:inherit;font-size:22px;letter-spacing:.05em;color:#2a1c00;background:#ffe14a;border:0;cursor:pointer;padding:10px 34px 8px;
+  clip-path:polygon(6% 0,100% 0,94% 100%,0 100%)}
+#lb-ui .lb-close:hover{filter:brightness(1.08)}
 #lb-ui .lb-mode small{display:block;font:700 11px/1 system-ui,sans-serif;letter-spacing:.14em;color:#ffe14a;margin-bottom:5px}
 #lb-ui .lb-mode span{font-size:24px;letter-spacing:.03em;line-height:1}
 #lb-ui .lb-mode em{display:block;font:500 12px/1.2 system-ui,sans-serif;font-style:normal;color:#b9c9e6;margin-top:4px}
@@ -54,7 +92,11 @@ const CSS = `
   #lb-ui .lb-dock{left:16px;right:16px;width:auto;bottom:max(20px,env(safe-area-inset-bottom))}
   #lb-ui .lb-hint{display:none}
   #lb-ui .lb-plate{font-size:18px}
-}`;
+  #lb-ui .lb-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #lb-ui .lb-tile{min-height:170px}
+  #lb-ui .lb-tile .art{min-height:86px}
+}
+@media (min-width:641px) and (max-width:980px){#lb-ui .lb-tiles{grid-template-columns:repeat(3,minmax(0,170px))}}`;
 
 const HTML = `
 <div class="lb-shade"></div>
@@ -65,17 +107,32 @@ const HTML = `
 </div>
 <div class="lb-plate" id="lb-plate"><span id="lb-plate-name">Gracz</span><small>GOTOWY</small></div>
 <div class="lb-dock">
-  <div class="lb-mode"><div class="lb-thumb"><svg viewBox="0 0 30 30" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round">
-    <circle cx="15" cy="15" r="9"/><path d="M15 2v6M15 22v6M2 15h6M22 15h6"/></svg></div>
-    <div><small>TRYB GRY</small><span id="lb-mode-name"></span><em id="lb-mode-desc"></em></div></div>
+  <button class="lb-mode" id="lb-mode" type="button" aria-haspopup="dialog"><div class="lb-thumb" id="lb-mode-ic"></div>
+    <div><small>TRYB GRY</small><span id="lb-mode-name"></span><em id="lb-mode-desc"></em></div><i class="lb-chev">ZMIEŃ ›</i></button>
   <div class="lb-playwrap"><button class="lb-play" id="lb-play" type="button"><span>GRAJ</span></button></div>
 </div>
-<div class="lb-hint">Przeciągnij, aby obrócić postać</div>`;
+<div class="lb-hint">Przeciągnij, aby obrócić postać</div>
+<div class="lb-picker" id="lb-picker" role="dialog" aria-label="Wybór trybu" hidden>
+  <h2>WYBIERZ TRYB</h2>
+  <div class="lb-tiles" id="lb-tiles"></div>
+  <button class="lb-close" id="lb-close" type="button">GOTOWE</button>
+</div>`;
+
+const ICONS = {
+  range: '<svg viewBox="0 0 30 30" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><circle cx="15" cy="15" r="9"/><path d="M15 2v6M15 22v6M2 15h6M22 15h6"/></svg>',
+  duel: '<b class="vs" data-t="VS">VS</b>',
+  soon: '<svg viewBox="0 0 30 30" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="13" width="16" height="12" rx="2"/><path d="M10.5 13V9.5a4.5 4.5 0 0 1 9 0V13"/></svg>',
+};
+const DEFAULT_MODES = [
+  { id: 'range', name: 'Strzelnica', desc: 'Solo · zestrzel czerwone fasolki', icon: 'range' },
+  { id: '1v1', name: '1v1', desc: 'Pojedynek z botem · do 5', icon: 'duel' },
+  { soon: true }, { soon: true }, { soon: true },
+];
 
 // deterministyczny generator losowy, żeby las wyglądał zawsze tak samo
 function rng(seed) { return () => (seed = (seed * 16807) % 2147483647) / 2147483647; }
 
-export function createLobby({ renderer, bean, animate = () => {}, onPlay = () => {}, mode = {} }) {
+export function createLobby({ renderer, bean, animate = () => {}, onPlay = () => {}, modes = DEFAULT_MODES }) {
   const rnd = rng(7);
   const R = (a, b) => a + (b - a) * rnd();
 
@@ -83,18 +140,47 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
   if (!document.getElementById('lb-font')) {
     const l = document.createElement('link');
     l.id = 'lb-font'; l.rel = 'stylesheet';
-    l.href = 'https://fonts.googleapis.com/css2?family=Anton&display=swap';
+    l.href = 'https://fonts.googleapis.com/css2?family=Anton&family=Bungee&display=swap';
     document.head.appendChild(l);
   }
   const style = document.createElement('style'); style.textContent = CSS; document.head.appendChild(style);
   const ui = document.createElement('div'); ui.id = 'lb-ui'; ui.innerHTML = HTML; document.body.appendChild(ui);
   const $ = id => ui.querySelector('#' + id);
-  $('lb-mode-name').textContent = mode.name || 'Strzelnica';
-  $('lb-mode-desc').textContent = mode.desc || 'Solo · zestrzel czerwone fasolki';
   const store = {
     get(k) { try { return localStorage.getItem(k); } catch { return null; } },
     set(k, v) { try { localStorage.setItem(k, v); } catch {} },
   };
+  // ---------- tryby gry ----------
+  const playable = modes.filter(m => !m.soon);
+  let mode = playable.find(m => m.id === store.get('fasolka-mode')) || playable[0];
+  const picker = $('lb-picker'), tiles = $('lb-tiles');
+  function renderMode() {
+    $('lb-mode-name').textContent = mode.name; $('lb-mode-desc').textContent = mode.desc;
+    const ic = $('lb-mode-ic'); ic.className = 'lb-thumb ic-' + mode.icon; ic.innerHTML = ICONS[mode.icon] || '';
+    tiles.querySelectorAll('.lb-tile').forEach(t => { t.classList.toggle('sel', t.dataset.id === mode.id); t.setAttribute('aria-pressed', t.dataset.id === mode.id); });
+  }
+  modes.forEach(m => {
+    const t = document.createElement('button'); t.type = 'button';
+    t.className = 'lb-tile' + (m.soon ? ' soon' : '');
+    const icon = m.soon ? 'soon' : m.icon;
+    t.innerHTML = `<div class="art ic-${icon}">${ICONS[icon] || ''}</div>` +
+      (m.soon ? '<div class="txt"><span>COMING SOON...</span><em>Nowy tryb w drodze</em></div>'
+              : `<div class="txt"><span></span><em></em></div>`);
+    if (m.soon) { t.disabled = true; t.setAttribute('aria-label', 'Coming soon'); }
+    else {
+      t.dataset.id = m.id; t.querySelector('.txt span').textContent = m.name; t.querySelector('.txt em').textContent = m.desc;
+      t.addEventListener('click', () => { mode = m; store.set('fasolka-mode', m.id); renderMode(); });
+      t.addEventListener('dblclick', () => closePicker());
+    }
+    tiles.appendChild(t);
+  });
+  const openPicker = () => { picker.hidden = false; hover = false; (tiles.querySelector('.sel') || tiles.firstChild).focus({ preventScroll: true }); };
+  const closePicker = () => { picker.hidden = true; };
+  $('lb-mode').addEventListener('click', openPicker);
+  $('lb-close').addEventListener('click', closePicker);
+  picker.addEventListener('click', e => { if (e.target === picker) closePicker(); });
+  addEventListener('keydown', e => { if (e.key === 'Escape' && !picker.hidden) { closePicker(); e.stopPropagation(); } }, true);
+  renderMode();
   const nick = $('lb-nick'), plateName = $('lb-plate-name'), plate = $('lb-plate');
   nick.value = store.get('fasolka-nick') || '';
   const syncNick = () => { plateName.textContent = nick.value.trim() || 'Gracz'; store.set('fasolka-nick', nick.value); };
@@ -105,20 +191,39 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
   // ---------- scena ----------
   const scene = new THREE.Scene();
   const HORIZON = new THREE.Color(0xcfe9ff);
-  scene.fog = new THREE.Fog(HORIZON, 28, 190);
+  scene.fog = new THREE.FogExp2(HORIZON, 0.0068);   // lekka mgła: przy postaci niewidoczna, gęstnieje z odległością
   const camera = new THREE.PerspectiveCamera(32, innerWidth / innerHeight, 0.1, 1200);
 
   // niebo: gradient na kuli
+  const skyU = { top: { value: new THREE.Color(0x1d63d8) }, mid: { value: new THREE.Color(0x5fb0ff) }, bot: { value: HORIZON } };
+  const SKY_GLSL = `uniform vec3 top,mid,bot;
+    vec3 skyCol(float h){vec3 c=mix(bot,mid,smoothstep(0.,.18,h));return mix(c,top,smoothstep(.18,.75,h));}`;
   scene.add(new THREE.Mesh(new THREE.SphereGeometry(600, 32, 16), new THREE.ShaderMaterial({
-    side: THREE.BackSide, depthWrite: false, fog: false,
-    uniforms: { top: { value: new THREE.Color(0x1d63d8) }, mid: { value: new THREE.Color(0x5fb0ff) }, bot: { value: HORIZON } },
+    side: THREE.BackSide, depthWrite: false, fog: false, uniforms: skyU,
     vertexShader: 'varying vec3 vP;void main(){vP=normalize(position);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
-    fragmentShader: `uniform vec3 top,mid,bot;varying vec3 vP;
-      void main(){float h=vP.y;vec3 c=mix(bot,mid,smoothstep(0.,.18,h));c=mix(c,top,smoothstep(.18,.75,h));
-      gl_FragColor=vec4(c,1.);
+    fragmentShader: `${SKY_GLSL} varying vec3 vP;
+      void main(){gl_FragColor=vec4(skyCol(vP.y),1.);
       #include <colorspace_fragment>
       }`,
   })));
+  // materiał gór "za mgłą": kolor nieba w tym kierunku zmieszany z barwą góry (amt = ile góry widać)
+  const SUN_DIR = new THREE.Vector3(7, 13, 6).normalize();
+  function hazeMat(tint, amt, fullAt) {
+    return new THREE.ShaderMaterial({
+      fog: false,
+      uniforms: { ...skyU, tint: { value: new THREE.Color(tint) }, amt: { value: amt }, fullAt: { value: fullAt }, sunDir: { value: SUN_DIR } },
+      vertexShader: 'varying vec3 vW;void main(){vec4 w=modelMatrix*vec4(position,1.);vW=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}',
+      fragmentShader: `${SKY_GLSL} uniform vec3 tint,sunDir;uniform float amt,fullAt;varying vec3 vW;
+        void main(){
+          vec3 d=normalize(vW-cameraPosition),n=normalize(cross(dFdx(vW),dFdy(vW)));if(dot(n,d)>0.)n=-n;
+          float l=.8+.25*max(dot(n,sunDir),0.);
+          float k=amt*(.3+.7*smoothstep(-6.,fullAt,vW.y));          // u podnóża więcej mgły
+          gl_FragColor=vec4(mix(skyCol(max(d.y,0.)),tint*l,k),1.);
+          #include <colorspace_fragment>
+        }`,
+    });
+  }
+  const rnd2 = rng(19), R2 = (a, b) => a + (b - a) * rnd2();   // osobny generator, żeby nie ruszać układu lasu
 
   // słońce z poświatą
   const glowTex = (() => {
@@ -163,14 +268,22 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
   const ground = new THREE.Mesh(groundGeo, new THREE.MeshStandardMaterial({ map: grassTex, roughness: 1 }));
   ground.receiveShadow = true; scene.add(ground);
 
-  // góry na horyzoncie
-  const mountMat = new THREE.MeshStandardMaterial({ color: 0x7fa9c8, flatShading: true, roughness: 1, fog: false });
-  const snowMat = new THREE.MeshStandardMaterial({ color: 0xf2f7ff, flatShading: true, roughness: 1, fog: false });
+  // góry na horyzoncie (bliższe pasmo, lekko zamglone)
+  const mountMat = hazeMat(0x6f9cc0, .78, 40);
+  const snowMat = hazeMat(0xf4f8ff, .82, 40);
   for (let i = 0; i < 12; i++) {
     const h = R(28, 52), r = h * R(1.3, 1.8), g = new THREE.Group();
     const m = new THREE.Mesh(new THREE.ConeGeometry(r, h, 9), mountMat); m.position.y = h / 2; g.add(m);
     const s = new THREE.Mesh(new THREE.ConeGeometry(r * .26, h * .26, 9), snowMat); s.position.y = h * .87 + .1; g.add(s);
     g.position.set(-330 + i * 60 + R(-20, 20), -6, R(-300, -250)); g.rotation.y = R(0, 6); scene.add(g);
+  }
+  // dalekie pasmo: ogromne, ledwo widoczne zza mgły
+  const farMat = hazeMat(0x4f74a6, .26, 120), farSnow = hazeMat(0xffffff, .2, 120);
+  for (let i = 0; i < 16; i++) {
+    const h = R2(80, 150), r = h * R2(1.4, 2.1), g = new THREE.Group();
+    const m = new THREE.Mesh(new THREE.ConeGeometry(r, h, 10), farMat); m.position.y = h / 2; g.add(m);
+    const sn = new THREE.Mesh(new THREE.ConeGeometry(r * .22, h * .22, 10), farSnow); sn.position.y = h * .89 + .2; g.add(sn);
+    g.position.set(-800 + i * 105 + R2(-30, 30), -10, R2(-640, -540)); g.rotation.y = R2(0, 6); scene.add(g);
   }
 
   // chmury
@@ -186,6 +299,38 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
     const flat = new THREE.Mesh(cloudGeo, cloudMat); flat.scale.set(n * 3.6, 2.2, 7); flat.position.y = -1.5; c.add(flat);
     c.position.set(R(-320, 320), R(45, 110), R(-380, -120)); c.scale.setScalar(R(.8, 1.6));
     c.userData.v = R(.6, 1.6); scene.add(c); clouds.push(c);
+  }
+
+  // ptaki: kilka kluczy przelatuje po niebie, machają skrzydłami i czasem szybują
+  const birdMat = new THREE.MeshBasicMaterial({ color: 0x2c3746, side: THREE.DoubleSide, fog: false });
+  const wingGeo = new THREE.BufferGeometry();
+  wingGeo.setAttribute('position', new THREE.Float32BufferAttribute([.24, 0, 0, -.22, 0, 0, -.16, 0, .82], 3));
+  const birdBody = new THREE.ConeGeometry(.07, .5, 5); birdBody.rotateZ(-Math.PI / 2);   // dziób w +X
+  function makeBird() {
+    const g = new THREE.Group(), L = new THREE.Mesh(wingGeo, birdMat), Rw = new THREE.Mesh(wingGeo, birdMat);
+    Rw.scale.z = -1; g.add(new THREE.Mesh(birdBody, birdMat), L, Rw);
+    g.userData = { L, R: Rw, ph: rnd2() * 6.28, f: R2(8, 10.5) }; return g;
+  }
+  const flocks = [];
+  // lot po skosie (nie idealnie w poprzek kadru), żeby z ziemi było widać rozpiętość skrzydeł
+  function launchFlock(f, first) {
+    const dir = rnd2() < .5 ? 1 : -1, tilt = (rnd2() < .5 ? 1 : -1) * R2(.6, .85);
+    const h = dir > 0 ? tilt : Math.PI - tilt;                       // obrót wokół Y; lokalne +X = kierunek lotu
+    f.v = new THREE.Vector3(Math.cos(h), 0, -Math.sin(h)); f.group.rotation.y = h;
+    f.speed = R2(5.5, 8.5); f.y = R2(13, 21);
+    const cross = new THREE.Vector3(R2(-18, 18), f.y, R2(-105, -70));   // gdzie klucz przetnie środek kadru
+    const back = first ? R2(5, 25) : R2(90, 200);
+    f.group.position.copy(cross).addScaledVector(f.v, -back);
+    f.left = back + 140;                                              // ile jeszcze leci, zanim wróci na start
+  }
+  for (let i = 0; i < 3; i++) {
+    const group = new THREE.Group(), n = 3 + Math.floor(R2(0, 5)), birds = [];
+    for (let j = 0; j < n; j++) {                       // formacja V za przewodnikiem
+      const b = makeBird(), row = Math.ceil(j / 2), side = j % 2 ? 1 : -1;
+      b.position.set(-row * 1.7 + R2(-.3, .3), R2(-.35, .35), row * side * 1.5); b.scale.setScalar(R2(1.9, 2.4));
+      group.add(b); birds.push(b);
+    }
+    const f = { group, birds, bob: R2(0, 6) }; launchFlock(f, i === 0); scene.add(group); flocks.push(f);
   }
 
   // drzewa
@@ -322,7 +467,7 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
   const play = $('lb-play'), wrap = ui.querySelector('.lb-playwrap');
   wrap.addEventListener('pointerenter', () => hover = true);
   wrap.addEventListener('pointerleave', () => hover = false);
-  play.addEventListener('click', () => { if (active) onPlay(); });
+  play.addEventListener('click', () => { if (active) onPlay(mode.id); });
 
   // ---------- pętla ----------
   const head = new THREE.Vector3();
@@ -342,6 +487,16 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
 
     swaying.forEach(c => { c.rotation.z = Math.sin(t * 1.1 + c.userData.ph) * .025; });
     clouds.forEach(c => { c.position.x += c.userData.v * dt; if (c.position.x > 360) c.position.x = -360; });
+    flocks.forEach(f => {
+      const p = f.group.position;
+      p.addScaledVector(f.v, f.speed * dt); p.y = f.y + Math.sin(t * .45 + f.bob) * .8;
+      f.left -= f.speed * dt; if (f.left < 0) launchFlock(f, false);
+      f.birds.forEach(b => {
+        const u = b.userData, glide = THREE.MathUtils.smoothstep(Math.sin(t * .35 + u.ph), .45, .8);
+        const a = THREE.MathUtils.lerp(.15 + Math.sin(t * u.f + u.ph) * .6, .1, glide);
+        u.L.rotation.x = -a; u.R.rotation.x = a; b.position.y += Math.cos(t * u.f + u.ph) * .002;
+      });
+    });
     const pa = pollenGeo.attributes.position;
     for (let i = 0; i < POLLEN; i++) {
       let y = pa.getY(i) + dt * (.12 + (i % 5) * .03); if (y > 5) y = 0;
@@ -357,7 +512,7 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
   }
 
   function show() { active = true; ui.classList.remove('lb-hidden'); }
-  function hide() { active = false; dragging = false; hover = false; ui.classList.add('lb-hidden'); }
+  function hide() { active = false; dragging = false; hover = false; picker.hidden = true; ui.classList.add('lb-hidden'); }
 
-  return { scene, camera, update, show, hide, get active() { return active; }, ui };
+  return { scene, camera, update, show, hide, get active() { return active; }, get mode() { return mode.id; }, ui };
 }
