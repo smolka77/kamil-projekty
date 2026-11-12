@@ -66,7 +66,7 @@
 <div id="fatigue" class="hud"><i id="fatbar"></i></div>
 <div id="banner" class="hud"></div>
 <div id="ammo" class="hud"><small id="state"></small><b id="mag">30</b> <span>/ <span id="reserve">120</span></span></div>
-<div id="keys" class="hud"><kbd>WASD</kbd> ruch · <kbd>Shift</kbd> bieg · <kbd>Spacja</kbd> skok · <kbd>C</kbd> kucanie (w biegu: slide)<br><kbd>LPM</kbd> strzał · <kbd>PPM</kbd> celowanie · <kbd>R</kbd> przeładuj · <kbd>1</kbd>–<kbd>4</kbd> / kółko broń · <kbd>Q</kbd> poprzednia<br><kbd>V</kbd> zmiana widoku · <kbd>M</kbd> dźwięk · <kbd>Esc</kbd> pauza</div>
+<div id="keys" class="hud"><kbd>WASD</kbd> ruch · <kbd>Shift</kbd> bieg · <kbd>Spacja</kbd> skok · <kbd>C</kbd> kucanie (w biegu: slide)<br><kbd>LPM</kbd> strzał · <kbd>PPM</kbd> celowanie · <kbd>R</kbd> przeładuj · <kbd>F</kbd> oglądaj broń · <kbd>1</kbd>–<kbd>4</kbd> / kółko broń · <kbd>Q</kbd> poprzednia<br><kbd>V</kbd> zmiana widoku · <kbd>M</kbd> dźwięk · <kbd>Esc</kbd> pauza</div>
 <div id="overlay"><div class="card"><h1 id="ovTitle">Pauza</h1><p id="ovText">Kliknij, aby wrócić do gry. Mysz obraca kamerę, Esc robi pauzę.</p><span class="go" id="ovGo">WZNÓW</span><button class="lobby" id="toLobby" type="button">Wróć do lobby</button><br><button class="mute" type="button" aria-pressed="false">Dźwięk: wł. (M)</button></div></div>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
 <script type="module">
@@ -487,7 +487,7 @@ attachRifle('fps');
 
 // ================= broń: stan =================
 const gun={cd:0,firing:false,trigger:false,reloading:0,reloadDur:2,reloadEmpty:false,reloadClick:false,switching:0,switchDur:.5,switchTo:-1,swapped:false,
-  autoReload:0,spread:0,kick:V3(),kickRot:0,sway:V3(),flashT:0,slideT:0};
+  autoReload:0,spread:0,kick:V3(),kickRot:0,sway:V3(),flashT:0,slideT:0,inspect:0,inspectDur:4};
 // gun.mag/reserve/magSize/rpm = stan broni w rękach (zgodność z resztą kodu)
 Object.defineProperties(gun,{
   mag:{get:()=>inv[curW].mag,set:v=>{inv[curW].mag=v}},reserve:{get:()=>inv[curW].reserve,set:v=>{inv[curW].reserve=v}},
@@ -507,7 +507,7 @@ function selectWeapon(n){
   if(gun.reloading>0){gun.reloading=0;gun.reloadClick=false;rifle.slideLocked=inv[curW].mag===0&&rifle.pistol;applyParts(rifle,null,true)}   // przerwane przeładowanie
   if(rifle.flash){rifle.flash.visible=false;rifle.flashLight.intensity=0}
   let d=1;if(gun.switching>0){const half=gun.switchDur/2;d=gun.swapped?1-gun.switching/half:(gun.switching-half)/half}   // aktualna wysokość broni (1 = w rękach)
-  gun.switchTo=n;gun.switchDur=.18+WEAPON_STATS[inv[n].id].draw*.75;gun.switching=gun.switchDur/2*(1+clamp(d,0,1));gun.swapped=false;gun.autoReload=0;
+  gun.inspect=0;gun.switchTo=n;gun.switchDur=.18+WEAPON_STATS[inv[n].id].draw*.75;gun.switching=gun.switchDur/2*(1+clamp(d,0,1));gun.swapped=false;gun.autoReload=0;
   sndClick(700,.05,.15);setHud();
 }
 
@@ -595,6 +595,7 @@ addEventListener('keydown',e=>{
   if(['Space','ArrowUp','ArrowDown'].includes(e.code))e.preventDefault();
   if(!playing)return;
   if(e.code==='KeyR')startReload();
+  if(e.code==='KeyF')startInspect();
   if(/^Digit[1-9]$/.test(e.code))selectWeapon(+e.code.slice(5)-1);
   if(e.code==='KeyQ')selectWeapon(prevW);
   if(e.code==='KeyM')setMuted(!muted);
@@ -627,7 +628,7 @@ function startReload(){
 }
 function fireShot(){
   const w=inv[curW],st=WEAPON_STATS[w.id],inst=rifle,ads=player.ads>.5;
-  w.mag--;gun.cd=60/st.rpm;gun.trigger=false;
+  w.mag--;gun.cd=60/st.rpm;gun.trigger=false;gun.inspect=0;
   const sp=(ads?st.spread.ads:st.spread.hip)+gun.spread*.018;
   const spreadRad=sp*(1+player.speed01*st.spread.move*1.2)*(player.onGround?1:2.2)*(1-player.crouch*.35);
   camera.getWorldPosition(_o);
@@ -757,6 +758,7 @@ function stepPlayer(dt){
 function stepGun(dt){
   let w=inv[curW],st=WEAPON_STATS[w.id];
   gun.cd=Math.max(0,gun.cd-dt);
+  if(gun.inspect>0){if(adsHeld||gun.reloading>0||gun.switching>0)gun.inspect=0;else gun.inspect=Math.max(0,gun.inspect-dt)}
   // zmiana broni: chowanie → podmiana w połowie → wyjmowanie
   if(gun.switching>0){
     gun.switching-=dt;const half=gun.switchDur/2;
@@ -783,6 +785,7 @@ function stepGun(dt){
   gun.slideT=Math.max(0,gun.slideT-dt);
   const back=gun.slideT>0?st.recoilTravel*Math.min(1,gun.slideT/.04):0;
   rifle.slideBack=rifle.slideLocked?st.recoilTravel:back;
+  {const ip=inspectPose();if(ip&&ip[7]>0&&!rifle.slideLocked)rifle.slideBack=Math.max(rifle.slideBack,ip[7]*(rifle.pistol?.02:st.recoilTravel))}
   if(gun.reloading>0&&rifle.pistol&&gun.reloadEmpty){const rp=reloadPose(rifle,1-gun.reloading/gun.reloadDur,true);if(rp.slideBack!==null)rifle.slideBack=st.recoilTravel*rp.slideBack}
   // sprężyny odrzutu
   const k=18*dt;gun.kick.multiplyScalar(Math.max(0,1-k));gun.kickRot*=Math.max(0,1-k);
@@ -792,6 +795,51 @@ function applyRecoil(){ // przenosi odrzut do pitch/yaw
   if(player.recoilY!==0){player.yaw+=player.recoilY;player.recoilY=0}
 }
 const bump=t=>Math.min(1,Math.sin(Math.PI*t)*1.7);
+// oglądanie broni (F), jak w CS: klatki kluczowe [czas 0..1, x,y,z (przesunięcie), rx,ry,rz (obrót wokół środka broni), zamek 0..1, lewa dłoń puszczona 0..1]
+const INSPECT={
+  rifle:{dur:4.6,keys:[
+    [0,   0,0,0,        0,0,0,         0,0],
+    [.13, -.06,.045,.03, .12,.62,.78,  0,0],      // lewy bok broni do kamery
+    [.33, -.065,.05,.025,.06,.7,.88,   0,0],
+    [.5,  -.12,.07,-.12,-.04,-.95,-.32,0,0],     // obrót na prawy bok: okno wyrzutowe
+    [.6,  -.122,.072,-.12,-.02,-1.0,-.35,0,0],
+    [.68, -.122,.072,-.12,-.02,-1.0,-.35,.85,0],   // przeciągnięcie rączki zamka
+    [.76, -.122,.072,-.12,-.02,-1.0,-.35,0,0],
+    [.88, -.02,.03,.02,  .32,-.12,-.25,0,0],      // lufa w górę
+    [1,   0,0,0,        0,0,0,         0,0]]},
+  pistol:{dur:3.8,keys:[
+    [0,   0,0,0,        0,0,0,         0,0],
+    [.14, -.07,.05,.06,  .1,.85,.55,   0,1],      // lewy bok, lewa ręka puszcza
+    [.36, -.075,.055,.055,.05,.92,.62, 0,1],
+    [.52, -.05,.045,.05, -.05,-.82,-.38,0,1],      // prawy bok
+    [.6,  -.05,.045,.05, -.04,-.85,-.4,0,1],
+    [.66, -.05,.045,.05, -.04,-.85,-.4,.45,1],   // sprawdzenie komory (zamek lekko do tyłu)
+    [.74, -.05,.045,.05, -.04,-.85,-.4,0,1],
+    [.86, -.02,.03,.03,  .35,-.1,-.15, 0,.4],     // lufa w górę
+    [1,   0,0,0,        0,0,0,         0,0]]}};
+const _ik9=new Array(9).fill(0);
+function inspectPose(){
+  if(gun.inspect<=0)return null;
+  const K=INSPECT[rifle.pistol?'pistol':'rifle'].keys,t=1-gun.inspect/gun.inspectDur;
+  let i=0;while(i<K.length-2&&t>K[i+1][0])i++;
+  const a=K[i],b=K[i+1],u=clamp((t-a[0])/(b[0]-a[0]),0,1),e=u*u*(3-2*u);
+  for(let k=1;k<9;k++)_ik9[k]=a[k]+(b[k]-a[k])*e;
+  return _ik9;
+}
+function startInspect(){
+  if(gun.reloading>0||gun.switching>0||adsHeld)return;
+  gun.inspectDur=INSPECT[rifle.pistol?'pistol':'rifle'].dur;gun.inspect=gun.inspectDur;sndClick(420,.06,.08);
+}
+const _ipq=new THREE.Quaternion(),_ipq0=new THREE.Quaternion(),_ipc=V3(),_ipc2=V3(),_ipE=new THREE.Euler();
+// obrót oglądania wokół środka broni (a nie wokół dłoni) – broń kręci się w miejscu, jak w CS
+function applyInspect(g,ip,w,s){
+  if(!ip)return;
+  const A=rifle.anchors;_ipc.set(0,rifle.boreY||A.muzzle.y,(A.stockEnd.z+A.muzzle.z)/2).multiplyScalar(s);
+  _ipq0.copy(g.quaternion);
+  _ipE.set(g.rotation.x+ip[4]*w,g.rotation.y+ip[5]*w,g.rotation.z+ip[6]*w,g.rotation.order);g.rotation.copy(_ipE);_ipq.copy(g.quaternion);
+  _ipc2.copy(_ipc).applyQuaternion(_ipq0).sub(_ipc.applyQuaternion(_ipq));
+  g.position.add(_ipc2);g.position.x+=ip[1]*w;g.position.y+=ip[2]*w;g.position.z+=ip[3]*w;
+}
 // wspólna poza broni: przeładowanie i zmiana broni
 function weaponPose(){
   const rp=gun.reloading>0?reloadPose(rifle,1-gun.reloading/gun.reloadDur,gun.reloadEmpty):null;
@@ -823,12 +871,14 @@ function poseViewmodel(dt){
   rifle.group.position.set(base.x+gun.sway.x*sw,base.y+gun.sway.y*sw+gun.kick.y*.6,base.z+gun.kick.z);
   rifle.group.rotation.set(L.pitch*(1-ads)+gun.kickRot+dp.pitch+(rp?rp.pitch:0)+gun.sway.y*1.2*sw,L.yaw*(1-ads)-gun.sway.x*1.5*sw+(rp?rp.yaw:0),(rp?rp.roll:0)+dp.roll,'XYZ');
   rifle.group.scale.setScalar(s);
+  const ip=inspectPose();applyInspect(rifle.group,ip,1,s);
   for(const m of rifle.rear)m.visible=ads<.6;
   applyParts(rifle,rp?rp.magOff:null,rp?rp.magVisible:true,rp?rp.magRot:0);
   // ręce: barki poza kadrem, prawa dłoń na chwycie, lewa na łożu / magazynku
   rifle.group.updateWorldMatrix(true,false);viewModel.updateWorldMatrix(true,false);
   _gr.copy(rifle.gripR);rifle.group.localToWorld(_gr);viewModel.worldToLocal(_gr);
   leftHandTarget(rifle,rp,viewModel,_gl,null);
+  if(ip&&ip[8]>0)_gl.lerp(V3t3.set(L.shL.x+.03,L.shL.y+.06,L.shL.z-.12),ip[8]);   // pistolet: lewa ręka opada w dół kadru
   ikArm(fpsArmR,L.shR,_gr,L.poleR);
   ikArm(fpsArmL,L.shL,_gl,L.poleL);
 }
@@ -848,11 +898,13 @@ function poseThirdPerson(dt){
   meHolder.rotation.set(0,0,0);                            // broń nie podąża za patrzeniem w górę/dół (na razie wyłączone)
   const {rp,dp}=weaponPose();
   placeTP(rifle,gun.kick.y*.4-dp.drop*.7+(rp?rp.lift:0),gun.kick.z*.6,gun.kickRot*.6+dp.pitch*.7+(rp?rp.pitch:0),(rp?rp.roll:0)+dp.roll*.7,rp?rp.side:0);
+  const ip=inspectPose();applyInspect(rifle.group,ip,.75,rifle.group.scale.x);
   keepRifleOut(ud,rifle.group);
   applyParts(rifle,rp?rp.magOff:null,rp?rp.magVisible:true,rp?rp.magRot:0);
   me.updateWorldMatrix(true,true);
   _gr.copy(rifle.gripR);rifle.group.localToWorld(_gr);ud.torso.worldToLocal(_gr);
   leftHandTarget(rifle,rp,ud.torso,_gl,null);
+  if(ip&&ip[8]>0)_gl.lerp(V3t3.set(-.36,.62,-.12),ip[8]);   // lewa ręka opuszczona przy boku
   poseArmsTo(ud,_gr,_gl);
 }
 function stepEnemies(dt){
@@ -1072,6 +1124,6 @@ $('toLobby').addEventListener('click',e=>{
 function armJoints(arm){arm.updateWorldMatrix(true,true);const u=arm.userData,D=u.def;const H=V3().copy(D.d2).multiplyScalar(D.l2);u.b2.localToWorld(H);
   return{S:arm.getWorldPosition(V3()),P:u.b1.getWorldPosition(V3()),E:u.b2.getWorldPosition(V3()),H}}
 function bodyHit(ud,w,m=0){const q=ud.torso.worldToLocal(w.clone());return inBody3(q.x,q.y,q.z,m)}
-window.__game={armJoints,bodyHit,inv,selectWeapon,get curW(){return curW},get rifle(){return rifle},solveArm,armR,armL,TP_HOLD,VM,me,poseArmsTo,makeBean,scene,keepRifleOut,placeTP,createWeapon,lobby,duel,setMode,player,gun,enemies,camera,setView:attachRifle,startPlay,start:()=>{playing=true;$('overlay').style.display='none'},fire:()=>{if(gun.mag>0&&gun.cd<=0&&gun.reloading<=0)fireShot()},reload:startReload,setAds:v=>adsHeld=v,keys};
+window.__game={armJoints,bodyHit,inv,selectWeapon,get curW(){return curW},get rifle(){return rifle},solveArm,armR,armL,TP_HOLD,VM,me,poseArmsTo,makeBean,scene,keepRifleOut,placeTP,createWeapon,lobby,duel,setMode,player,gun,enemies,camera,setView:attachRifle,startPlay,start:()=>{playing=true;$('overlay').style.display='none'},fire:()=>{if(gun.mag>0&&gun.cd<=0&&gun.reloading<=0)fireShot()},reload:startReload,inspect:startInspect,setAds:v=>adsHeld=v,keys};
 $('loading').remove();window.__ready=true;frame();
 </script>
