@@ -2,294 +2,83 @@
 <html lang="pl">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Fasolka – Lobby</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap" rel="stylesheet">
 <style>
-  :root { --accent:#ffd23f; --accent-dark:#e0a800; --ink:#2b1d52; }
-  * { box-sizing:border-box; margin:0; padding:0; }
-  html, body { height:100%; overflow:hidden; }
-  body {
-    font-family:'Lilita One', system-ui, sans-serif; color:#fff;
-    background: radial-gradient(circle at 50% 35%, #8f6bff 0%, #5a3bd6 45%, #2b1d72 100%);
-    user-select:none; -webkit-user-select:none; touch-action:none;
-  }
-  #scene { position:fixed; inset:0; display:block; cursor:grab; }
-  #scene:active { cursor:grabbing; }
-  .ui { position:fixed; inset:0; pointer-events:none; display:flex; flex-direction:column;
-        justify-content:space-between; padding:20px 16px 28px; }
-  .ui > * { pointer-events:auto; }
-  .top { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
-  .logo { font-size:clamp(28px,6vw,48px); letter-spacing:1px;
-          text-shadow:0 4px 0 var(--ink), 0 8px 18px rgba(0,0,0,.35); transform:rotate(-3deg); }
-  .logo span { color:var(--accent); }
-  .nick { background:rgba(0,0,0,.25); border:3px solid rgba(255,255,255,.25); border-radius:14px;
-          padding:8px 14px; font:inherit; font-size:18px; color:#fff; width:min(180px,40vw); outline:none; }
-  .nick:focus { border-color:var(--accent); }
-  .bottom { display:flex; flex-direction:column; align-items:center; gap:16px; }
-  .colors { display:flex; gap:10px; background:rgba(0,0,0,.22); padding:8px 12px; border-radius:999px; }
-  .sw { width:30px; height:30px; border-radius:50%; border:3px solid #fff; cursor:pointer;
-        box-shadow:0 3px 0 rgba(0,0,0,.3); transition:transform .15s; }
-  .sw:hover { transform:scale(1.15); }
-  .sw.on { outline:3px solid var(--accent); outline-offset:2px; }
-  .play {
-    font:inherit; font-size:clamp(34px,7vw,52px); letter-spacing:2px; color:var(--ink);
-    background:linear-gradient(#ffe36e, var(--accent)); border:none; border-radius:22px;
-    padding:14px 64px 18px; cursor:pointer; box-shadow:0 8px 0 var(--accent-dark), 0 14px 30px rgba(0,0,0,.35);
-    transition:transform .08s, box-shadow .08s; animation:pulse 1.6s ease-in-out infinite;
-  }
-  .play:hover { filter:brightness(1.06); }
-  .play:active { transform:translateY(6px); box-shadow:0 2px 0 var(--accent-dark), 0 6px 14px rgba(0,0,0,.3); }
-  .play[disabled] { animation:none; cursor:default; background:#cfc6ff; box-shadow:0 8px 0 #9a8ee0; }
-  @keyframes pulse { 50% { transform:scale(1.05); } }
-  .hint { font-size:14px; opacity:.7; font-family:system-ui, sans-serif; }
+  html, body { margin:0; height:100%; overflow:hidden; background:#5fb0ff; }
+  canvas { display:block; width:100%; height:100%; touch-action:none; cursor:grab; }
 </style>
 </head>
 <body>
-<canvas id="scene"></canvas>
-
-<div class="ui">
-  <div class="top">
-    <div class="logo">FASOL<span>KA</span></div>
-    <input class="nick" id="nick" maxlength="14" placeholder="Twój nick" aria-label="Nick">
-  </div>
-  <div class="bottom">
-    <div class="colors" id="colors" aria-label="Kolor fasolki"></div>
-    <button class="play" id="play">GRAJ</button>
-    <div class="hint">Przeciągnij, aby obrócić fasolkę</div>
-  </div>
-</div>
-
 <script type="importmap">
-{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js" } }
 </script>
 <script type="module">
+// Samodzielne demo lobby z prostą fasolką. W grze (bean-fps) lobby używa modelu gracza z twarzą ze zdjęcia.
 import * as THREE from 'three';
+import { createLobby } from './lobby.js';
 
-const canvas = document.getElementById('scene');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true });
+// Gra otwierana przyciskiem GRAJ (artefakt z grą bean-fps, już z tym lobby na starcie).
+const GAME_URL = 'https://claude.ai/artifact/77HjtkSu2VLX1aV4xD6A1B';
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.body.prepend(renderer.domElement);
+addEventListener('resize', () => renderer.setSize(innerWidth, innerHeight));
 
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
-
-// Światła
-scene.add(new THREE.HemisphereLight(0xffffff, 0x6a4cff, 1.4));
-const sun = new THREE.DirectionalLight(0xffffff, 2.2);
-sun.position.set(3, 6, 4);
-sun.castShadow = true;
-sun.shadow.mapSize.set(1024, 1024);
-sun.shadow.radius = 6;
-scene.add(sun);
-
-// Podest
-const podium = new THREE.Mesh(
-  new THREE.CylinderGeometry(1.6, 1.75, 0.35, 48),
-  new THREE.MeshToonMaterial({ color:0xffd23f })
-);
-podium.position.y = -0.175;
-podium.receiveShadow = true;
-scene.add(podium);
-const ring = new THREE.Mesh(
-  new THREE.TorusGeometry(1.62, 0.06, 12, 64),
-  new THREE.MeshToonMaterial({ color:0xffffff })
-);
-ring.rotation.x = Math.PI / 2;
-scene.add(ring);
-
-// Fasolka
+// prosta fasolka (przodem do -Z, ~1,5 m)
+const skin = new THREE.MeshStandardMaterial({ color: 0xf0b440, roughness: .55 });
 const bean = new THREE.Group();
-const body = new THREE.Group();
-bean.add(body);
-const bodyMat = new THREE.MeshToonMaterial({ color:0xff5fa2 });
-
-const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.55, 0.7, 12, 32), bodyMat);
-torso.position.y = 0.95;
-torso.castShadow = true;
-body.add(torso);
-
-// Wizjer (twarz)
-const visor = new THREE.Mesh(
-  new THREE.SphereGeometry(0.42, 32, 16),
-  new THREE.MeshToonMaterial({ color:0xffffff })
-);
-visor.scale.set(1, 0.62, 0.45);
-visor.position.set(0, 1.28, 0.38);
-body.add(visor);
-
-const eyeMat = new THREE.MeshBasicMaterial({ color:0x1b1033 });
-const eyes = [-0.13, 0.13].map(x => {
-  const e = new THREE.Mesh(new THREE.SphereGeometry(0.065, 16, 12), eyeMat);
-  e.scale.set(1, 1.4, 0.6);
-  e.position.set(x, 1.3, 0.56);
-  body.add(e);
-  return e;
+const body = new THREE.Group(); bean.add(body);
+const torso = new THREE.Mesh(new THREE.CapsuleGeometry(.36, .52, 12, 32), skin);
+torso.position.y = .78; body.add(torso);
+const white = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: .3 });
+const black = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: .3 });
+const eyes = [-.09, .09].map(x => {
+  const e = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 12), white);
+  e.scale.set(.06, .08, .035); e.position.set(x, 1.08, -.34);
+  const p = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 10), black);
+  p.scale.set(.5, .55, .5); p.position.set(0, -.05, -.8); e.add(p);
+  body.add(e); return e;
 });
-const shine = new THREE.MeshBasicMaterial({ color:0xffffff });
-eyes.forEach(e => {
-  const s = new THREE.Mesh(new THREE.SphereGeometry(0.02, 8, 8), shine);
-  s.position.set(0.025, 0.03, 0.05);
-  e.add(s);
-});
-
-// Rączki
 const arms = [-1, 1].map(side => {
-  const pivot = new THREE.Group();
-  pivot.position.set(0.55 * side, 1.0, 0);
-  const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.11, 0.28, 8, 16), bodyMat);
-  arm.position.y = -0.18;
-  arm.castShadow = true;
-  pivot.add(arm);
-  pivot.rotation.z = 0.35 * side;
-  body.add(pivot);
-  return pivot;
+  const pivot = new THREE.Group(); pivot.position.set(.36 * side, .98, 0);
+  const a = new THREE.Mesh(new THREE.CapsuleGeometry(.06, .34, 8, 16), skin); a.position.y = -.22; pivot.add(a);
+  body.add(pivot); return pivot;
+});
+[-.14, .14].forEach(x => {
+  const l = new THREE.Mesh(new THREE.CapsuleGeometry(.075, .2, 8, 16), skin); l.position.set(x, .17, 0); bean.add(l);
 });
 
-// Nóżki
-[-0.22, 0.22].forEach(x => {
-  const leg = new THREE.Mesh(new THREE.CapsuleGeometry(0.13, 0.12, 8, 16), bodyMat);
-  leg.position.set(x, 0.14, 0.03);
-  leg.castShadow = true;
-  bean.add(leg);
-});
-scene.add(bean);
-
-// Konfetti w tle
-const confetti = new THREE.Group();
-const confColors = [0xffd23f, 0x4ee6ff, 0xff5fa2, 0x7dff8a, 0xffffff];
-for (let i = 0; i < 60; i++) {
-  const m = new THREE.Mesh(
-    new THREE.BoxGeometry(0.08, 0.08, 0.02),
-    new THREE.MeshBasicMaterial({ color: confColors[i % confColors.length] })
-  );
-  const a = Math.random() * Math.PI * 2, r = 3 + Math.random() * 5;
-  m.position.set(Math.cos(a) * r, Math.random() * 6 - 1, Math.sin(a) * r - 3);
-  m.userData = { spin: Math.random() * 2 + 1, fall: Math.random() * 0.3 + 0.15 };
-  confetti.add(m);
-}
-scene.add(confetti);
-
-// Kolory
-const palette = ['#ff5fa2', '#4ee6ff', '#7dff8a', '#ff9f43', '#b18cff', '#ffffff'];
-const colorsEl = document.getElementById('colors');
-const store = {
-  get(k){ try { return localStorage.getItem(k); } catch { return null; } },
-  set(k,v){ try { localStorage.setItem(k,v); } catch {} }
-};
-function setColor(c) {
-  bodyMat.color.set(c);
-  [...colorsEl.children].forEach(b => b.classList.toggle('on', b.dataset.c === c));
-  store.set('fasolka-color', c);
-  hop();
-}
-palette.forEach(c => {
-  const b = document.createElement('button');
-  b.className = 'sw'; b.style.background = c; b.dataset.c = c;
-  b.setAttribute('aria-label', 'Kolor ' + c);
-  b.onclick = () => setColor(c);
-  colorsEl.appendChild(b);
-});
-const nick = document.getElementById('nick');
-nick.value = store.get('fasolka-nick') || '';
-nick.oninput = () => store.set('fasolka-nick', nick.value);
-
-// Obracanie przeciąganiem
-let dragging = false, lastX = 0, rotY = 0, rotVel = 0;
-canvas.addEventListener('pointerdown', e => { dragging = true; lastX = e.clientX; canvas.setPointerCapture(e.pointerId); });
-canvas.addEventListener('pointermove', e => {
-  if (!dragging) return;
-  const dx = e.clientX - lastX; lastX = e.clientX;
-  rotVel = dx * 0.012; rotY += rotVel;
-});
-canvas.addEventListener('pointerup', () => dragging = false);
-canvas.addEventListener('click', () => { if (Math.abs(rotVel) < 0.01) hop(); });
-
-// Skok
-let hopT = -1;
-function hop() { if (hopT < 0) hopT = 0; }
-
-// Przycisk GRAJ
-const play = document.getElementById('play');
-let waving = 0;
-play.onclick = () => {
-  play.disabled = true;
-  waving = 1;
-  hop();
-  let n = 3;
-  play.textContent = 'SZUKANIE…';
-  setTimeout(function tick() {
-    if (n > 0) { play.textContent = n--; hop(); setTimeout(tick, 800); }
-    else {
-      play.textContent = 'START!';
-      setTimeout(() => { play.disabled = false; play.textContent = 'GRAJ'; waving = 0; }, 1500);
-    }
-  }, 1200);
-};
-
-// Rozmiar
-function resize() {
-  const w = innerWidth, h = innerHeight;
-  renderer.setSize(w, h, false);
-  camera.aspect = w / h;
-  const portrait = w < h;
-  camera.position.set(0, portrait ? 2.0 : 1.7, portrait ? 9 : 6.8);
-  camera.lookAt(0, portrait ? 0.45 : 0.55, 0);
-  camera.updateProjectionMatrix();
-}
-addEventListener('resize', resize);
-resize();
-
-setColor(store.get('fasolka-color') || palette[0]);
-
-// Animacja
-const clock = new THREE.Clock();
 let blinkAt = 2;
-function loop() {
-  const dt = Math.min(clock.getDelta(), 0.05), t = clock.elapsedTime;
-
-  if (!dragging) { rotVel *= 0.94; rotY += rotVel; rotY += (Math.sin(t * 0.4) * 0.35 - rotY) * 0.01; }
-  bean.rotation.y = rotY;
-
-  // oddychanie / bujanie
-  const breathe = Math.sin(t * 2.2);
-  body.scale.set(1 + breathe * 0.015, 1 - breathe * 0.02, 1 + breathe * 0.015);
-  body.rotation.z = Math.sin(t * 1.1) * 0.04;
-
-  // skok
-  if (hopT >= 0) {
-    hopT += dt * 2.4;
-    const p = Math.min(hopT, 1);
-    bean.position.y = Math.sin(p * Math.PI) * 0.6;
-    body.scale.y *= p < 0.15 ? 1 - p : 1 + Math.sin(p * Math.PI) * 0.08;
-    if (hopT >= 1) { hopT = -1; bean.position.y = 0; }
-  }
-
-  // rączki – machanie przy GRAJ
-  arms[0].rotation.z = -0.35 - Math.sin(t * 2) * 0.05;
-  arms[1].rotation.z = waving ? 2.6 + Math.sin(t * 14) * 0.4 : 0.35 + Math.sin(t * 2) * 0.05;
-
-  // mruganie
+function animate(b, t, dt, st) {
+  const br = Math.sin(t * 2.1);
+  body.scale.set(1 + br * .015, 1 - br * .02, 1 + br * .015);
+  body.rotation.z = Math.sin(t * 1.1) * .03;
+  arms[0].rotation.z = -.12 - br * .03;                                   // ręka po stronie -X luźno
+  arms[1].rotation.z = THREE.MathUtils.lerp(.12 + br * .03, 2.6 + Math.sin(t * 13) * .35, st.wave);   // macha nad GRAJ
   if (t > blinkAt) {
-    const b = (t - blinkAt) / 0.15;
-    const sy = b < 1 ? 1.4 * Math.abs(1 - 2 * b) + 0.1 : 1.4;
+    const k = (t - blinkAt) / .15, sy = k < 1 ? .08 * Math.abs(1 - 2 * k) + .01 : .08;
     eyes.forEach(e => e.scale.y = sy);
-    if (b >= 1) blinkAt = t + 2 + Math.random() * 3;
+    if (k >= 1) blinkAt = t + 2 + Math.random() * 3;
   }
-
-  // konfetti
-  confetti.children.forEach(m => {
-    m.rotation.x += dt * m.userData.spin; m.rotation.y += dt * m.userData.spin;
-    m.position.y -= dt * m.userData.fall;
-    if (m.position.y < -1.5) m.position.y = 5;
-  });
-
-  renderer.render(scene, camera);
-  requestAnimationFrame(loop);
 }
-loop();
+
+const lobby = createLobby({
+  renderer, bean, animate,
+  mode: { name: 'Strzelnica', desc: 'Solo · zestrzel czerwone fasolki' },
+  onPlay: () => { lobby.hide(); location.href = GAME_URL; },
+});
+
+const clock = new THREE.Clock();
+(function loop() {
+  lobby.update(Math.min(clock.getDelta(), .05));
+  requestAnimationFrame(loop);
+})();
 </script>
 </body>
 </html>
