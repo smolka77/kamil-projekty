@@ -34,51 +34,36 @@ const CSS = `
 #lb-ui .lb-mode:hover{background:rgba(20,40,82,.78);border-color:rgba(255,225,74,.55)}
 #lb-ui .lb-mode:focus-visible{outline:3px solid #ffe14a;outline-offset:-6px}
 #lb-ui .lb-mode .lb-chev{margin-left:auto;font:700 11px/1 system-ui,sans-serif;letter-spacing:.12em;color:#ffe14a;white-space:nowrap}
-#lb-ui .lb-thumb{width:54px;height:54px;flex:none;border-radius:6px;display:grid;place-items:center;
-  font-size:22px;letter-spacing:.02em;color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.25)}
-#lb-ui .lb-thumb svg{width:30px;height:30px}
-/* emblematy trybów: ciemne tło z akcentem, ukośne prążki, metaliczne złoto z ciemnym obrysem */
-#lb-ui .ic-range,#lb-ui .ic-duel{position:relative;overflow:hidden;isolation:isolate}
-#lb-ui .ic-range{background:
-  radial-gradient(circle at 50% 50%,rgba(0,0,0,0) 35%,rgba(0,0,0,.6) 100%),
-  repeating-linear-gradient(115deg,rgba(255,255,255,.06) 0 2px,transparent 2px 9px),
-  linear-gradient(135deg,#ff8a2a 0%,#c4231b 55%,#4a0b0b 100%)}
-#lb-ui .ic-duel{background:
-  radial-gradient(circle at 50% 50%,rgba(0,0,0,0) 35%,rgba(0,0,0,.6) 100%),
-  repeating-linear-gradient(115deg,rgba(255,255,255,.06) 0 2px,transparent 2px 9px),
-  linear-gradient(115deg,#c8162f 0 49.2%,#f4f4f4 49.2% 50.8%,#1a45c4 50.8% 100%)}
-#lb-ui .ic-range::after,#lb-ui .ic-duel::after{content:"";position:absolute;top:-30%;bottom:-30%;width:35%;left:-60%;z-index:-1;transform:skewX(-20deg);
-  background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.22),rgba(255,255,255,0));animation:lb-sheen 5s ease-in-out infinite}
-@keyframes lb-sheen{0%,70%{left:-60%}100%{left:130%}}
-#lb-ui .vs{display:inline-block;font-family:'Anton',Impact,sans-serif;font-weight:400;font-style:normal;line-height:1;font-size:32px;letter-spacing:.01em;
-  transform:skewX(-10deg);color:transparent;padding:0 .06em;
-  background:linear-gradient(180deg,#ffffff 0%,#fff1c4 30%,#f3b632 51%,#a8660f 52%,#e9a52a 75%,#ffe08a 100%);-webkit-background-clip:text;background-clip:text;
-  -webkit-text-stroke:1.5px #140b1f;filter:drop-shadow(0 2px 0 #140b1f) drop-shadow(0 5px 8px rgba(0,0,0,.55))}
-#lb-ui .lb-tile .art b.vs{font-size:84px;-webkit-text-stroke:2.5px #140b1f;filter:drop-shadow(0 4px 0 #140b1f) drop-shadow(0 10px 14px rgba(0,0,0,.55))}
-#lb-ui .emb{filter:drop-shadow(0 2px 0 #140b1f) drop-shadow(0 5px 8px rgba(0,0,0,.55))}
-#lb-ui .lb-thumb .emb{width:40px;height:40px}
-#lb-ui .lb-tile .art .emb{width:88px;height:88px}
-#lb-ui .ic-soon{background:radial-gradient(circle at 50% 40%,#5d6676,#343a46 70%)}
+#lb-ui .lb-thumb{width:64px;height:48px;flex:none;border-radius:6px;overflow:hidden;border:2px solid rgba(255,255,255,.7);box-shadow:0 2px 8px rgba(0,0,0,.4)}
+#lb-ui .lb-thumb svg{display:block;width:100%;height:100%}
 #lb-ui .lb-picker{position:absolute;inset:0;pointer-events:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;
   padding:24px 16px;background:rgba(6,14,32,.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);animation:lb-in .18s ease}
 #lb-ui .lb-picker[hidden]{display:none}
 @keyframes lb-in{from{opacity:0}to{opacity:1}}
 #lb-ui .lb-picker h2{margin:0;font-weight:400;font-size:clamp(30px,4vw,46px);letter-spacing:.04em;transform:skewX(-8deg);text-shadow:0 3px 0 #1b4fa8}
-#lb-ui .lb-tiles{display:grid;grid-template-columns:repeat(3,minmax(0,190px));gap:14px;width:100%;justify-content:center}
-#lb-ui .lb-tile{position:relative;font:inherit;color:#fff;text-align:left;border:3px solid rgba(255,255,255,.14);border-radius:8px;cursor:pointer;
-  padding:0;overflow:hidden;background:#1a2440;display:flex;flex-direction:column;min-height:230px;transition:transform .12s ease,border-color .12s ease}
-#lb-ui .lb-tile:hover{transform:translateY(-4px);border-color:rgba(255,255,255,.5)}
-#lb-ui .lb-tile.sel{border-color:#ffe14a;box-shadow:0 0 0 2px rgba(255,225,74,.35),0 10px 30px rgba(0,0,0,.35)}
-#lb-ui .lb-tile .art{flex:1;display:grid;place-items:center;min-height:130px}
-#lb-ui .lb-tile .art svg{width:56px;height:56px}
-#lb-ui .lb-tile .art b{font-weight:400;font-size:54px;letter-spacing:.02em;text-shadow:0 4px 0 rgba(0,0,0,.25)}
-#lb-ui .lb-tile .txt{padding:10px 12px 12px;background:rgba(6,12,28,.75)}
-#lb-ui .lb-tile .txt span{display:block;font-size:24px;line-height:1;letter-spacing:.03em}
-#lb-ui .lb-tile .txt em{display:block;font:500 12px/1.3 system-ui,sans-serif;font-style:normal;color:#b9c9e6;margin-top:5px}
-#lb-ui .lb-tile .tag{position:absolute;top:8px;left:8px;font:700 10px/1 system-ui,sans-serif;letter-spacing:.12em;color:#2a1c00;background:#ffe14a;border-radius:3px;padding:4px 6px}
-#lb-ui .lb-tile.soon{cursor:default;filter:saturate(.3);opacity:.75}
-#lb-ui .lb-tile.soon:hover{transform:none;border-color:rgba(255,255,255,.14)}
-#lb-ui .lb-tile.soon .txt span{font-size:20px;color:#cfd6e4}
+#lb-ui .lb-tiles{display:grid;grid-template-columns:repeat(3,minmax(0,300px));gap:18px;width:100%;justify-content:center}
+#lb-ui .lb-tile{position:relative;display:block;aspect-ratio:16/10;padding:0;font:inherit;color:#fff;text-align:left;cursor:pointer;overflow:hidden;
+  border:0;border-radius:10px;background:#0c1630;box-shadow:0 0 0 3px rgba(255,255,255,.18),0 10px 24px rgba(0,0,0,.45);
+  transition:transform .14s ease,box-shadow .14s ease,filter .14s ease}
+#lb-ui .lb-tile svg.art{position:absolute;inset:0;width:100%;height:100%;display:block;transition:transform .35s ease}
+#lb-ui .lb-tile:hover{transform:translateY(-5px);box-shadow:0 0 0 3px rgba(255,255,255,.75),0 16px 30px rgba(0,0,0,.5)}
+#lb-ui .lb-tile:hover svg.art{transform:scale(1.05)}
+#lb-ui .lb-tile.sel{transform:translateY(-5px) scale(1.03);box-shadow:0 0 0 5px #fff,0 0 34px 6px rgba(120,200,255,.55),0 18px 34px rgba(0,0,0,.55)}
+#lb-ui .lb-tile:focus-visible{outline:none;box-shadow:0 0 0 5px #ffe14a,0 16px 30px rgba(0,0,0,.5)}
+#lb-ui .lb-tile .cap{position:absolute;left:0;right:0;bottom:0;padding:34px 14px 12px;
+  background:linear-gradient(180deg,rgba(4,8,24,0) 0%,rgba(4,8,24,.72) 55%,rgba(4,8,24,.92) 100%)}
+#lb-ui .lb-tile .cap span{display:block;font-size:34px;line-height:.95;letter-spacing:.02em;text-transform:uppercase;transform:skewX(-8deg);transform-origin:left bottom;
+  text-shadow:0 3px 0 rgba(0,0,0,.45)}
+#lb-ui .lb-tile .cap em{display:block;font:600 12px/1.25 system-ui,sans-serif;font-style:normal;color:#cfe0ff;margin-top:6px}
+#lb-ui .lb-tile .tag{position:absolute;top:10px;left:10px;font:800 10px/1 system-ui,sans-serif;letter-spacing:.12em;color:#1d1400;background:#ffe14a;
+  padding:5px 8px 4px;transform:skewX(-10deg);box-shadow:0 2px 0 rgba(0,0,0,.35)}
+#lb-ui .lb-tile .check{position:absolute;top:10px;right:10px;width:26px;height:26px;border-radius:50%;background:#fff;color:#0c1630;
+  display:none;place-items:center;font:900 15px/1 system-ui,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+#lb-ui .lb-tile.sel .check{display:grid}
+#lb-ui .lb-tile.soon{cursor:default}
+#lb-ui .lb-tile.soon:hover{transform:none;box-shadow:0 0 0 3px rgba(255,255,255,.18),0 10px 24px rgba(0,0,0,.45)}
+#lb-ui .lb-tile.soon:hover svg.art{transform:none}
+#lb-ui .lb-tile.soon .tag{background:#9aa7c0}
 #lb-ui .lb-close{font:inherit;font-size:22px;letter-spacing:.05em;color:#2a1c00;background:#ffe14a;border:0;cursor:pointer;padding:10px 34px 8px;
   clip-path:polygon(6% 0,100% 0,94% 100%,0 100%)}
 #lb-ui .lb-close:hover{filter:brightness(1.08)}
@@ -104,9 +89,8 @@ const CSS = `
   #lb-ui .lb-dock{left:16px;right:16px;width:auto;bottom:max(20px,env(safe-area-inset-bottom))}
   #lb-ui .lb-hint{display:none}
   #lb-ui .lb-plate{font-size:18px}
-  #lb-ui .lb-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
-  #lb-ui .lb-tile{min-height:170px}
-  #lb-ui .lb-tile .art{min-height:86px}
+  #lb-ui .lb-tiles{grid-template-columns:1fr;max-width:340px}
+  #lb-ui .lb-tile .cap span{font-size:28px}
 }
 `;
 
@@ -130,19 +114,74 @@ const HTML = `
   <button class="lb-close" id="lb-close" type="button">GOTOWE</button>
 </div>`;
 
-const ICONS = {
-  range: '<svg class="emb" viewBox="0 0 64 64"><defs><linearGradient id="lbGold" gradientUnits="userSpaceOnUse" x1="0" y1="6" x2="0" y2="58">' +
-    '<stop offset="0" stop-color="#fff"/><stop offset=".3" stop-color="#fff1c4"/><stop offset=".51" stop-color="#f3b632"/><stop offset=".52" stop-color="#a8660f"/>' +
-    '<stop offset=".75" stop-color="#e9a52a"/><stop offset="1" stop-color="#ffe08a"/></linearGradient></defs>' +
-    '<g fill="none" stroke="#140b1f" stroke-width="9" stroke-linecap="round"><circle cx="32" cy="32" r="17"/><path d="M32 5v13M32 46v13M5 32h13M46 32h13"/></g>' +
-    '<g fill="none" stroke="url(#lbGold)" stroke-width="5" stroke-linecap="round"><circle cx="32" cy="32" r="17"/><path d="M32 5v13M32 46v13M5 32h13M46 32h13"/></g>' +
-    '<circle cx="32" cy="32" r="5" fill="url(#lbGold)" stroke="#140b1f" stroke-width="2.2"/></svg>',
-  duel: '<b class="vs" data-t="VS">VS</b>',
-  soon: '<svg viewBox="0 0 30 30" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="13" width="16" height="12" rx="2"/><path d="M10.5 13V9.5a4.5 4.5 0 0 1 9 0V13"/></svg>',
+// ilustracje kafelków (SVG 320x200), rysowane kodem; uid = unikalne id gradientów w dokumencie
+let artN = 0;
+function beanSvg(u, cx, top, w, h, col, dir = 1, eyes = true) {
+  const x = cx - w / 2, lw = w * .2, legs = `<rect x="${cx - w * .26}" y="${top + h - w * .3}" width="${lw}" height="${w * .55}" rx="${lw / 2}" fill="${col}"/>` +
+    `<rect x="${cx + w * .06}" y="${top + h - w * .3}" width="${lw}" height="${w * .55}" rx="${lw / 2}" fill="${col}"/>`;
+  let s = legs + `<rect x="${x}" y="${top}" width="${w}" height="${h}" rx="${w / 2}" fill="${col}"/>` +
+    `<rect x="${x}" y="${top}" width="${w}" height="${h}" rx="${w / 2}" fill="url(#sh${u})"/>` +
+    `<ellipse cx="${cx - dir * w * .2}" cy="${top + h * .2}" rx="${w * .12}" ry="${h * .09}" fill="#fff" opacity=".38"/>`;
+  if (eyes) for (const ex of [-.15, .15]) {
+    const ecx = cx + dir * w * .12 + ex * w, ecy = top + h * .3;
+    s += `<ellipse cx="${ecx}" cy="${ecy}" rx="${w * .1}" ry="${w * .13}" fill="#fff"/><ellipse cx="${ecx + dir * w * .035}" cy="${ecy + w * .02}" rx="${w * .05}" ry="${w * .07}" fill="#111"/>`;
+  }
+  return s;
+}
+const shadeDef = u => `<linearGradient id="sh${u}" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity=".08"/><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".32"/></linearGradient>`;
+const vign = u => `<radialGradient id="vg${u}" cx=".5" cy=".45" r=".75"><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".55"/></radialGradient>`;
+const ART = {
+  range() {
+    const u = ++artN;
+    return `<svg class="art" viewBox="0 0 320 200" preserveAspectRatio="xMidYMid slice"><defs>${shadeDef(u)}${vign(u)}
+      <linearGradient id="sk${u}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2b1763"/><stop offset=".5" stop-color="#d9416b"/><stop offset=".78" stop-color="#ffb35a"/></linearGradient>
+      <radialGradient id="sn${u}" cx=".7" cy=".6" r=".42"><stop offset="0" stop-color="#fff7d0"/><stop offset=".22" stop-color="#ffd27a" stop-opacity=".85"/><stop offset="1" stop-color="#ff9a4a" stop-opacity="0"/></radialGradient>
+      <linearGradient id="gd${u}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4f9a3c"/><stop offset="1" stop-color="#1d4a22"/></linearGradient>
+      <filter id="gl${u}" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+      <rect width="320" height="200" fill="url(#sk${u})"/><rect width="320" height="200" fill="url(#sn${u})"/>
+      <g fill="#fff" opacity=".1"><polygon points="224,120 140,0 175,0"/><polygon points="224,120 250,0 290,0"/><polygon points="224,120 320,40 320,80"/></g>
+      <g transform="translate(222 84) scale(1.3) translate(-222 -120)">
+      <path d="M0 128 L30 104 L52 120 L84 92 L116 122 L150 100 L182 124 L214 98 L250 126 L284 102 L320 120 V260 H0Z" fill="#5b2f6e" opacity=".75"/>
+      <g fill="#2e5a34">${[18, 46, 74, 262, 292].map((x, i) => `<polygon points="${x},${132 - (i % 2) * 8} ${x - 11},${150} ${x + 11},150"/>`).join('')}</g>
+      <path d="M-40 146 Q90 128 170 140 T360 136 V260 H-40Z" fill="url(#gd${u})"/>
+      ${beanSvg(u, 118, 116, 16, 25, '#d9473f', 1)}${beanSvg(u, 268, 112, 19, 30, '#c93a55', -1)}${beanSvg(u, 205, 92, 30, 48, '#ea4a3a', -1)}
+      <g fill="none" stroke="#fff" stroke-width="2.4"><circle cx="205" cy="128" r="7"/><circle cx="205" cy="128" r="2.6" fill="#fff"/></g>
+      <g filter="url(#gl${u})" stroke="#fff" fill="none" stroke-linecap="round"><circle cx="205" cy="122" r="27" stroke-width="2.6"/>
+        <path d="M205 86v18M205 140v18M169 122h18M223 122h18" stroke-width="3"/></g><circle cx="205" cy="122" r="2.2" fill="#ff3b2f"/></g>
+      <rect width="320" height="200" fill="url(#vg${u})"/></svg>`;
+  },
+  duel() {
+    const u = ++artN;
+    return `<svg class="art" viewBox="0 0 320 200" preserveAspectRatio="xMidYMid slice"><defs>${shadeDef(u)}${vign(u)}
+      <linearGradient id="rd${u}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff5a3a"/><stop offset="1" stop-color="#8a0c2c"/></linearGradient>
+      <linearGradient id="bl${u}" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4aa3ff"/><stop offset="1" stop-color="#0e2a8a"/></linearGradient>
+      <linearGradient id="gold${u}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset=".32" stop-color="#fff1c4"/><stop offset=".52" stop-color="#f3b632"/><stop offset=".53" stop-color="#a8660f"/><stop offset="1" stop-color="#ffe08a"/></linearGradient>
+      <filter id="gl${u}" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4"/></filter></defs>
+      <polygon points="0,0 186,0 134,200 0,200" fill="url(#rd${u})"/><polygon points="186,0 320,0 320,200 134,200" fill="url(#bl${u})"/>
+      <g stroke="#fff" stroke-opacity=".14" stroke-width="2">${Array.from({ length: 9 }, (_, i) => `<line x1="${-40 + i * 22}" y1="${200}" x2="${10 + i * 22}" y2="0"/>`).join('')}
+        ${Array.from({ length: 9 }, (_, i) => `<line x1="${180 + i * 22}" y1="200" x2="${230 + i * 22}" y2="0"/>`).join('')}</g>
+      <polygon points="181,0 191,0 139,200 129,200" fill="#fff" filter="url(#gl${u})"/><polygon points="184,0 188,0 136,200 132,200" fill="#fff"/>
+      ${beanSvg(u, 72, 70, 62, 150, '#f0b440', 1)}${beanSvg(u, 250, 70, 62, 150, '#e0473f', -1)}
+      <g transform="translate(160 118) skewX(-10)"><text text-anchor="middle" font-family="Anton,Impact,sans-serif" font-size="76" fill="url(#gold${u})"
+        stroke="#140b1f" stroke-width="5" paint-order="stroke" stroke-linejoin="round">VS</text></g>
+      <rect width="320" height="200" fill="url(#vg${u})"/></svg>`;
+  },
+  soon() {
+    const u = ++artN;
+    return `<svg class="art" viewBox="0 0 320 200" preserveAspectRatio="xMidYMid slice"><defs>${shadeDef(u)}${vign(u)}
+      <radialGradient id="bg${u}" cx=".5" cy=".42" r=".7"><stop offset="0" stop-color="#3a4f86"/><stop offset=".6" stop-color="#18234a"/><stop offset="1" stop-color="#0a1028"/></radialGradient>
+      <filter id="gl${u}" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="5"/></filter></defs>
+      <rect width="320" height="200" fill="url(#bg${u})"/>
+      <g stroke="#9fc2ff" stroke-opacity=".12">${Array.from({ length: 16 }, (_, i) => `<line x1="${i * 22}" y1="0" x2="${i * 22 - 60}" y2="200"/>`).join('')}</g>
+      <rect x="128" y="44" width="64" height="130" rx="32" fill="#7fb0ff" opacity=".5" filter="url(#gl${u})"/>
+      <rect x="130" y="46" width="60" height="126" rx="30" fill="#0b1230"/>
+      <text x="160" y="128" text-anchor="middle" font-family="Anton,Impact,sans-serif" font-size="70" fill="#cfe0ff" opacity=".9">?</text>
+      <rect width="320" height="200" fill="url(#vg${u})"/></svg>`;
+  },
 };
 const DEFAULT_MODES = [
-  { id: 'range', name: 'Strzelnica', desc: 'Solo · zestrzel czerwone fasolki', icon: 'range' },
-  { id: '1v1', name: '1v1', desc: 'Pojedynek z botem · do 5', icon: 'duel' },
+  { id: 'range', name: 'Strzelnica', desc: 'Solo · zestrzel czerwone fasolki', icon: 'range', tag: 'SOLO' },
+  { id: '1v1', name: '1v1', desc: 'Pojedynek z botem · do 5', icon: 'duel', tag: '1 NA 1' },
   { soon: true },
 ];
 
@@ -173,19 +212,18 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
   const picker = $('lb-picker'), tiles = $('lb-tiles');
   function renderMode() {
     $('lb-mode-name').textContent = mode.name; $('lb-mode-desc').textContent = mode.desc;
-    const ic = $('lb-mode-ic'); ic.className = 'lb-thumb ic-' + mode.icon; ic.innerHTML = ICONS[mode.icon] || '';
+    $('lb-mode-ic').innerHTML = ART[mode.icon] ? ART[mode.icon]() : '';
     tiles.querySelectorAll('.lb-tile').forEach(t => { t.classList.toggle('sel', t.dataset.id === mode.id); t.setAttribute('aria-pressed', t.dataset.id === mode.id); });
   }
   modes.forEach(m => {
     const t = document.createElement('button'); t.type = 'button';
     t.className = 'lb-tile' + (m.soon ? ' soon' : '');
     const icon = m.soon ? 'soon' : m.icon;
-    t.innerHTML = `<div class="art ic-${icon}">${ICONS[icon] || ''}</div>` +
-      (m.soon ? '<div class="txt"><span>COMING SOON...</span><em>Nowy tryb w drodze</em></div>'
-              : `<div class="txt"><span></span><em></em></div>`);
-    if (m.soon) { t.disabled = true; t.setAttribute('aria-label', 'Coming soon'); }
+    t.innerHTML = (ART[icon] ? ART[icon]() : '') + '<i class="tag"></i><i class="check">✓</i><div class="cap"><span></span><em></em></div>';
+    t.querySelector('.tag').textContent = m.soon ? 'WKRÓTCE' : (m.tag || 'TRYB');
+    if (m.soon) { t.disabled = true; t.setAttribute('aria-label', 'Coming soon'); t.querySelector('.cap span').textContent = 'Coming soon...'; t.querySelector('.cap em').textContent = 'Nowy tryb jest w drodze'; }
     else {
-      t.dataset.id = m.id; t.querySelector('.txt span').textContent = m.name; t.querySelector('.txt em').textContent = m.desc;
+      t.dataset.id = m.id; t.querySelector('.cap span').textContent = m.name; t.querySelector('.cap em').textContent = m.desc;
       t.addEventListener('click', () => { mode = m; store.set('fasolka-mode', m.id); renderMode(); });
       t.addEventListener('dblclick', () => closePicker());
     }
