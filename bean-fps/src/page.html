@@ -36,6 +36,17 @@
   body.in-lobby canvas{cursor:grab}
   #overlay .lobby{display:inline-block;margin:14px 0 0 10px;padding:10px 18px;border-radius:8px;border:1px solid var(--line);background:rgba(255,255,255,.08);color:var(--fg);font:700 14px system-ui,sans-serif;cursor:pointer}
   #overlay .lobby:hover{background:rgba(255,255,255,.16)}
+  #hp{left:50%;bottom:24px;transform:translateX(-50%);display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);padding:8px 14px;border-radius:8px}
+  body:not(.duel) #hp{display:none}
+  #hp span{font:700 11px/1 system-ui,sans-serif;letter-spacing:.12em;color:var(--dim)}
+  #hp i{display:block;width:180px;height:10px;border-radius:5px;background:rgba(255,255,255,.12);overflow:hidden}
+  #hp i b{display:block;height:100%;width:100%;background:linear-gradient(90deg,#5ff08a,#2fc463);transition:width .15s}
+  #hp.low i b{background:linear-gradient(90deg,#ff7a5c,#e5432f)}
+  #hp em{font-style:normal;font-weight:700;font-size:18px;min-width:34px;text-align:right}
+  #score small{color:var(--dim);font-size:11px;margin-left:4px}
+  #banner{left:50%;top:32%;transform:translate(-50%,-50%);font:800 44px/1 system-ui,sans-serif;letter-spacing:.06em;text-shadow:0 3px 14px rgba(0,0,0,.55);opacity:0;white-space:nowrap}
+  #banner.show{animation:bn 1.3s ease forwards}
+  @keyframes bn{0%{opacity:0;transform:translate(-50%,-50%) scale(.8)}15%{opacity:1;transform:translate(-50%,-50%) scale(1)}75%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(1)}}
   #dmg{inset:0;box-shadow:inset 0 0 120px rgba(255,0,0,0);transition:box-shadow .2s}
 </style>
 <div id="loading">Ładowanie…</div>
@@ -44,9 +55,12 @@
 <div id="vlabel" class="hud"></div>
 <button id="muteHud" class="mute" type="button" aria-pressed="false">Dźwięk: wł. (M)</button>
 <div id="score" class="hud">Trafione fasolki <b id="kills">0</b></div>
+<div id="hp" class="hud"><span>ZDROWIE</span><i><b id="hpbar"></b></i><em id="hpnum">100</em></div>
+<div id="dmg" class="hud"></div>
+<div id="banner" class="hud"></div>
 <div id="ammo" class="hud"><small id="state"></small><b id="mag">30</b> <span>/ <span id="reserve">120</span></span></div>
 <div id="keys" class="hud"><kbd>WASD</kbd> ruch · <kbd>Shift</kbd> bieg · <kbd>Spacja</kbd> skok · <kbd>C</kbd> kucanie<br><kbd>LPM</kbd> strzał · <kbd>PPM</kbd> celowanie · <kbd>R</kbd> przeładuj<br><kbd>V</kbd> zmiana widoku · <kbd>M</kbd> dźwięk · <kbd>Esc</kbd> pauza</div>
-<div id="overlay"><div class="card"><h1>Pauza</h1><p>Kliknij, aby wrócić do gry. Mysz obraca kamerę, Esc robi pauzę.</p><span class="go">WZNÓW</span><button class="lobby" id="toLobby" type="button">Wróć do lobby</button><br><button class="mute" type="button" aria-pressed="false">Dźwięk: wł. (M)</button></div></div>
+<div id="overlay"><div class="card"><h1 id="ovTitle">Pauza</h1><p id="ovText">Kliknij, aby wrócić do gry. Mysz obraca kamerę, Esc robi pauzę.</p><span class="go" id="ovGo">WZNÓW</span><button class="lobby" id="toLobby" type="button">Wróć do lobby</button><br><button class="mute" type="button" aria-pressed="false">Dźwięk: wł. (M)</button></div></div>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
 <script type="module">
 import * as THREE from 'three';
@@ -475,7 +489,7 @@ addEventListener('mousemove',e=>{
 
 // ================= strzelanie =================
 const ray=new THREE.Raycaster();ray.far=250;
-const hitTargets=()=>[...enemyMeshes.filter(m=>m.userData.enemy.dead===0),...boxMeshes,window.__ground];
+const hitTargets=()=>[...enemyMeshes.filter(m=>m.userData.enemy.dead===0&&!m.userData.enemy.off),...boxMeshes,window.__ground];
 const _o=V3(),_dir=V3(),_mz=V3(),_n=V3(),_e=new THREE.Euler();
 function startReload(){
   if(gun.reloading>0||gun.mag===gun.magSize||gun.reserve<=0)return;
@@ -634,6 +648,7 @@ function poseThirdPerson(dt){
 function stepEnemies(dt){
   for(const e of enemies){
     const r=e.root;
+    if(MODE==='1v1'){if(e===duel.bot)stepDuelBot(e,dt);continue}
     if(e.dead>0){
       e.dead-=dt;e.fall=Math.min(1,e.fall+dt*3);
       if(e.flash>0){e.flash-=dt;e.mats.skin.emissive.setScalar(.9)}else e.mats.skin.emissive.setScalar(0);
@@ -700,6 +715,77 @@ function frame(){
   requestAnimationFrame(frame);
 }
 setHud();
+// ================= tryb 1v1: pojedynek z botem do 5 trafień =================
+let MODE='range';
+const WIN=5,duel={bot:null,hp:100,botScore:0,inv:0};
+function setPauseText(){$('ovTitle').textContent='Pauza';$('ovText').textContent='Kliknij, aby wrócić do gry. Mysz obraca kamerę, Esc robi pauzę.';$('ovGo').textContent='WZNÓW'}
+function setHp(v){duel.hp=Math.max(0,v);$('hpbar').style.width=duel.hp+'%';$('hpnum').textContent=Math.ceil(duel.hp);$('hp').classList.toggle('low',duel.hp<35)}
+function banner(t,c){const b=$('banner');b.textContent=t;b.style.color=c||'#fff';b.classList.remove('show');void b.offsetWidth;b.classList.add('show')}
+function resetPlayer(){player.pos.set(0,0,-14);player.vel.set(0,0,0);player.yaw=Math.PI;player.pitch=0;gun.mag=gun.magSize;gun.reserve=120;gun.reloading=0;rifle.mag.visible=true;setHud();setHp(100);duel.inv=1.2}
+function duelSpawn(e){Object.assign(e,{hp:100,dead:0,fall:0,cd:1,react:.8,strafe:rnd()<.5?1:-1,turn:1.5,counted:false});e.root.rotation.z=0;e.root.position.set((rnd()-.5)*16,0,12+rnd()*8)}
+function setMode(m){
+  MODE=m==='1v1'?'1v1':'range';document.body.classList.toggle('duel',MODE==='1v1');
+  kills=0;duel.botScore=0;duel.bot=enemies[0];
+  $('score').innerHTML=MODE==='1v1'?'Ty <b id="kills">0</b> : <b id="botScore">0</b> Bot <small>do 5</small>':'Trafione fasolki <b id="kills">0</b>';
+  for(const e of enemies){const on=MODE==='range'||e===duel.bot;e.off=!on;e.root.visible=on;e.hp=100;e.dead=0;e.fall=0;e.root.rotation.z=0;e.root.position.y=0;if(on&&MODE==='range')e.root.position.copy(spawnPos())}
+  if(MODE==='1v1'){duelSpawn(duel.bot);resetPlayer()}
+  setPauseText();
+}
+function sndFar(){
+  if(!AC)return;const t=AC.currentTime,s=AC.createBufferSource();s.buffer=noise();const f=AC.createBiquadFilter();f.type='lowpass';f.frequency.setValueAtTime(2200,t);f.frequency.exponentialRampToValueAtTime(300,t+.2);
+  const g=AC.createGain();g.gain.setValueAtTime(.22,t);g.gain.exponentialRampToValueAtTime(.001,t+.22);s.connect(f).connect(g).connect(master);s.start(t);s.stop(t+.25);
+}
+function endMatch(won){
+  playing=false;gun.firing=false;if(document.pointerLockElement)document.exitPointerLock();
+  $('ovTitle').textContent=won?'WYGRANA!':'PRZEGRANA';$('ovText').textContent='Wynik '+kills+' : '+duel.botScore+'. Kliknij, aby zagrać jeszcze raz.';$('ovGo').textContent='ZAGRAJ PONOWNIE';
+  $('overlay').style.display='flex';
+  kills=0;duel.botScore=0;$('kills').textContent=0;$('botScore').textContent=0;duelSpawn(duel.bot);resetPlayer();   // nowy mecz od razu gotowy
+}
+function playerHit(d){
+  if(duel.inv>0)return;setHp(duel.hp-d);
+  const el=$('dmg');el.style.boxShadow='inset 0 0 140px rgba(255,0,0,.6)';clearTimeout(el._t);el._t=setTimeout(()=>el.style.boxShadow='',140);
+  if(duel.hp<=0){duel.botScore++;$('botScore').textContent=duel.botScore;if(duel.botScore>=WIN)endMatch(false);else{banner('ZGINĄŁEŚ','#ff6a5c');resetPlayer()}}
+}
+const _be=V3(),_bp=V3(),_bt=V3(),_bm=V3(),losRay=new THREE.Raycaster();
+function stepDuelBot(e,dt){
+  const r=e.root,ud=r.userData;
+  if(e.flash>0){e.flash-=dt;e.mats.skin.emissive.setScalar(.9)}else e.mats.skin.emissive.setScalar(0);
+  if(e.dead>0){
+    if(!e.counted){e.counted=true;if(kills>=WIN){endMatch(true);return}banner('TRAFIONY!','#ffe14a')}
+    e.dead-=dt;e.fall=Math.min(1,e.fall+dt*3);r.rotation.z=e.fall*(Math.PI/2);r.position.y=Math.sin(e.fall*Math.PI/2)*.28;
+    if(e.dead<=0)duelSpawn(e);
+    return;
+  }
+  const dx=player.pos.x-r.position.x,dz=player.pos.z-r.position.z,dist=Math.hypot(dx,dz)||1;
+  _be.set(r.position.x,1.25,r.position.z);_bp.set(player.pos.x,player.pos.y+1.1-player.crouch*.4,player.pos.z);
+  _bt.copy(_bp).sub(_be);const L=_bt.length();_bt.multiplyScalar(1/L);losRay.set(_be,_bt);losRay.far=L;
+  const see=losRay.intersectObjects(boxMeshes,false).length===0;      // czy skrzynie nie zasłaniają gracza
+  let moving=0;
+  if(playing){
+    duel.inv=Math.max(0,duel.inv-dt);
+    e.turn-=dt;if(e.turn<=0){e.turn=1.2+rnd()*2.2;e.strafe*=-1}
+    const radial=clamp((dist-(see?13:6))*.25,-1,1);                      // bez widoczności podchodzi bliżej
+    let mx=-dz/dist*e.strafe*.9+dx/dist*radial,mz=dx/dist*e.strafe*.9+dz/dist*radial;const ml=Math.hypot(mx,mz)||1;
+    const nx=r.position.x+mx/ml*2.6*dt,nz=r.position.z+mz/ml*2.6*dt;
+    if(Math.hypot(nx,nz)>ARENA-2||boxes.some(b=>nx>b.minX-.45&&nx<b.maxX+.45&&nz>b.minZ-.45&&nz<b.maxZ+.45&&b.top>.5)){e.strafe*=-1;e.turn=1}
+    else{r.position.x=nx;r.position.z=nz;moving=1}
+    e.react=see?e.react-dt:.55;e.cd-=dt;
+    if(see&&e.react<=0&&e.cd<=0&&dist<45){
+      e.cd=.32+rnd()*.35;
+      const pHit=clamp(.62-dist*.011-player.speed01*.25-player.crouch*.1-(player.onGround?0:.15),.1,.6),hit=rnd()<pHit;
+      e.rifle.muzzle.getWorldPosition(_bm);_bt.copy(_bp);if(!hit)_bt.add(V3((rnd()-.5)*2.2,(rnd()-.3)*1.4,(rnd()-.5)*2.2));
+      spawnTracer(_bm,_bt);sndFar();if(hit)playerHit(rnd()<.18?24:12);
+    }
+  }
+  r.rotation.y+=angDiff(Math.atan2(dx,dz)+Math.PI,r.rotation.y)*Math.min(1,dt*8);   // zawsze patrzy na gracza
+  e.phase+=dt*9.7*moving;poseLegs(ud,e.phase,.42*moving,0,0);
+  ud.upper.position.y=Math.abs(Math.sin(e.phase))*.03*moving;leanTorso(ud,-.04,0,Math.sin(e.phase)*.04*moving);
+  e.holder.rotation.x=clamp(Math.atan2(_bp.y-1.0,dist),-.3,.3);e.holder.rotation.y=0;
+  keepRifleOut(ud,e.rifle.group);r.updateWorldMatrix(true,true);
+  _gr.copy(e.rifle.gripR);e.rifle.group.localToWorld(_gr);ud.torso.worldToLocal(_gr);
+  _gl.copy(e.rifle.gripL);e.rifle.group.localToWorld(_gl);ud.torso.worldToLocal(_gl);
+  poseArmsTo(ud,_gr,_gl);
+}
 // ================= lobby =================
 const lobbyBean=makeBean(ME_COLOR,{eyes:false});
 const _lt=V3();
@@ -719,13 +805,13 @@ function lobbyAnimate(b,t,dt,st){
   }
 }
 const lobby=createLobby({renderer,bean:lobbyBean,animate:lobbyAnimate,
-  mode:{name:'Strzelnica',desc:'Solo · zestrzel czerwone fasolki'},
-  onPlay:()=>{lobby.hide();document.body.classList.remove('in-lobby');startPlay()}});
+  onPlay:m=>{setMode(m);lobby.hide();document.body.classList.remove('in-lobby');startPlay()}});
+$('overlay').addEventListener('click',()=>setTimeout(setPauseText,0));
 $('toLobby').addEventListener('click',e=>{
   e.stopPropagation();playing=false;gun.firing=false;
   if(document.pointerLockElement)document.exitPointerLock();
   document.body.classList.add('in-lobby');lobby.show();
 });
-window.__game={lobby,player,gun,enemies,camera,setView:attachRifle,startPlay,start:()=>{playing=true;$('overlay').style.display='none'},fire:()=>{if(gun.mag>0&&gun.cd<=0&&gun.reloading<=0)fireShot()},reload:startReload,setAds:v=>adsHeld=v,keys};
+window.__game={lobby,duel,setMode,player,gun,enemies,camera,setView:attachRifle,startPlay,start:()=>{playing=true;$('overlay').style.display='none'},fire:()=>{if(gun.mag>0&&gun.cd<=0&&gun.reloading<=0)fireShot()},reload:startReload,setAds:v=>adsHeld=v,keys};
 $('loading').remove();window.__ready=true;frame();
 </script>
