@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8"><meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Artykuł – Market ZIKO</title>
+<link rel="icon" href="assets/logo.png">
+<link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/pages.css">
+</head>
+<body data-page="poradnik">
+<main class="wrap">
+
+<div id="c"></div>
+<article class="article" id="a"></article>
+<section><div class="shead"><h2>Powiązane produkty</h2></div><div class="grid" id="rel"></div></section>
+
+</main>
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+<script>const g=GUIDES.find(x=>x.id==qs.get('id'))||GUIDES[0];document.title=g.t+' – Market ZIKO';
+$('#c').innerHTML=crumbs([['Poradnik','poradnik.html'],[g.t]]);
+$('#a').innerHTML=`<h1>${g.t}</h1><div class="hero-img"><img src="${cimg(g.c)}" alt=""></div>${g.demo?'<div class="demo-note">Artykuł przykładowy w wersji demonstracyjnej.</div>':''}${g.body.map(t=>`<p>${t}</p>`).join('')}<a class="btn btn-red" href="kategoria.html?c=${g.c}">Zobacz produkty z kategorii</a> <a class="btn btn-dark" href="poradnik.html">← Wszystkie artykuły</a>`;
+$('#rel').innerHTML=P.filter(p=>p.c===g.c).slice(0,4).map(card).join('')</script>
+</body>
+</html>

@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8"><meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Koszyk – Market ZIKO</title>
+<link rel="icon" href="assets/logo.png">
+<link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/pages.css">
+</head>
+<body data-page="koszyk">
+<main class="wrap">
+ <div id="crumbs"></div>
+ <div class="phead"><h1>Koszyk i zamówienie</h1></div>
+ <div class="steps" id="steps"></div>
+ <div id="view"></div>
+</main>
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+<script>
+document.getElementById('crumbs').innerHTML=crumbs([['Koszyk']]);
+let step=1,coupon=0,ship=ls.get('zikoShip','kurier'),pay='przelew';
+const SH={kurier:['Kurier',15],paczkomat:['Paczkomat',12],odbior:['Odbiór osobisty',0]};
+const shipCost=()=>sum()>=500||!count()?0:SH[ship][1];
+const total=()=>Math.max(0,sum()*(1-coupon)+(ship==='odbior'?0:shipCost()));
+function steps(){$('#steps').innerHTML=['Koszyk','Dane i dostawa','Potwierdzenie'].map((t,i)=>`<div class="${i+1===step?'on':i+1<step?'dn':''}"><b>${i+1<step?'✓':i+1}</b>${t}</div>`).join('')}
+function summary(btn){
+ const s=sum();
+ return `<aside class="box sumbox"><h3 style="margin-bottom:10px">Podsumowanie</h3>
+ <div class="l"><span>Produkty (${count()})</span><span>${zl(s)}</span></div>
+ ${coupon?`<div class="l" style="color:#198754"><span>Kod rabatowy (−${coupon*100}%)</span><span>−${zl(s*coupon)}</span></div>`:''}
+ <div class="l"><span>Dostawa</span><span>${ship==='odbior'||s>=500?'0,00 zł':zl(shipCost())}</span></div>
+ <div class="l t"><span>Razem</span><span>${zl(total())}</span></div>
+ ${btn}</aside>`;
+}
+function view(){
+ steps();
+ const e=Object.entries(cart),v=$('#view');
+ if(step===3)return;
+ if(!e.length){v.innerHTML=`<div class="box" style="text-align:center;padding:60px 20px"><h2>Twój koszyk jest pusty</h2><p style="color:var(--gray);margin:10px 0 24px">Dodaj produkty, aby złożyć zamówienie.</p><a class="btn btn-red" href="kategoria.html">Przejdź do sklepu</a></div>`;return}
+ if(step===1){
+  v.innerHTML=`<div class="cart-layout"><div class="box">${e.map(([id,q])=>{const p=find(id);return `<div class="crow"><img src="${p.im}" alt=""><div><h4><a href="produkt.html?id=${id}">${p.n}</a></h4><small>${p.b} · ${zl(p.p)} / szt.</small></div><div class="qty"><button data-q="${id}" data-d="-1">−</button><span>${q}</span><button data-q="${id}" data-d="1">+</button></div><div class="pr">${zl(p.p*q)}<button class="rm" data-rm="${id}" style="display:block;font-size:12px;color:var(--gray-m);font-weight:500;margin-left:auto">Usuń</button></div></div>`}).join('')}
+  <div class="coupon"><input id="cin" placeholder="Kod rabatowy (np. ZIKO10)"><button class="btn btn-dark" id="cap" style="padding:10px 20px">Zastosuj</button></div><small id="cmsg" style="color:var(--gray-m)"></small></div>
+  ${summary('<button class="btn btn-red" style="width:100%;justify-content:center;margin-top:16px" id="next">Dalej →</button><a href="kategoria.html" style="display:block;text-align:center;margin-top:14px;color:var(--gray);font-size:14px">← Kontynuuj zakupy</a>')}</div>`;
+  $('#cap').onclick=()=>{if($('#cin').value.trim().toUpperCase()==='ZIKO10'){coupon=.1;view();$('#cmsg').textContent='Kod zastosowany.'}else{$('#cmsg').textContent='Nieprawidłowy kod. Spróbuj: ZIKO10'}};
+  $('#next').onclick=()=>{step=2;view();scrollTo({top:0})};
+ }
+ if(step===2){
+  v.innerHTML=`<form class="cart-layout" id="of"><div style="display:grid;gap:24px"><div class="box form"><h3>Dane odbiorcy</h3>
+   <div class="row"><label>Imię<input required></label><label>Nazwisko<input required></label></div>
+   <div class="row"><label>E-mail<input type="email" required></label><label>Telefon<input type="tel" required></label></div>
+   <div class="row"><label>Ulica i numer<input required></label><label>Kod pocztowy i miasto<input required></label></div></div>
+  <div class="box"><h3 style="margin-bottom:14px">Dostawa</h3>${Object.entries(SH).map(([k,[n,c]])=>`<label class="opt"><input type="radio" name="sh" value="${k}" ${ship===k?'checked':''}>${n}<span>${c&&sum()<500?zl(c):'0,00 zł'}</span></label>`).join('')}</div>
+  <div class="box"><h3 style="margin-bottom:14px">Płatność</h3>${[['przelew','Przelew tradycyjny'],['blik','BLIK'],['karta','Karta płatnicza'],['pobranie','Płatność przy odbiorze'],['raty','Raty']].map(([k,n])=>`<label class="opt"><input type="radio" name="pay" value="${k}" ${pay===k?'checked':''}>${n}</label>`).join('')}
+   <label class="chk" style="display:flex;gap:10px;margin-top:12px;font-size:14px;color:var(--gray)"><input type="checkbox" required style="accent-color:var(--red);width:18px;height:18px"> Akceptuję <a href="regulamin.html" style="color:var(--red)">regulamin</a> sklepu</label></div></div>
+  ${summary('<button class="btn btn-red" style="width:100%;justify-content:center;margin-top:16px">Złóż zamówienie</button><button type="button" id="back" style="display:block;width:100%;text-align:center;margin-top:14px;color:var(--gray);font-size:14px">← Wróć do koszyka</button>')}</form>`;
+  $('#back').onclick=()=>{step=1;view()};
+  $('#of').onchange=e=>{if(e.target.name==='sh'){ship=e.target.value;ls.set('zikoShip',ship);$('.sumbox').outerHTML=summary($('.sumbox button').outerHTML+$('#back').outerHTML);$('#back').onclick=()=>{step=1;view()}}else if(e.target.name==='pay')pay=e.target.value};
+  $('#of').onsubmit=ev=>{ev.preventDefault();
+   const no='ZK/'+new Date().getFullYear()+'/'+Math.floor(1000+Math.random()*9000),orders=ls.get('zikoOrders',[]);
+   orders.unshift({no,date:new Date().toLocaleDateString('pl-PL'),total:total(),n:count(),status:'Przyjęte'});ls.set('zikoOrders',orders);
+   cart={};drawCart();step=3;steps();
+   $('#view').innerHTML=`<div class="box success"><div class="ok">${ic('check')}</div><h2>Dziękujemy za zamówienie!</h2><p style="color:var(--gray);margin:10px 0 6px">Numer zamówienia: <b>${no}</b></p><p style="color:var(--gray);margin-bottom:24px">To wersja demonstracyjna – zamówienie nie zostało wysłane do sklepu.</p><a class="btn btn-red" href="index.html">Wróć na stronę główną</a> <a class="btn btn-dark" href="konto.html#zamowienia">Historia zamówień</a></div>`;scrollTo({top:0})};
+ }
+}
+window.onCartChange=()=>{if(step<3)view()};
+view();
+</script>
+</body>
+</html>

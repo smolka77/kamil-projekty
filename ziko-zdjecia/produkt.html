@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8"><meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Produkt – Market ZIKO</title>
+<link rel="icon" href="assets/logo.png">
+<link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/pages.css">
+</head>
+<body data-page="produkt">
+<main class="wrap" id="main"></main>
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+<script>
+const p=find(qs.get('id'))||P[0],c=CATS.find(x=>x.id===p.c);
+document.title=p.n+' – Market ZIKO';
+const rel=P.filter(x=>x.c===p.c&&x.id!==p.id).concat(P.filter(x=>x.c!==p.c)).slice(0,4);
+let rv=ls.get('zikoRecent',[]).filter(i=>i!==p.id);ls.set('zikoRecent',[p.id,...rv].slice(0,8));
+rv=rv.slice(0,4).map(find).filter(Boolean);
+$('#main').innerHTML=`${crumbs([['Produkty','kategoria.html'],[c.n,'kategoria.html?c='+c.id],[p.n]])}
+<div class="pd">
+ <div class="gal">${p.o?`<span class="pb">-${disc(p)}%</span>`:p.nw?'<span class="pb new">Nowość</span>':''}<img src="${p.im}" alt="${p.n}"></div>
+ <div>
+  <span class="k" style="color:var(--gray-m);text-transform:uppercase;letter-spacing:.06em;font-size:12.5px;font-weight:700">${p.b}</span>
+  <h1>${p.n}</h1>
+  <div class="meta"><span>Kod: <b>${p.sku}</b></span><span>Kategoria: <a href="kategoria.html?c=${c.id}"><b>${c.n}</b></a></span></div>
+  <div class="price ${p.o?'sale':''}"><b>${zl(p.p)}</b>${p.o?`<s>${zl(p.o)}</s>`:''}</div>
+  <p style="color:var(--gray-m);font-size:13px;margin-bottom:12px">Cena brutto z VAT${p.o?`. Oszczędzasz ${zl(p.o-p.p)}`:''}</p>
+  <div class="stock">Dostępny (${p.st>8?'ponad 8':p.st} szt.), wysyłka w 24 h</div>
+  <div class="buy"><div class="qty"><button id="m">−</button><span id="v">1</span><button id="pl">+</button></div><button class="btn btn-red" id="add">${ic('cart')}Dodaj do koszyka</button><button class="fav" data-fav="${p.id}" style="position:static;width:48px;height:48px;border:1px solid var(--line);box-shadow:none" aria-label="Ulubione">${ic('heart')}</button></div>
+  <div class="perks"><div>${ic('check')}Darmowa dostawa od 500 zł</div><div>${ic('check')}Możliwość zakupu na raty</div><div>${ic('check')}14 dni na zwrot</div><div>${ic('phone')}Pytania? Zadzwoń: +48 (18) 477 85 60</div></div>
+ </div>
+</div>
+<section>
+ <div class="tabs" id="tabs"><button class="on" data-t="0">Opis</button><button data-t="1">Dane techniczne</button><button data-t="2">Dostawa i zwroty</button></div>
+ <div class="box">
+  <div class="tp on prose">${p.real?'':`<div class="demo-note">${DEMO_NOTE}</div>`}<p>${p.n} marki ${p.b} to rozwiązanie z kategorii „${c.n}”. Produkt dostępny w Markecie ZIKO z szybką wysyłką.</p><p>Potrzebujesz pomocy w doborze? Skontaktuj się z nami telefonicznie lub mailowo, a doradca podpowie najlepszy model do Twojej instalacji.</p></div>
+  <div class="tp"><table class="spec"><tr><td>Producent / marka</td><td>${p.b}</td></tr><tr><td>Kod produktu</td><td>${p.sku}</td></tr>${SPECS[p.c].map(s=>`<tr><td>${s[0]}</td><td>${s[1]}</td></tr>`).join('')}</table></div>
+  <div class="tp prose"><p><b>Wysyłka:</b> kurier lub paczkomat, zwykle w 24 h od zaksięgowania płatności. Darmowa dostawa przy zamówieniach od 500 zł.</p><p><b>Zwroty:</b> masz 14 dni na odstąpienie od umowy. Szczegóły na stronie <a href="dostawa.html#zwrot" style="color:var(--red)">Dostawa i zwroty</a>.</p></div>
+ </div>
+</section>
+<section><div class="shead"><h2>Podobne produkty</h2></div><div class="grid">${rel.map(card).join('')}</div></section>
+${rv.length?`<section><div class="shead"><h2>Ostatnio oglądane</h2></div><div class="grid">${rv.map(card).join('')}</div></section>`:''}`;
+let q=1;
+$('#m').onclick=()=>{q=Math.max(1,q-1);$('#v').textContent=q};$('#pl').onclick=()=>{q++;$('#v').textContent=q};
+$('#add').onclick=()=>{addCart(p.id,q);openEl('#drawer')};
+$('#tabs').onclick=e=>{const b=e.target.closest('button');if(!b)return;$$('#tabs button').forEach(x=>x.classList.toggle('on',x===b));$$('.tp').forEach((t,i)=>t.classList.toggle('on',i==b.dataset.t))};
+</script>
+</body>
+</html>

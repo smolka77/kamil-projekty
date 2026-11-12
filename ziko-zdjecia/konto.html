@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8"><meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Moje konto – Market ZIKO</title>
+<link rel="icon" href="assets/logo.png">
+<link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/pages.css">
+</head>
+<body data-page="konto">
+<main class="wrap">
+ <div id="crumbs"></div>
+ <div class="phead"><h1>Moje konto</h1><p>Wersja demonstracyjna – logowanie jest symulowane, żadne dane nie są wysyłane.</p></div>
+ <div id="view"></div>
+</main>
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+<script>
+$('#crumbs').innerHTML=crumbs([['Moje konto']]);
+let user=ls.get('zikoUser',null),tab=location.hash==='#rejestracja'?'r':location.hash==='#zamowienia'?'o':'l';
+function view(){
+ const v=$('#view');
+ if(!user){
+  v.innerHTML=`<div class="box" style="max-width:480px;margin:0 auto"><div class="atabs"><button data-t="l" class="${tab!=='r'?'on':''}">Logowanie</button><button data-t="r" class="${tab==='r'?'on':''}">Rejestracja</button></div>
+  <form class="form" id="f">${tab==='r'?'<label>Imię i nazwisko<input required></label>':''}<label>E-mail<input type="email" required></label><label>Hasło<input type="password" required minlength="4"></label>
+  ${tab==='r'?'<label class="chk"><input type="checkbox" required> Akceptuję regulamin</label>':''}<button class="btn btn-red" style="justify-content:center">${tab==='r'?'Załóż konto':'Zaloguj się'}</button></form></div>`;
+  $('.atabs').onclick=e=>{const b=e.target.closest('button');if(b){tab=b.dataset.t;view()}};
+  $('#f').onsubmit=e=>{e.preventDefault();const i=$$('#f input');user={name:tab==='r'?i[0].value:'Klient demo',email:tab==='r'?i[1].value:i[0].value};ls.set('zikoUser',user);tab='p';view();toast('Zalogowano (demo)')};
+ }else{
+  const o=ls.get('zikoOrders',[]);if(tab==='l'||tab==='r')tab='p';
+  v.innerHTML=`<div class="cart-layout" style="grid-template-columns:260px 1fr"><div class="box" style="padding:12px"><div style="padding:14px"><b>${user.name}</b><br><small style="color:var(--gray-m)">${user.email}</small></div>
+   ${[['p','Moje dane'],['o','Historia zamówień'],['u','Ulubione']].map(([k,n])=>`<button data-t="${k}" style="display:block;width:100%;text-align:left;padding:12px 14px;border-radius:12px;font-weight:600;${tab===k?'background:var(--red-l);color:var(--red)':''}">${n}</button>`).join('')}
+   <button id="out" style="display:block;width:100%;text-align:left;padding:12px 14px;color:var(--gray-m)">Wyloguj</button></div>
+   <div>${tab==='o'?(o.length?`<table class="t"><tr><th>Nr</th><th>Data</th><th>Sztuk</th><th>Kwota</th><th>Status</th></tr>${o.map(x=>`<tr><td>${x.no}</td><td>${x.date}</td><td>${x.n}</td><td>${zl(x.total)}</td><td>${x.status}</td></tr>`).join('')}</table>`:'<div class="box">Brak zamówień. Złóż pierwsze zamówienie w sklepie.</div>'):tab==='u'?`<div class="box">Masz ${favs.length} ulubionych produktów. <a href="ulubione.html" style="color:var(--red);font-weight:700">Zobacz listę →</a></div>`:`<div class="box form"><h3>Moje dane</h3><div class="row"><label>Imię i nazwisko<input value="${user.name}"></label><label>E-mail<input value="${user.email}"></label></div><div class="row"><label>Telefon<input></label><label>Miasto<input></label></div><button class="btn btn-red" style="justify-self:start" id="sv">Zapisz</button></div>`}</div></div>`;
+  v.onclick=e=>{const b=e.target.closest('[data-t]');if(b){tab=b.dataset.t;view()}if(e.target.id==='out'){ls.set('zikoUser',null);user=null;tab='l';view()}if(e.target.id==='sv')toast('Zapisano (demo)')};
+ }
+}
+view();
+</script>
+</body>
+</html>

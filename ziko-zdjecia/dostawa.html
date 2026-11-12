@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8"><meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dostawa i płatności – Market ZIKO</title>
+<link rel="icon" href="assets/logo.png">
+<link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/pages.css">
+</head>
+<body data-page="dostawa">
+<main class="wrap">
+
+<nav class="crumbs"><a href="index.html">Strona główna</a><span>›</span><b>Dostawa</b></nav>
+<div class="phead"><h1>Dostawa, płatności i zwroty</h1><p>Wszystko, co musisz wiedzieć o realizacji zamówienia.</p></div>
+<div class="demo-note">Stawki i terminy w tej sekcji są przykładowe i wymagają potwierdzenia przez sklep.</div>
+<section id="dostawa" style="margin-top:20px"><div class="shead"><h2>Dostawa</h2></div><div class="three"><div class="svc"><h3>Kurier</h3><p>Dostawa pod wskazany adres. Wysyłka zwykle w 24 h.</p></div><div class="svc"><h3>Paczkomat</h3><p>Odbiór w wygodnym dla Ciebie punkcie.</p></div><div class="svc"><h3>Odbiór osobisty</h3><p>Zamów online i odbierz w sklepie. Dane kontaktowe znajdziesz w zakładce Kontakt.</p></div></div></section>
+<section id="koszt"><div class="shead"><h2>Koszt wysyłki</h2></div><table class="t"><tr><th>Sposób dostawy</th><th>Koszt</th><th>Czas</th></tr><tr><td>Kurier</td><td>15,00 zł (gratis od 500 zł)</td><td>1–2 dni robocze</td></tr><tr><td>Paczkomat</td><td>12,00 zł (gratis od 500 zł)</td><td>1–2 dni robocze</td></tr><tr><td>Odbiór osobisty</td><td>0,00 zł</td><td>po potwierdzeniu</td></tr></table></section>
+<section id="raty"><div class="shead"><h2>Płatności i raty</h2></div><div class="box prose"><p>Zapłacisz przelewem, BLIK-iem, kartą, przy odbiorze, a przy większych zakupach możesz skorzystać z rat.</p><img src="assets/raty.png" alt="Raty" style="height:60px"></div></section>
+<section id="zwrot"><div class="shead"><h2>Najczęstsze pytania</h2></div>
+<div class="acc"><button>Jak mogę zwrócić produkt?</button><div class="ab"><p>Masz 14 dni od otrzymania przesyłki na odstąpienie od umowy. Skontaktuj się z nami, a wyślemy instrukcję zwrotu.</p></div></div>
+<div class="acc"><button>Jak wymienić towar?</button><div class="ab"><p>Napisz na sklep@market-ziko.pl z numerem zamówienia i opisem. Uzgodnimy sposób wymiany.</p></div></div>
+<div class="acc" id="reklamacje"><button>Jak złożyć reklamację?</button><div class="ab"><p>Opisz wadę i dołącz zdjęcia, a następnie wyślij zgłoszenie na adres sklep@market-ziko.pl. Odpowiemy w ustawowym terminie.</p></div></div>
+<div class="acc"><button>Kiedy wyślecie zamówienie?</button><div class="ab"><p>Zamówienia opłacone i dostępne w magazynie wysyłamy zwykle w ciągu 24 godzin.</p></div></div></section>
+
+</main>
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+<script>$$('.acc button').forEach(b=>b.onclick=()=>{const a=b.parentElement,on=a.classList.toggle('on');const x=a.querySelector('.ab');x.style.maxHeight=on?x.scrollHeight+'px':0});if(location.hash){const t=document.querySelector(location.hash);t&&t.scrollIntoView()}</script>
+</body>
+</html>

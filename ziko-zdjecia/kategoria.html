@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8"><meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Produkty – Market ZIKO</title>
+<link rel="icon" href="assets/logo.png">
+<link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/pages.css">
+</head>
+<body data-page="kategoria">
+<main class="wrap">
+  <div id="crumbs"></div>
+  <div class="phead"><h1 id="title">Produkty</h1><p id="sub"></p></div>
+  <div class="cat-layout">
+    <aside class="filters" id="filters">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><b style="font-size:18px">Filtry</b><button class="x fbtn" id="fclose">✕</button></div>
+      <div class="fg"><h4>Kategoria</h4><div id="fcats"></div></div>
+      <div class="fg"><h4>Cena (zł)</h4><div class="prange"><input type="number" id="pmin" placeholder="od" min="0"><span>–</span><input type="number" id="pmax" placeholder="do" min="0"></div></div>
+      <div class="fg"><h4>Producent / marka</h4><div id="fbrands"></div></div>
+      <div class="fg"><h4>Dodatkowe</h4><label><input type="checkbox" id="fpromo"> Tylko promocje</label><label><input type="checkbox" id="fnew"> Tylko nowości</label></div>
+      <button class="fcl" id="fclear">Wyczyść filtry</button>
+    </aside>
+    <div>
+      <div class="rtop">
+        <div class="r"><button class="btn btn-dark fbtn" id="fopen" style="padding:9px 18px">Filtry</button><span class="cnt" id="cnt"></span></div>
+        <div class="r">
+          <select class="sort" id="sort"><option value="def">Sortuj: polecane</option><option value="pa">Cena: rosnąco</option><option value="pd">Cena: malejąco</option><option value="na">Nazwa A–Z</option><option value="disc">Największy rabat</option></select>
+          <div class="vt"><button class="on" id="vg" aria-label="Siatka"></button><button id="vl" aria-label="Lista"></button></div>
+        </div>
+      </div>
+      <div class="grid" id="grid"></div>
+      <div class="pager" id="pager"></div>
+    </div>
+  </div>
+</main>
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+<script>
+const S={c:qs.get('c')||'all',q:(qs.get('q')||'').toLowerCase(),promo:qs.get('promo')==='1',nw:false,min:'',max:'',brands:[],sort:'def',page:1,list:false};
+const PS=12;
+$('#vg').innerHTML=ic('grid','width:16px;height:16px');$('#vl').innerHTML='<svg class="i" viewBox="0 0 24 24" style="width:16px;height:16px"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>';
+function base(skip){return P.filter(p=>(skip==='c'||S.c==='all'||p.c==S.c)&&(!S.q||(p.n+p.b).toLowerCase().includes(S.q)))}
+function drawFilters(){
+ const all=P.filter(p=>!S.q||(p.n+p.b).toLowerCase().includes(S.q));
+ $('#fcats').innerHTML=`<label><input type="radio" name="fc" value="all" ${S.c==='all'?'checked':''}> Wszystkie <small>${all.length}</small></label>`+CATS.map(c=>`<label><input type="radio" name="fc" value="${c.id}" ${S.c==c.id?'checked':''}> ${c.n}<small>${all.filter(p=>p.c===c.id).length}</small></label>`).join('');
+ const bs=[...new Set(base().map(p=>p.b))].sort((a,b)=>a.localeCompare(b,'pl'));
+ $('#fbrands').innerHTML=bs.map(b=>`<label><input type="checkbox" value="${b}" ${S.brands.includes(b)?'checked':''}> ${b}<small>${base().filter(p=>p.b===b).length}</small></label>`).join('');
+}
+function filtered(){
+ let r=base().filter(p=>(!S.promo||p.o)&&(!S.nw||p.nw)&&(S.min===''||p.p>=S.min)&&(S.max===''||p.p<=S.max)&&(!S.brands.length||S.brands.includes(p.b)));
+ if(S.sort==='pa')r.sort((a,b)=>a.p-b.p);if(S.sort==='pd')r.sort((a,b)=>b.p-a.p);if(S.sort==='na')r.sort((a,b)=>a.n.localeCompare(b.n,'pl'));if(S.sort==='disc')r.sort((a,b)=>disc(b)-disc(a));
+ return r;
+}
+function render(){
+ const c=CATS.find(x=>x.id==S.c),r=filtered(),pages=Math.max(1,Math.ceil(r.length/PS));S.page=Math.min(S.page,pages);
+ const title=S.promo?'Promocje':c?c.n:S.q?`Wyniki dla „${qs.get('q')}”`:'Wszystkie produkty';
+ $('#title').textContent=title;document.title=title+' – Market ZIKO';
+ $('#sub').textContent=c?'Podkategorie: '+c.s.join(' · '):'';
+ $('#crumbs').innerHTML=crumbs(c?[['Produkty','kategoria.html'],[c.n]]:[[title]]);
+ $('#cnt').textContent=r.length+' '+(r.length===1?'produkt':'produktów');
+ $('#grid').className='grid'+(S.list?' list':'');
+ $('#grid').innerHTML=r.length?r.slice((S.page-1)*PS,S.page*PS).map(card).join(''):'<div class="empty">Nie znaleziono produktów. Zmień filtry lub wyszukiwanie.</div>';
+ $('#pager').innerHTML=pages>1?Array.from({length:pages},(_,i)=>`<button class="${i+1===S.page?'on':''}" data-p="${i+1}">${i+1}</button>`).join(''):'';
+ $('#fpromo').checked=S.promo;
+}
+function all(){drawFilters();render()}
+$('#filters').addEventListener('change',e=>{
+ const t=e.target;
+ if(t.name==='fc'){S.c=t.value==='all'?'all':+t.value;S.brands=[];S.page=1;history.replaceState(null,'','?'+(S.c==='all'?'':'c='+S.c));all()}
+ else if(t.id==='fpromo'){S.promo=t.checked;S.page=1;render()}
+ else if(t.id==='fnew'){S.nw=t.checked;S.page=1;render()}
+ else if(t.id==='pmin'||t.id==='pmax'){S.min=$('#pmin').value===''?'':+$('#pmin').value;S.max=$('#pmax').value===''?'':+$('#pmax').value;S.page=1;render()}
+ else if(t.closest('#fbrands')){S.brands=$$('#fbrands input:checked').map(i=>i.value);S.page=1;render()}
+});
+$('#fclear').onclick=()=>{Object.assign(S,{c:'all',q:'',promo:false,nw:false,min:'',max:'',brands:[],page:1});$('#pmin').value=$('#pmax').value='';$('#fnew').checked=false;$('#q').value='';history.replaceState(null,'','kategoria.html');all()};
+$('#sort').onchange=e=>{S.sort=e.target.value;render()};
+$('#vg').onclick=()=>{S.list=false;$('#vg').classList.add('on');$('#vl').classList.remove('on');render()};
+$('#vl').onclick=()=>{S.list=true;$('#vl').classList.add('on');$('#vg').classList.remove('on');render()};
+$('#pager').onclick=e=>{const b=e.target.closest('[data-p]');if(b){S.page=+b.dataset.p;render();scrollTo({top:0,behavior:'smooth'})}};
+$('#fopen').onclick=()=>{$('#filters').classList.add('on');$('#ov').classList.add('on')};
+$('#fclose').onclick=()=>{$('#filters').classList.remove('on');$('#ov').classList.remove('on')};
+$('#ov').addEventListener('click',()=>$('#filters').classList.remove('on'));
+all();
+</script>
+</body>
+</html>

@@ -2,7 +2,7 @@ name: Podgląd market-ziko (GitHub Pages)
 on:
   push:
     branches: [claude/zealous-mayer-3fh88l, main]
-    paths: ['market-ziko/**', '.github/workflows/pages-market-ziko.yml']
+    paths: ['market-ziko/**', 'ziko-zdjecia/**', '.github/workflows/pages-market-ziko.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -20,8 +20,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
+      - name: Zbuduj strukturę serwisu
+        run: |
+          mkdir -p _site/ziko-zdjecia
+          cp -r market-ziko/. _site/
+          cp -r ziko-zdjecia/. _site/ziko-zdjecia/
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: market-ziko
+          path: _site
       - id: dep
         uses: actions/deploy-pages@v4
