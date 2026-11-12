@@ -32,6 +32,10 @@
   .mute:hover{border-color:var(--accent)}.mute:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   #muteHud{position:fixed;left:max(16px,env(safe-area-inset-left,0px));top:16px;z-index:3}
   #overlay .mute{margin-top:12px}
+  body.in-lobby .hud,body.in-lobby #overlay,body.in-lobby #muteHud{display:none!important}
+  body.in-lobby canvas{cursor:grab}
+  #overlay .lobby{display:inline-block;margin:14px 0 0 10px;padding:10px 18px;border-radius:8px;border:1px solid var(--line);background:rgba(255,255,255,.08);color:var(--fg);font:700 14px system-ui,sans-serif;cursor:pointer}
+  #overlay .lobby:hover{background:rgba(255,255,255,.16)}
   #dmg{inset:0;box-shadow:inset 0 0 120px rgba(255,0,0,0);transition:box-shadow .2s}
 </style>
 <div id="loading">Ładowanie…</div>
@@ -42,15 +46,17 @@
 <div id="score" class="hud">Trafione fasolki <b id="kills">0</b></div>
 <div id="ammo" class="hud"><small id="state"></small><b id="mag">30</b> <span>/ <span id="reserve">120</span></span></div>
 <div id="keys" class="hud"><kbd>WASD</kbd> ruch · <kbd>Shift</kbd> bieg · <kbd>Spacja</kbd> skok · <kbd>C</kbd> kucanie<br><kbd>LPM</kbd> strzał · <kbd>PPM</kbd> celowanie · <kbd>R</kbd> przeładuj<br><kbd>V</kbd> zmiana widoku · <kbd>M</kbd> dźwięk · <kbd>Esc</kbd> pauza</div>
-<div id="overlay"><div class="card"><h1>Bean FPS</h1><p>Fasolka z karabinem, widok z pierwszej osoby. Zestrzel czerwone fasolki.</p><p>Kliknij, aby grać. Mysz obraca kamerę, Esc robi pauzę.</p><span class="go">GRAJ</span><br><button class="mute" type="button" aria-pressed="false">Dźwięk: wł. (M)</button></div></div>
+<div id="overlay"><div class="card"><h1>Pauza</h1><p>Kliknij, aby wrócić do gry. Mysz obraca kamerę, Esc robi pauzę.</p><span class="go">WZNÓW</span><button class="lobby" id="toLobby" type="button">Wróć do lobby</button><br><button class="mute" type="button" aria-pressed="false">Dźwięk: wł. (M)</button></div></div>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
 <script type="module">
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import glbB64 from './bean-data.js';
+import {createLobby} from './lobby.js';
 
 const $=id=>document.getElementById(id);
+document.body.classList.add('in-lobby');
 const clamp=THREE.MathUtils.clamp, lerp=THREE.MathUtils.lerp, damp=THREE.MathUtils.damp;
 const V3=(x=0,y=0,z=0)=>new THREE.Vector3(x,y,z);
 let seed=11;const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
@@ -682,6 +688,7 @@ function updateCross(){
 }
 function frame(){
   const dt=Math.min(clock.getDelta(),.05);time+=dt;
+  if(lobby.active){lobby.update(dt);requestAnimationFrame(frame);return}
   if(playing){stepPlayer(dt);stepGun(dt);applyRecoil()}else{gun.firing=false}
   stepEnemies(dt);
   if(player.view==='fps'){poseViewmodel(dt);me.visible=false}else{poseThirdPerson(dt)}
@@ -691,6 +698,32 @@ function frame(){
   requestAnimationFrame(frame);
 }
 setHud();
-window.__game={player,gun,enemies,camera,setView:attachRifle,startPlay,start:()=>{playing=true;$('overlay').style.display='none'},fire:()=>{if(gun.mag>0&&gun.cd<=0&&gun.reloading<=0)fireShot()},reload:startReload,setAds:v=>adsHeld=v,keys};
+// ================= lobby =================
+const lobbyBean=makeBean(ME_COLOR,{eyes:false});
+const _lt=V3();
+function lobbyAnimate(b,t,dt,st){
+  const ud=b.userData,br=Math.sin(t*2.1);
+  poseLegs(ud,0,0,0,0);
+  ud.upper.position.y=br*.006;
+  leanTorso(ud,.02+br*.012,Math.sin(t*.7)*.07,Math.sin(t*1.1)*.025);
+  ud.body.scale.set(1+br*.012,1-br*.012,1+br*.012);
+  for(let i=0;i<2;i++){
+    const def=i?armL:armR,S0=def.shoulder,side=i?-1:1,L=def.a+def.b;
+    _lt.set(S0.x+side*(.12+.015*br),S0.y-L*.9,S0.z-.02+.03*Math.sin(t*1.3+i));       // ręce luźno wzdłuż ciała
+    if(i===0&&st.wave>0.01){                                                     // macha, gdy kursor jest nad GRAJ
+      const up=V3(S0.x+.28+Math.sin(t*13)*.14,S0.y+L*.8,S0.z-.08);_lt.lerp(up,st.wave);
+    }
+    armTo(ud.arms[i],def,_lt);
+  }
+}
+const lobby=createLobby({renderer,bean:lobbyBean,animate:lobbyAnimate,
+  mode:{name:'Strzelnica',desc:'Solo · zestrzel czerwone fasolki'},
+  onPlay:()=>{lobby.hide();document.body.classList.remove('in-lobby');startPlay()}});
+$('toLobby').addEventListener('click',e=>{
+  e.stopPropagation();playing=false;gun.firing=false;
+  if(document.pointerLockElement)document.exitPointerLock();
+  document.body.classList.add('in-lobby');lobby.show();
+});
+window.__game={lobby,player,gun,enemies,camera,setView:attachRifle,startPlay,start:()=>{playing=true;$('overlay').style.display='none'},fire:()=>{if(gun.mag>0&&gun.cd<=0&&gun.reloading<=0)fireShot()},reload:startReload,setAds:v=>adsHeld=v,keys};
 $('loading').remove();window.__ready=true;frame();
 </script>

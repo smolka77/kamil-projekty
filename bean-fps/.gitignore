@@ -1,3 +1,5 @@
 vendor/
 bean-data.js
 index.html
+# lobby.js: lobby robione w osobnym czacie (branch claude/bold-cori-x4vpba, fasolka-lobby/); tu tylko lokalna kopia do testów
+lobby.js
