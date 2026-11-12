@@ -103,7 +103,7 @@ sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.bias=-0.0004;
 Object.assign(sun.shadow.camera,{left:-22,right:22,top:22,bottom:-22,near:1,far:80});
 scene.add(sun,sun.target);
 // odbicia PBR (metal broni) z mapy otoczenia; światła świecą też na warstwie 1 (broń w widoku z pierwszej osoby)
-{const pm=new THREE.PMREMGenerator(renderer);scene.environment=pm.fromScene(new RoomEnvironment(),.04).texture;scene.environmentIntensity=.6;pm.dispose()}
+{const pm=new THREE.PMREMGenerator(renderer);scene.environment=pm.fromScene(new RoomEnvironment(),.04).texture;scene.environmentIntensity=.38;pm.dispose()}
 scene.traverse(o=>{if(o.isLight)o.layers.enable(1)});
 const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.03,300);
 scene.add(camera);
