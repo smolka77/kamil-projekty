@@ -1,22 +1,43 @@
 const PG={};
 PG.index=()=>{
- const sale=P.filter(p=>p.o).slice(0,8),neu=P.filter(p=>p.k).concat(P.filter(p=>!p.k).slice(0,3)).slice(0,8);
+ const sale=P.filter(p=>p.o).slice(0,8),neu=P.filter(p=>p.k).concat(P.filter(p=>!p.k).slice(0,4)).slice(0,8);
+ const word=['Piece','Grzejniki','Pompy','Hydraulika','Łazienka','Narzędzia','Elektryka','Fugi i farby'];
+ const mq=word.map(w=>`<span>${w}</span><i>✦</i>`).join('').repeat(4);
  $('#app').innerHTML=`
-<section class="hero"><div class="wrap"><div><span class="eyebrow"><i></i>Hydraulika · ogrzewanie · łazienka · narzędzia</span>
-<h1>Wszystko do domu <em>w jednym</em> sklepie</h1><p>Piece, grzejniki, pompy, armatura i narzędzia od sprawdzonych producentów. Doradzimy, dowieziemy i pomożemy w zleceniu.</p>
-<div class="cta"><a class="btn" href="kategoria.html">Przeglądaj sklep ${icon('arrow','')}</a><a class="btn ghost" href="info.html?s=zlecenia">Zleć wykonanie</a></div>
-<div class="hero-stats"><div><b>5000+</b><span>produktów</span></div><div><b>40+</b><span>marek</span></div><div><b>24 h</b><span>wysyłka</span></div></div></div>
-<div class="hero-art">${[5,1,12,16].map(id=>{const p=P.find(x=>x.id===id);return `<a href="produkt.html?id=${p.id}">${art(p.t)}<b>${p.b}</b><span>${zl(p.p)}</span></a>`}).join('')}</div></div></section>
-<section class="trust"><div class="wrap"><div>${icon('truck')}<span><b>Darmowa dostawa</b><small>przy zamówieniach od 500 zł</small></span></div><div>${icon('card')}<span><b>Raty Santander</b><small>decyzja online w kilka minut</small></span></div><div>${icon('shield')}<span><b>Gwarancja producentów</b><small>oryginalne towary z fakturą</small></span></div><div>${icon('phone')}<span><b>Doradztwo</b><small>+48 18 477 85 60</small></span></div></div></section>
-<section class="sec"><div class="wrap">${sectionHead('Kategorie','Wybierz dział i znajdź to, czego potrzebujesz',['kategoria.html','Wszystkie produkty'])}
-<div class="cats">${CATS.map(c=>`<a class="cat" href="kategoria.html?c=${c.id}"><div class="ic">${icon(c.i)}</div><h3>${c.n}</h3><ul>${c.s.map(s=>`<li>${s}</li>`).join('')}</ul><span class="go">Zobacz wszystkie ${icon('arrow','')}</span></a>`).join('')}</div></div></section>
-<section class="sec" style="padding-top:0"><div class="wrap">${sectionHead('Promocje','Obniżone ceny na wybrane produkty',['promocje.html','Wszystkie promocje'])}<div class="scroller">${sale.map(card).join('')}</div></div></section>
-<section class="sec" style="padding-top:0"><div class="wrap"><div class="banner"><div class="t"><h2>Masz zlecenie? Wykonamy je za Ciebie</h2><p>Montaż instalacji c.o., wymiana grzejników, modernizacja łazienki – wyślij opis, a przygotujemy bezpłatną wycenę.</p><a class="btn" href="info.html?s=zlecenia">Poproś o wycenę</a></div><div class="art">${icon('tool')}</div></div></div></section>
-<section class="sec" style="padding-top:0"><div class="wrap">${sectionHead('Nowości','Świeżo w ofercie')}<div class="scroller">${neu.map(card).join('')}</div></div></section>
+<section class="hero2"><span class="blob b1"></span><span class="blob b2"></span><div class="wrap hgrid">
+<div class="rv"><span class="pill"><i></i>Hydraulika · ogrzewanie · łazienka · narzędzia</span>
+<h1>Wszystko do domu <em>w jednym</em> sklepie.</h1>
+<p class="lead">Piece, grzejniki, pompy i armatura od sprawdzonych producentów. Doradzimy, dowieziemy i – jeśli trzeba – zrobimy to za Ciebie.</p>
+<div class="cta"><a class="btn big" href="kategoria.html">Wejdź do sklepu ${icon('arrow')}</a><a class="btn ghost big" href="info.html?s=zlecenia">Zleć wykonanie</a></div>
+<div class="stats"><div><b>5000+</b><span>produktów w ofercie</span></div><div><b>40+</b><span>marek i producentów</span></div><div><b>24 h</b><span>wysyłka zamówień</span></div></div></div>
+<div class="stage rv"><div class="disc"></div><div class="hero-main">${art('boiler')}</div>
+<a class="mini m1" href="produkt.html?id=5"><span>${art('radst')}</span><b>Purmo C22</b><small>od 459 zł</small></a>
+<a class="mini m2" href="produkt.html?id=9"><span>${art('pump')}</span><b>Pompa c.o.</b><small>od 389 zł</small></a>
+<div class="float f1">${icon('truck')}<span><b>Darmowa dostawa</b><small>od 500 zł</small></span></div>
+<div class="float f2">${icon('card')}<span><b>Raty Santander</b><small>decyzja online</small></span></div>
+<span class="dot d1"></span><span class="dot d2"></span></div></div></section>
+<div class="strip" aria-hidden="true"><div class="track">${mq}</div></div>
+
+<section class="sec"><div class="wrap"><div class="rv">${sectionHead('Znajdź swój <em>dział</em>','Dwanaście kategorii – wszystko, czego potrzebuje dom i warsztat',['kategoria.html','Cała oferta'])}</div>
+<div class="cats2">${CATS.map((c,i)=>`<a class="cat2 rv" style="--tint:${TINTS[i%TINTS.length]};--d:${(i%4)*70}ms" href="kategoria.html?c=${c.id}"><div class="ph">${art(CATART[c.id])}</div><div class="bd"><h3>${c.n}</h3><p>${c.s.slice(0,3).join(' · ')}</p><span class="go">Zobacz ${icon('arrow')}</span></div></a>`).join('')}</div></div></section>
+
+<section class="sec" style="padding-top:0"><div class="wrap"><div class="rv">${sectionHead('Hity <em>cenowe</em>','Obniżone ceny na wybrane produkty',['promocje.html','Wszystkie promocje'])}</div><div class="scroller rv">${sale.map(card).join('')}</div></div></section>
+
+<section class="sec" style="padding-top:0"><div class="wrap"><div class="why rv"><div><span class="pill dark"><i></i>Dlaczego ZIKO</span><h2>Prosto, solidnie, <em>fachowo</em>.</h2><p>Nie sprzedajemy wszystkiego. Wybieramy to, co sami zamontowalibyśmy u siebie – od producentów, którym ufamy.</p><a class="btn light" href="info.html?s=o-firmie">Poznaj nas</a></div>
+<div class="tiles">${[['shield','Oryginalne towary','Gwarancja producenta i faktura VAT'],['truck','Szybka wysyłka','Zamówienia do 14:00 wychodzą tego samego dnia'],['phone','Doradztwo z głową','Pomożemy dobrać moc, średnicę i typ'],['tool','Montaż na zlecenie','Instalacje c.o., łazienki, wymiana grzejników']].map(t=>`<div class="tile">${icon(t[0])}<b>${t[1]}</b><span>${t[2]}</span></div>`).join('')}</div></div></div></section>
+
+<section class="sec" style="padding-top:0"><div class="wrap"><div class="rv">${sectionHead('Świeżo w <em>ofercie</em>','Nowości w sklepie')}</div><div class="scroller rv">${neu.map(card).join('')}</div></div></section>
+
 <section class="brands" aria-label="Marki"><div class="track">${BRANDS.concat(BRANDS).map(b=>`<span>${b}</span>`).join('')}</div></section>
-<section class="sec"><div class="wrap">${sectionHead('Poradnik','Porady ekspertów: jak wybierać i montować',['blog.html','Wszystkie wpisy'])}<div class="posts">${POSTS.slice(0,3).map(postCard).join('')}</div></div></section>
-<section class="sec" style="padding-top:0"><div class="wrap"><div class="news"><div><h2>Bądź na bieżąco</h2><p>Zapisz się do newslettera – promocje i nowości prosto na maila.</p></div><form id="nl"><input type="email" required placeholder="twój e-mail" aria-label="E-mail"><button class="btn">Zapisz się</button></form></div></div></section>`;
- $('#nl').onsubmit=e=>{e.preventDefault();e.target.innerHTML='<b style="font-size:18px">Dziękujemy! Sprawdź skrzynkę ✔</b>'};
+
+<section class="sec"><div class="wrap"><div class="rv">${sectionHead('Poradnik <em>fachowca</em>','Jak wybierać, montować i konserwować',['blog.html','Wszystkie wpisy'])}</div><div class="posts">${POSTS.slice(0,3).map(p=>`<a class="post rv" href="wpis.html?id=${p.id}"><div class="cv" style="background:${p.c}">${icon(p.i)}</div><div class="bd"><span class="meta">Poradnik · ${p.d}</span><h3>${p.t}</h3><p>${p.x}</p><span class="link-more">Czytaj dalej ${icon('arrow')}</span></div></a>`).join('')}</div></div></section>
+
+<section class="sec" style="padding-top:0"><div class="wrap">${sectionHead('Trzy kroki do <em>gotowej</em> instalacji')}<div class="steps3">${[['01','Wybierz','Znajdź produkty w sklepie albo zadzwoń po radę.'],['02','Zamów','Zapłać online, na raty lub przy odbiorze.'],['03','Odbierz lub zleć montaż','Dowieziemy paczkę albo przyjedziemy z ekipą.']].map(s=>`<div class="st rv"><b>${s[0]}</b><h3>${s[1]}</h3><p>${s[2]}</p></div>`).join('')}</div></div></section>
+
+<section class="sec" style="padding-top:0"><div class="wrap"><div class="banner rv"><div class="t"><h2>Masz zlecenie? <em>Wykonamy je</em> za Ciebie.</h2><p>Montaż instalacji c.o., wymiana grzejników, modernizacja łazienki – opisz zadanie, a przygotujemy bezpłatną wycenę.</p><a class="btn light" href="info.html?s=zlecenia">Poproś o wycenę ${icon('arrow')}</a></div><div class="art"><span>${art('radst')}</span><span>${art('pump')}</span></div></div></div></section>
+
+<section class="sec" style="padding-top:0"><div class="wrap"><div class="news rv"><div><h2>Promocje prosto <em>na maila</em></h2><p>Raz w tygodniu: nowości i najlepsze oferty. Bez spamu.</p></div><form id="nl"><input type="email" required placeholder="twój e-mail" aria-label="E-mail"><button class="btn">Zapisz się</button></form></div></div></section>`;
+ $('#nl').onsubmit=e=>{e.preventDefault();e.target.innerHTML='<b style="font-size:18px">Dziękujemy! Sprawdź skrzynkę ✔</b>'};reveal();
 };
 
 PG.kategoria=()=>{

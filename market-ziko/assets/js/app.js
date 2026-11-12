@@ -53,8 +53,11 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-add]');if(
  toast('Dodano do koszyka: '+P.find(p=>p.id===id).n.slice(0,38)+'…')});
 
 /* ---------- komponenty ---------- */
+const TINTS=['#fde3df','#e4e8ee','#ffefcf','#e0efe6','#e2eaf7','#f1e5f6','#fde9d6','#e6f0f2'];
+const TINT=c=>TINTS[CATS.findIndex(x=>x.id===c)%TINTS.length];
+const CATART={piece:'boiler','grzejniki-aluminiowe':'radal','grzejniki-stalowe':'radst','ogrzewanie-podlogowe':'coll',pompy:'pump',podgrzewacze:'heater',lazienka:'faucet','dom-i-ogrod':'saw',hydraulika:'fit','systemy-instalacyjne':'tube',elektrycznosc:'plug','fuga-silikon-farba':'cart'};
 const card=p=>`<article class="pcard">${p.o?`<span class="badge">-${Math.round((1-p.p/p.o)*100)}%</span>`:p.k?'<span class="badge new">NOWOŚĆ</span>':''}
-<a class="im" href="produkt.html?id=${p.id}" aria-label="${p.n}">${art(p.t)}</a><span class="br">${p.b}</span>
+<a class="im" style="--tint:${TINT(p.c)}" href="produkt.html?id=${p.id}" aria-label="${p.n}">${art(p.t)}</a><span class="br">${p.b}</span>
 <h3><a href="produkt.html?id=${p.id}">${p.n}</a></h3>
 <div class="bot"><div class="price">${p.o?`<span class="old">${zl(p.o)}</span>`:''}${zl(p.p)}</div>
 <button class="add" data-add="${p.id}" aria-label="Dodaj do koszyka">${icon('cart')}</button></div></article>`;
@@ -88,5 +91,7 @@ function layout(){
   const r=P.filter(p=>(p.n+p.b+p.s).toLowerCase().includes(v)).slice(0,6);
   sg.innerHTML=r.length?r.map(p=>`<a href="produkt.html?id=${p.id}"><span class="th">${art(p.t)}</span><span>${p.n}<small>${cat(p.c).n}</small></span><span class="pr">${zl(p.p)}</span></a>`).join(''):'<a href="#" onclick="return false">Brak wyników</a>';sg.classList.add('on')});
  Cart.badge();
+ const io='IntersectionObserver' in window?new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.12}):null;
+ window.reveal=()=>$$('.rv:not(.in)').forEach(el=>io?io.observe(el):el.classList.add('in'));
 }
 function sectionHead(t,sub,link){return `<div class="sec-head"><div><h2>${t}</h2>${sub?`<p>${sub}</p>`:''}</div>${link?`<a class="link-more" href="${link[0]}">${link[1]} ${icon('arrow','')}</a>`:''}</div>`}
