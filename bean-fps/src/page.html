@@ -182,18 +182,20 @@ function poseLegs(ud,phi,run,air,crouch){
 const LIMB_R=Math.min(...legDefs.map(d=>d.r))*1.05;
 const X=V3(1,0,0);
 const armDefs=armsC.map(a=>{
-  const fs=fingC.filter(f=>nearest(f,armsC)===a);
+  // oryginalna ręka z modelu (bez palców): bark = koniec przy ciele, dłoń = najdalszy koniec rurki
   const ap=a.g.attributes.position;let minAbs=1e9;for(let i=0;i<ap.count;i++)minAbs=Math.min(minAbs,Math.abs(ap.getX(i)));
   const sh=V3();let k=0;for(let i=0;i<ap.count;i++)if(Math.abs(ap.getX(i))<minAbs+0.12*S*1.0+0.03){sh.add(V3(ap.getX(i),ap.getY(i),ap.getZ(i)));k++}sh.multiplyScalar(1/k);
-  const side=Math.sign(a.c.x),leg=legDefs.find(d=>d.side===side)||legDefs[0];
-  const g=leg.pure.clone();g.rotateX(-Math.PI/2);                       // noga w dół (-Y) -> ręka wzdłuż +Z
-  const knee=leg.knee.clone().applyAxisAngle(X,-Math.PI/2);
-  const gp=g.attributes.position;let maxZ=-1e9;for(let i=0;i<gp.count;i++)maxZ=Math.max(maxZ,gp.getZ(i));
-  const end=V3();let n=0;for(let i=0;i<gp.count;i++)if(gp.getZ(i)>maxZ-.035){end.add(V3(gp.getX(i),gp.getY(i),gp.getZ(i)));n++}end.multiplyScalar(1/n);end.z=maxZ-LIMB_R;
-  const q=new THREE.Quaternion().setFromUnitVectors(knee.clone().normalize(),Z);   // ramię dokładnie wzdłuż +Z
-  g.applyQuaternion(q);knee.applyQuaternion(q);end.applyQuaternion(q);
-  const thin=g.clone(),tp=thin.attributes.position;for(let i=0;i<tp.count;i++){tp.setX(i,tp.getX(i)*.75);tp.setY(i,tp.getY(i)*.75)}thin.computeVertexNormals();
-  return{geo:g,thin,shoulder:sh,a:knee.length(),b:end.distanceTo(knee),restLower:end.clone().sub(knee).normalize(),side};
+  const pt=V3();let maxD=0;for(let i=0;i<ap.count;i++)maxD=Math.max(maxD,pt.fromBufferAttribute(ap,i).distanceTo(sh));
+  const end=V3();let n=0;for(let i=0;i<ap.count;i++)if(pt.fromBufferAttribute(ap,i).distanceTo(sh)>maxD-.03){end.add(pt);n++}end.multiplyScalar(1/n);
+  const L=sh.distanceTo(end),q=new THREE.Quaternion().setFromUnitVectors(end.clone().sub(sh).normalize(),Z);
+  const g=a.g.clone();g.translate(-sh.x,-sh.y,-sh.z);g.applyQuaternion(q);      // oś bark -> dłoń wzdłuż +Z, kształt bez zmian
+  // łokieć w połowie: miękkie przejście wag skóry, jak w kolanie
+  const gp=g.attributes.position,si=new Uint16Array(gp.count*4),sw=new Float32Array(gp.count*4),band=L*.1;
+  for(let i=0;i<gp.count;i++){const t=clamp((gp.getZ(i)-L/2)/band*.5+.5,0,1);si[i*4+1]=1;sw[i*4]=1-t;sw[i*4+1]=t}
+  g.setAttribute('skinIndex',new THREE.Uint16BufferAttribute(si,4));g.setAttribute('skinWeight',new THREE.Float32BufferAttribute(sw,4));
+  // wersja do widoku z pierwszej osoby: nieco cieńsza, bo jest tuż przy kamerze
+  const thin=g.clone(),tp=thin.attributes.position;for(let i=0;i<tp.count;i++){tp.setX(i,tp.getX(i)*.8);tp.setY(i,tp.getY(i)*.8)}thin.computeVertexNormals();
+  return{geo:g,thin,shoulder:sh,a:L/2,b:L/2,restLower:Z.clone(),side:Math.sign(a.c.x)};
 });
 const armR=armDefs.find(d=>d.side>0),armL=armDefs.find(d=>d.side<0);
 
