@@ -133,11 +133,33 @@ const par=new Int32Array(pos.count).map((_,i)=>i);
 const find=x=>{while(par[x]!==x){par[x]=par[par[x]];x=par[x]}return x};
 for(let i=0;i<idx.length;i+=3){const a=find(idx[i]),b=find(idx[i+1]),c=find(idx[i+2]);par[b]=a;par[find(c)]=a}
 const groups=new Map();for(let i=0;i<pos.count;i++){const r=find(i);if(!groups.has(r))groups.set(r,[]);groups.get(r).push(i)}
+// W modelu część trójkątów (np. zaślepka prawej ręki) ma odwrotny kierunek – karta graficzna ich nie rysuje i widać dziurę.
+// Ujednolicamy kierunek trójkątów (od sąsiada do sąsiada) i odwracamy całość, jeśli objętość wychodzi ujemna (powierzchnia do środka).
+let WINDING_FIXES=0;
+function fixWinding(ix,p){
+  const nt=ix.length/3,key=(a,b)=>a<b?a*1e6+b:b*1e6+a,edges=new Map(),canon=new Map(),cv=new Int32Array(p.length/3);
+  for(let i=0;i<cv.length;i++){const k=Math.round(p[i*3]*1e5)+'_'+Math.round(p[i*3+1]*1e5)+'_'+Math.round(p[i*3+2]*1e5);if(!canon.has(k))canon.set(k,i);cv[i]=canon.get(k)}
+  for(let t=0;t<nt;t++)for(let j=0;j<3;j++){const a=cv[ix[t*3+j]],b=cv[ix[t*3+(j+1)%3]],k=key(a,b);if(!edges.has(k))edges.set(k,[]);edges.get(k).push(t)}
+  const seen=new Uint8Array(nt),flip=t=>{const a=ix[t*3+1];ix[t*3+1]=ix[t*3+2];ix[t*3+2]=a};
+  const dirOf=(t,a,b)=>{for(let j=0;j<3;j++){if(cv[ix[t*3+j]]===a&&cv[ix[t*3+(j+1)%3]]===b)return 1;if(cv[ix[t*3+j]]===b&&cv[ix[t*3+(j+1)%3]]===a)return -1}return 0};
+  for(let s0=0;s0<nt;s0++){
+    if(seen[s0])continue;seen[s0]=1;const q=[s0];
+    while(q.length){const t=q.pop();
+      for(let j=0;j<3;j++){const a=cv[ix[t*3+j]],b=cv[ix[t*3+(j+1)%3]];
+        for(const u of edges.get(key(a,b))){if(u===t||seen[u])continue;seen[u]=1;
+          if(dirOf(u,a,b)===1){flip(u);WINDING_FIXES++}            // sąsiad idzie tą samą krawędzią w tę samą stronę -> odwrócony
+          q.push(u)}}}
+  }
+  let vol=0;for(let t=0;t<nt;t++){const a=ix[t*3]*3,b=ix[t*3+1]*3,c=ix[t*3+2]*3;
+    vol+=p[a]*(p[b+1]*p[c+2]-p[b+2]*p[c+1])-p[a+1]*(p[b]*p[c+2]-p[b+2]*p[c])+p[a+2]*(p[b]*p[c+1]-p[b+1]*p[c])}
+  if(vol<0){for(let t=0;t<nt;t++)flip(t);WINDING_FIXES+=nt}
+}
 function extract(vs){
   const map=new Map();vs.forEach((v,i)=>map.set(v,i));
   const p=new Float32Array(vs.length*3),n=new Float32Array(vs.length*3);
   vs.forEach((v,i)=>{p.set([pos.getX(v),pos.getY(v),pos.getZ(v)],i*3);n.set([nor.getX(v),nor.getY(v),nor.getZ(v)],i*3)});
   const ix=[];for(let i=0;i<idx.length;i+=3)if(map.has(idx[i]))ix.push(map.get(idx[i]),map.get(idx[i+1]),map.get(idx[i+2]));
+  fixWinding(ix,p);
   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(p,3));g.setAttribute('normal',new THREE.BufferAttribute(n,3));g.setIndex(ix);
   g.computeBoundingBox();return g;
 }
@@ -195,6 +217,25 @@ function poseLegs(ud,phi,run,air,crouch){
 // ręce: ręka + palce; oś = od barku do środka dłoni, ułożona wzdłuż +Z
 const LIMB_R=Math.min(...legDefs.map(d=>d.r))*1.05;
 const X=V3(1,0,0);
+// zamyka otwarte końce rurki (pętle krawędzi brzegowych) zaokrągloną zaślepką
+function capOpenEnds(geo){
+  const pos=geo.attributes.position,ix=geo.index.array,canon=new Int32Array(pos.count),seen=new Map();
+  for(let i=0;i<pos.count;i++){const k=Math.round(pos.getX(i)*1e5)+'_'+Math.round(pos.getY(i)*1e5)+'_'+Math.round(pos.getZ(i)*1e5);if(!seen.has(k))seen.set(k,i);canon[i]=seen.get(k)}
+  const ec=new Map(),ek=(a,b)=>a<b?a+'_'+b:b+'_'+a;
+  for(let i=0;i<ix.length;i+=3)for(let j=0;j<3;j++){const a=canon[ix[i+j]],b=canon[ix[i+(j+1)%3]];const k=ek(a,b);ec.set(k,(ec.get(k)||0)+1)}
+  const adj=new Map();
+  for(const [k,c] of ec){if(c!==1)continue;const [a,b]=k.split('_').map(Number);if(!adj.has(a))adj.set(a,[]);if(!adj.has(b))adj.set(b,[]);adj.get(a).push(b);adj.get(b).push(a)}
+  const done=new Set(),caps=[],v=V3();
+  for(const st of adj.keys()){
+    if(done.has(st))continue;const loop=[],stack=[st];done.add(st);
+    while(stack.length){const x=stack.pop();loop.push(x);for(const y of adj.get(x))if(!done.has(y)){done.add(y);stack.push(y)}}
+    if(loop.length<3)continue;
+    const c=V3();for(const i of loop)c.add(v.fromBufferAttribute(pos,i));c.multiplyScalar(1/loop.length);
+    let r=0;for(const i of loop)r+=v.fromBufferAttribute(pos,i).distanceTo(c);r/=loop.length;
+    const sp=new THREE.SphereGeometry(r*1.02,16,12);sp.deleteAttribute('uv');sp.translate(c.x,c.y,c.z);caps.push(sp);
+  }
+  return caps.length?mergeGeometries([geo,...caps]):geo;
+}
 const armDefs=armsC.map(a=>{
   // dosłownie siatka ręki z modelu (palce pominięte): bark = koniec przy ciele, dłoń = najdalszy koniec rurki
   const ap=a.g.attributes.position;let minAbs=1e9;for(let i=0;i<ap.count;i++)minAbs=Math.min(minAbs,Math.abs(ap.getX(i)));
@@ -202,14 +243,15 @@ const armDefs=armsC.map(a=>{
   const pt=V3();let maxD=0;for(let i=0;i<ap.count;i++)maxD=Math.max(maxD,pt.fromBufferAttribute(ap,i).distanceTo(sh));
   const end=V3();let n=0;for(let i=0;i<ap.count;i++)if(pt.fromBufferAttribute(ap,i).distanceTo(sh)>maxD-.03){end.add(pt);n++}end.multiplyScalar(1/n);
   const L=sh.distanceTo(end),q=new THREE.Quaternion().setFromUnitVectors(end.clone().sub(sh).normalize(),Z);
-  const g=a.g.clone();g.translate(-sh.x,-sh.y,-sh.z);g.applyQuaternion(q);      // cięciwa bark -> dłoń wzdłuż +Z
+  const g=capOpenEnds(a.g.clone().translate(-sh.x,-sh.y,-sh.z).applyQuaternion(q));   // cięciwa bark -> dłoń wzdłuż +Z; otwarte końce zaślepione
+  g.computeVertexNormals();                                                      // normalne z geometrii: zaślepka przy barku miała w modelu odwrócone normalne (wyglądała na wklęsłą)
   const gp=g.attributes.position,NB=24;
   const bins=()=>{const cx=new Float32Array(NB),cy=new Float32Array(NB),cn=new Float32Array(NB);
     for(let i=0;i<gp.count;i++){const bi=clamp(Math.floor(gp.getZ(i)/L*NB),0,NB-1);cx[bi]+=gp.getX(i);cy[bi]+=gp.getY(i);cn[bi]++}
     for(let bi=0;bi<NB;bi++)if(cn[bi]){cx[bi]/=cn[bi];cy[bi]/=cn[bi]}return{cx,cy,cn}};
   // ręka z modelu ma kształt "^": krótki odcinek z barku w górę/na zewnątrz (szczyt) i długi odcinek w dół do dłoni
   let B=bins(),best=NB>>1,bd=-1;for(let bi=2;bi<NB-4;bi++){if(!B.cn[bi])continue;const d=Math.hypot(B.cx[bi],B.cy[bi]);if(d>bd){bd=d;best=bi}}
-  g.rotateZ(Math.atan2(B.cx[best],B.cy[best]));                                 // płaszczyzna wygięcia = YZ, szczyt w +Y
+  const rz=Math.atan2(B.cx[best],B.cy[best]);g.rotateZ(rz);                    // płaszczyzna wygięcia = YZ, szczyt w +Y
   B=bins();
   const cen=z=>{const bi=clamp(Math.floor(z/L*NB),0,NB-1);return V3(B.cx[bi],B.cy[bi],z)};
   const zP=(best+.5)/NB*L,zE=(zP+L)/2;
@@ -221,8 +263,20 @@ const armDefs=armsC.map(a=>{
   g.setAttribute('skinIndex',new THREE.Uint16BufferAttribute(si,4));g.setAttribute('skinWeight',new THREE.Float32BufferAttribute(sw,4));
   const d0=Pj.clone().normalize(),d1=Ej.clone().sub(Pj).normalize(),d2=Hj.clone().sub(Ej).normalize();
   const l0=Pj.length(),l1=Ej.distanceTo(Pj),l2=Hj.distanceTo(Ej);
-  return{geo:g,shoulder:sh,P:Pj,E:Ej,l0,l1,l2,d0,d1,d2,sr:Math.sign(V3().crossVectors(d0,d1).x)||1,a:l0+l1,b:l2,side:Math.sign(a.c.x)};
+  // kierunek odcinka barkowego w przestrzeni ciała (tak wychodzi z boku korpusu w modelu)
+  const c0=d0.clone().applyAxisAngle(Z,-rz).applyQuaternion(q.clone().invert());
+  return{geo:g,shoulder:sh,P:Pj,E:Ej,l0,l1,l2,d0,d1,d2,c0,sr:Math.sign(V3().crossVectors(d0,d1).x)||1,a:l0+l1,b:l2,side:Math.sign(a.c.x)};
 });
+// bark na powierzchni korpusu: zaokrąglony koniec rurki wystaje lekko na zewnątrz jak staw barkowy
+// (gdy bark był w środku ciała, rurka przecinała powierzchnię pod ostrym kątem i wyglądała na ściętą, wklęsłą)
+{const rc=new THREE.Raycaster(),bm=new THREE.Mesh(bodyGeo);bm.updateMatrixWorld(true);bodyGeo.computeBoundingBox();
+ const bb=bodyGeo.boundingBox,cz=(bb.min.z+bb.max.z)/2;
+ for(const d of armDefs){
+   const dir=V3(d.shoulder.x,0,d.shoulder.z-cz).normalize();
+   rc.set(V3(dir.x*3,d.shoulder.y,cz+dir.z*3),dir.clone().negate());
+   const h=rc.intersectObject(bm)[0];
+   if(h)d.shoulder.copy(h.point).addScaledVector(dir,-.006);
+ }}
 const armR=armDefs.find(d=>d.side>0),armL=armDefs.find(d=>d.side<0);
 
 function beanMats(color){
@@ -243,25 +297,34 @@ function makeArm(def,mat,thin){
 const ARM_TH0=.6;                                   // kąt odcinka barkowego (od strony łokcia w stronę dłoni)
 const _ik={d:V3(),pp:V3(),c:V3(),P:V3(),E:V3(),T:V3(),S:V3(),d2:V3(),p2:V3(),n:V3(),f2:V3(),f3:V3(),e3:V3(),v:V3(),w:V3(),
   mf:new THREE.Matrix4(),me:new THREE.Matrix4(),q0:new THREE.Quaternion(),q:new THREE.Quaternion()};
-function ikArm(arm,S,T,pole,outE,outP){
+function ikArm(arm,S,T,pole,outE,outP,c0){
   const u=arm.userData,D=u.def,l0=D.l0*u.s,l1=D.l1*u.s,l2=D.l2*u.s,R=(l1+l2)*.985;
   const d=_ik.d.copy(T).sub(S);let dist=Math.max(1e-4,d.length());d.multiplyScalar(1/dist);
   const pp=_ik.pp.copy(pole).addScaledVector(d,-pole.dot(d));if(pp.lengthSq()<1e-6)pp.set(1,0,0).addScaledVector(d,-d.x);pp.normalize();
-  const S2=_ik.S.copy(S);
-  let need=(dist*dist+l0*l0-R*R)/(2*dist*l0);
-  if(need>1){const sh=Math.min(dist-l0-R,.12);if(sh>0){S2.addScaledVector(d,sh);dist-=sh}need=1}   // za daleko: bark lekko podąża za dłonią
-  const sinT=Math.max(Math.sin(ARM_TH0),clamp(need,-1,1)),cosT=Math.sqrt(1-sinT*sinT);
-  const c=_ik.c.copy(pp).multiplyScalar(cosT).addScaledVector(d,sinT);
+  const S2=_ik.S.copy(S),c=_ik.c;
+  const reachFrom=dir=>_ik.v.copy(S2).addScaledVector(dir,l0).distanceTo(T)<=R;
+  if(c0){
+    // odcinek barkowy wychodzi z boku korpusu jak w modelu; odchylamy go w stronę dłoni tylko na tyle, ile trzeba, by sięgnąć
+    if(reachFrom(c.copy(c0)));
+    else if(!reachFrom(c.copy(d))){const sh=Math.min(dist-l0-R,.12);if(sh>0){S2.addScaledVector(d,sh);dist-=sh}c.copy(d)}
+    else{let lo=0,hi=1;for(let i=0;i<10;i++){const m=(lo+hi)/2;c.copy(c0).lerp(d,m).normalize();if(reachFrom(c))hi=m;else lo=m}c.copy(c0).lerp(d,hi).normalize()}
+  }else{
+    let need=(dist*dist+l0*l0-R*R)/(2*dist*l0);
+    if(need>1){const sh=Math.min(dist-l0-R,.12);if(sh>0){S2.addScaledVector(d,sh);dist-=sh}need=1}
+    const sinT=Math.max(Math.sin(ARM_TH0),clamp(need,-1,1)),cosT=Math.sqrt(1-sinT*sinT);
+    c.copy(pp).multiplyScalar(cosT).addScaledVector(d,sinT);
+  }
   const P=_ik.P.copy(S2).addScaledVector(c,l0);
   const d2=_ik.d2.copy(T).sub(P);const dp=Math.max(1e-4,d2.length());d2.multiplyScalar(1/dp);
   const dd=clamp(dp,Math.abs(l1-l2)+.005,(l1+l2)*.999),x=(l1*l1-l2*l2+dd*dd)/(2*dd),h=Math.sqrt(Math.max(0,l1*l1-x*x));
   const p2=_ik.p2.copy(pole).addScaledVector(d2,-pole.dot(d2));if(p2.lengthSq()<1e-6)p2.copy(pp);p2.normalize();
   const E=_ik.E.copy(P).addScaledVector(d2,x).addScaledVector(p2,h),Tr=_ik.T.copy(P).addScaledVector(d2,dd);
   if(outE)outE.copy(E);if(outP)outP.copy(P);
-  // orientacja odcinka barkowego: d0 -> c, normalna płaszczyzny modelu (X) -> normalna płaszczyzny ręki
-  const nrm=_ik.n.crossVectors(d,pp).normalize();
-  const turn=_ik.v.copy(E).sub(P);const sg=D.sr*(Math.sign(_ik.w.crossVectors(c,turn).dot(nrm))||1);
-  const f2=_ik.f2.copy(nrm).multiplyScalar(sg),f3=_ik.f3.crossVectors(c,f2),e3=_ik.e3.crossVectors(D.d0,X);
+  // skręt: płaszczyzna zgięcia w barku (odcinek barkowy -> ramię) = płaszczyzna wygięcia z modelu (normalna X), ten sam zwrot
+  const turn=_ik.v.copy(E).sub(P),f2=_ik.f2.crossVectors(c,turn);
+  if(f2.lengthSq()<1e-8)f2.crossVectors(d,pp);
+  f2.normalize().multiplyScalar(D.sr);
+  const f3=_ik.f3.crossVectors(c,f2),e3=_ik.e3.crossVectors(D.d0,X);
   _ik.mf.makeBasis(c,f2,f3);_ik.me.makeBasis(D.d0,X,e3).transpose();
   arm.quaternion.setFromRotationMatrix(_ik.mf.multiply(_ik.me));arm.position.copy(S2);
   const q0i=_ik.q0.copy(arm.quaternion).invert();
@@ -279,7 +342,7 @@ function segClear(A,B,m){for(let t=.2;t<=1.001;t+=.1){if(inBody(A.x+(B.x-A.x)*t,
 function armTo(arm,def,T){
   const S=def.shoulder;
   for(const pp of POLES){
-    _pole.set(pp[0]*def.side,pp[1],pp[2]);ikArm(arm,S,T,_pole,_E,_P);
+    _pole.set(pp[0]*def.side,pp[1],pp[2]);ikArm(arm,S,T,_pole,_E,_P,def.c0);
     if(segClear(_P,_E,LIMB_R)&&segClear(_E,T,LIMB_R))return;
   }
 }
