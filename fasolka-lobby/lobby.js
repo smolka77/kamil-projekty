@@ -179,8 +179,8 @@ const ART = {
   duel() {
     // niebieski | biała błyskawica | czerwony; duże jedynki, mniejsze złote VS, wszystko na środku
     const u = ++artN;
-    // błyskawica / _ / : stroma, z krótkim zygzakiem tuż pod VS
-    const boltPts = [[166, -4], [184, -4], [165, 152], [192, 152], [182, 204], [164, 204], [173, 166], [146, 166]];
+    // błyskawica / _ / : stroma, zygzak na środku za VS
+    const boltPts = [[166, -4], [184, -4], [160, 93], [186, 93], [176, 204], [158, 204], [170, 107], [144, 107]];
     const P = a => a.map(q => q.join(',')).join(' ');
     const bolt = P(boltPts);
     return `<svg class="art" viewBox="0 0 320 200" preserveAspectRatio="xMidYMid slice"><defs>${DEFS(u)}
@@ -188,7 +188,7 @@ const ART = {
       <linearGradient id="rd${u}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff3a3a"/><stop offset="1" stop-color="#c8101c"/></linearGradient>
       <linearGradient id="wb${u}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#eef2f8"/><stop offset=".5" stop-color="#ffffff"/><stop offset="1" stop-color="#dfe6ef"/></linearGradient></defs>
       <rect width="320" height="200" fill="url(#rd${u})"/>
-      <polygon points="-4,-4 166,-4 146,166 173,166 164,204 -4,204" fill="url(#bu${u})"/>
+      <polygon points="-4,-4 166,-4 144,107 170,107 158,204 -4,204" fill="url(#bu${u})"/>
       ${stripes(18, .06)}<rect width="320" height="200" fill="url(#hl${u})"/>
       <polygon points="${bolt}" fill="#fff" opacity=".55" filter="url(#bl${u})"/>
       <polygon points="${bolt}" fill="#000" opacity=".3" transform="translate(3 2)"/>
