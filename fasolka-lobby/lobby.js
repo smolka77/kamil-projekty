@@ -50,11 +50,11 @@ const CSS = `
 #lb-ui .lb-tile:hover svg.art{transform:scale(1.05)}
 #lb-ui .lb-tile.sel{transform:translateY(-5px) scale(1.03);box-shadow:0 0 0 5px #fff,0 0 34px 6px rgba(120,200,255,.55),0 18px 34px rgba(0,0,0,.55)}
 #lb-ui .lb-tile:focus-visible{outline:none;box-shadow:0 0 0 5px #ffe14a,0 16px 30px rgba(0,0,0,.5)}
-#lb-ui .lb-tile .cap{position:absolute;left:0;right:0;bottom:0;padding:34px 14px 12px;
-  background:linear-gradient(180deg,rgba(4,8,24,0) 0%,rgba(4,8,24,.72) 55%,rgba(4,8,24,.92) 100%)}
+#lb-ui .lb-tile .cap{position:absolute;left:0;right:0;bottom:0;padding:22px 14px 11px;
+  background:linear-gradient(180deg,rgba(4,8,24,0) 0%,rgba(4,8,24,.6) 100%)}
 #lb-ui .lb-tile .cap span{display:block;font-size:34px;line-height:.95;letter-spacing:.02em;text-transform:uppercase;transform:skewX(-8deg);transform-origin:left bottom;
   text-shadow:0 3px 0 rgba(0,0,0,.45)}
-#lb-ui .lb-tile .cap em{display:block;font:600 12px/1.25 system-ui,sans-serif;font-style:normal;color:#cfe0ff;margin-top:6px}
+#lb-ui .lb-tile .cap em{display:block;font:600 12px/1.25 system-ui,sans-serif;font-style:normal;color:#e6eeff;text-shadow:0 1px 2px rgba(0,0,0,.6)}
 #lb-ui .lb-tile .tag{position:absolute;top:10px;left:10px;font:800 10px/1 system-ui,sans-serif;letter-spacing:.12em;color:#1d1400;background:#ffe14a;
   padding:5px 8px 4px;transform:skewX(-10deg);box-shadow:0 2px 0 rgba(0,0,0,.35)}
 #lb-ui .lb-tile .check{position:absolute;top:10px;right:10px;width:26px;height:26px;border-radius:50%;background:#fff;color:#0c1630;
@@ -114,68 +114,43 @@ const HTML = `
   <button class="lb-close" id="lb-close" type="button">GOTOWE</button>
 </div>`;
 
-// ilustracje kafelków (SVG 320x200), rysowane kodem; uid = unikalne id gradientów w dokumencie
+// ilustracje kafelków (SVG 320x200): same napisy na tłach; uid = unikalne id gradientów w dokumencie
 let artN = 0;
-function beanSvg(u, cx, top, w, h, col, dir = 1, eyes = true) {
-  const x = cx - w / 2, lw = w * .2, legs = `<rect x="${cx - w * .26}" y="${top + h - w * .3}" width="${lw}" height="${w * .55}" rx="${lw / 2}" fill="${col}"/>` +
-    `<rect x="${cx + w * .06}" y="${top + h - w * .3}" width="${lw}" height="${w * .55}" rx="${lw / 2}" fill="${col}"/>`;
-  let s = legs + `<rect x="${x}" y="${top}" width="${w}" height="${h}" rx="${w / 2}" fill="${col}"/>` +
-    `<rect x="${x}" y="${top}" width="${w}" height="${h}" rx="${w / 2}" fill="url(#sh${u})"/>` +
-    `<ellipse cx="${cx - dir * w * .2}" cy="${top + h * .2}" rx="${w * .12}" ry="${h * .09}" fill="#fff" opacity=".38"/>`;
-  if (eyes) for (const ex of [-.15, .15]) {
-    const ecx = cx + dir * w * .12 + ex * w, ecy = top + h * .3;
-    s += `<ellipse cx="${ecx}" cy="${ecy}" rx="${w * .1}" ry="${w * .13}" fill="#fff"/><ellipse cx="${ecx + dir * w * .035}" cy="${ecy + w * .02}" rx="${w * .05}" ry="${w * .07}" fill="#111"/>`;
-  }
-  return s;
-}
-const shadeDef = u => `<linearGradient id="sh${u}" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity=".08"/><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".32"/></linearGradient>`;
-const vign = u => `<radialGradient id="vg${u}" cx=".5" cy=".45" r=".75"><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".55"/></radialGradient>`;
+const vign = u => `<radialGradient id="vg${u}" cx=".5" cy=".45" r=".75"><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".5"/></radialGradient>`;
+const goldDef = u => `<linearGradient id="gold${u}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset=".32" stop-color="#fff1c4"/><stop offset=".52" stop-color="#f3b632"/><stop offset=".53" stop-color="#a8660f"/><stop offset="1" stop-color="#ffe08a"/></linearGradient>`;
+const TXT = 'font-family="Anton,Impact,sans-serif" text-anchor="middle" stroke="#120a1c" stroke-linejoin="round" paint-order="stroke"';
+const stripes = (n, op) => `<g stroke="#fff" stroke-opacity="${op}" stroke-width="2">${Array.from({ length: n }, (_, i) => `<line x1="${-60 + i * 22}" y1="200" x2="${i * 22}" y2="0"/>`).join('')}</g>`;
 const ART = {
   range() {
     const u = ++artN;
-    return `<svg class="art" viewBox="0 0 320 200" preserveAspectRatio="xMidYMid slice"><defs>${shadeDef(u)}${vign(u)}
-      <linearGradient id="sk${u}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2b1763"/><stop offset=".5" stop-color="#d9416b"/><stop offset=".78" stop-color="#ffb35a"/></linearGradient>
-      <radialGradient id="sn${u}" cx=".7" cy=".6" r=".42"><stop offset="0" stop-color="#fff7d0"/><stop offset=".22" stop-color="#ffd27a" stop-opacity=".85"/><stop offset="1" stop-color="#ff9a4a" stop-opacity="0"/></radialGradient>
-      <linearGradient id="gd${u}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4f9a3c"/><stop offset="1" stop-color="#1d4a22"/></linearGradient>
-      <filter id="gl${u}" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
-      <rect width="320" height="200" fill="url(#sk${u})"/><rect width="320" height="200" fill="url(#sn${u})"/>
-      <g fill="#fff" opacity=".1"><polygon points="224,120 140,0 175,0"/><polygon points="224,120 250,0 290,0"/><polygon points="224,120 320,40 320,80"/></g>
-      <g transform="translate(222 84) scale(1.3) translate(-222 -120)">
-      <path d="M0 128 L30 104 L52 120 L84 92 L116 122 L150 100 L182 124 L214 98 L250 126 L284 102 L320 120 V260 H0Z" fill="#5b2f6e" opacity=".75"/>
-      <g fill="#2e5a34">${[18, 46, 74, 262, 292].map((x, i) => `<polygon points="${x},${132 - (i % 2) * 8} ${x - 11},${150} ${x + 11},150"/>`).join('')}</g>
-      <path d="M-40 146 Q90 128 170 140 T360 136 V260 H-40Z" fill="url(#gd${u})"/>
-      ${beanSvg(u, 118, 116, 16, 25, '#d9473f', 1)}${beanSvg(u, 268, 112, 19, 30, '#c93a55', -1)}${beanSvg(u, 205, 92, 30, 48, '#ea4a3a', -1)}
-      <g fill="none" stroke="#fff" stroke-width="2.4"><circle cx="205" cy="128" r="7"/><circle cx="205" cy="128" r="2.6" fill="#fff"/></g>
-      <g filter="url(#gl${u})" stroke="#fff" fill="none" stroke-linecap="round"><circle cx="205" cy="122" r="27" stroke-width="2.6"/>
-        <path d="M205 86v18M205 140v18M169 122h18M223 122h18" stroke-width="3"/></g><circle cx="205" cy="122" r="2.2" fill="#ff3b2f"/></g>
+    return `<svg class="art" viewBox="0 0 320 200" preserveAspectRatio="xMidYMid slice"><defs>${vign(u)}${goldDef(u)}
+      <linearGradient id="bg${u}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff9a2e"/><stop offset=".5" stop-color="#e2461f"/><stop offset="1" stop-color="#6a0f12"/></linearGradient></defs>
+      <rect width="320" height="200" fill="url(#bg${u})"/>${stripes(18, .07)}
+      <g fill="none" stroke="#fff" stroke-opacity=".16"><circle cx="248" cy="92" r="118" stroke-width="16"/><circle cx="248" cy="92" r="80" stroke-width="14"/><circle cx="248" cy="92" r="44" stroke-width="12"/></g>
+      <circle cx="248" cy="92" r="14" fill="#fff" fill-opacity=".22"/>
+      <g stroke="#fff" stroke-opacity=".28" stroke-width="2"><line x1="248" y1="0" x2="248" y2="200"/><line x1="100" y1="92" x2="320" y2="92"/></g>
+      <g transform="translate(160 108) skewX(-10)"><text ${TXT} font-size="60" stroke-width="7" fill="#fff" letter-spacing="1">STRZELNICA</text></g>
+      <rect x="62" y="118" width="196" height="7" fill="url(#gold${u})" stroke="#120a1c" stroke-width="2" transform="skewX(-10) translate(21 0)"/>
       <rect width="320" height="200" fill="url(#vg${u})"/></svg>`;
   },
   duel() {
     const u = ++artN;
-    return `<svg class="art" viewBox="0 0 320 200" preserveAspectRatio="xMidYMid slice"><defs>${shadeDef(u)}${vign(u)}
-      <linearGradient id="rd${u}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff5a3a"/><stop offset="1" stop-color="#8a0c2c"/></linearGradient>
+    return `<svg class="art" viewBox="0 0 320 200" preserveAspectRatio="xMidYMid slice"><defs>${vign(u)}${goldDef(u)}
+      <linearGradient id="rd${u}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff4a3a"/><stop offset="1" stop-color="#8a0c2c"/></linearGradient>
       <linearGradient id="bl${u}" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4aa3ff"/><stop offset="1" stop-color="#0e2a8a"/></linearGradient>
-      <linearGradient id="gold${u}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset=".32" stop-color="#fff1c4"/><stop offset=".52" stop-color="#f3b632"/><stop offset=".53" stop-color="#a8660f"/><stop offset="1" stop-color="#ffe08a"/></linearGradient>
       <filter id="gl${u}" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4"/></filter></defs>
       <polygon points="0,0 186,0 134,200 0,200" fill="url(#rd${u})"/><polygon points="186,0 320,0 320,200 134,200" fill="url(#bl${u})"/>
-      <g stroke="#fff" stroke-opacity=".14" stroke-width="2">${Array.from({ length: 9 }, (_, i) => `<line x1="${-40 + i * 22}" y1="${200}" x2="${10 + i * 22}" y2="0"/>`).join('')}
-        ${Array.from({ length: 9 }, (_, i) => `<line x1="${180 + i * 22}" y1="200" x2="${230 + i * 22}" y2="0"/>`).join('')}</g>
-      <polygon points="181,0 191,0 139,200 129,200" fill="#fff" filter="url(#gl${u})"/><polygon points="184,0 188,0 136,200 132,200" fill="#fff"/>
-      ${beanSvg(u, 72, 70, 62, 150, '#f0b440', 1)}${beanSvg(u, 250, 70, 62, 150, '#e0473f', -1)}
-      <g transform="translate(160 118) skewX(-10)"><text text-anchor="middle" font-family="Anton,Impact,sans-serif" font-size="76" fill="url(#gold${u})"
-        stroke="#140b1f" stroke-width="5" paint-order="stroke" stroke-linejoin="round">VS</text></g>
+      ${stripes(18, .08)}
+      <polygon points="180,0 192,0 140,200 128,200" fill="#fff" filter="url(#gl${u})"/><polygon points="184,0 188,0 136,200 132,200" fill="#fff"/>
+      <g transform="translate(160 118) skewX(-10)"><text ${TXT} font-size="96" stroke-width="8" letter-spacing="2"><tspan fill="#fff">1</tspan><tspan fill="url(#gold${u})">VS</tspan><tspan fill="#fff">1</tspan></text></g>
       <rect width="320" height="200" fill="url(#vg${u})"/></svg>`;
   },
   soon() {
     const u = ++artN;
-    return `<svg class="art" viewBox="0 0 320 200" preserveAspectRatio="xMidYMid slice"><defs>${shadeDef(u)}${vign(u)}
-      <radialGradient id="bg${u}" cx=".5" cy=".42" r=".7"><stop offset="0" stop-color="#3a4f86"/><stop offset=".6" stop-color="#18234a"/><stop offset="1" stop-color="#0a1028"/></radialGradient>
-      <filter id="gl${u}" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="5"/></filter></defs>
-      <rect width="320" height="200" fill="url(#bg${u})"/>
-      <g stroke="#9fc2ff" stroke-opacity=".12">${Array.from({ length: 16 }, (_, i) => `<line x1="${i * 22}" y1="0" x2="${i * 22 - 60}" y2="200"/>`).join('')}</g>
-      <rect x="128" y="44" width="64" height="130" rx="32" fill="#7fb0ff" opacity=".5" filter="url(#gl${u})"/>
-      <rect x="130" y="46" width="60" height="126" rx="30" fill="#0b1230"/>
-      <text x="160" y="128" text-anchor="middle" font-family="Anton,Impact,sans-serif" font-size="70" fill="#cfe0ff" opacity=".9">?</text>
+    return `<svg class="art" viewBox="0 0 320 200" preserveAspectRatio="xMidYMid slice"><defs>${vign(u)}
+      <radialGradient id="bg${u}" cx=".5" cy=".42" r=".7"><stop offset="0" stop-color="#34497e"/><stop offset=".6" stop-color="#18234a"/><stop offset="1" stop-color="#0a1028"/></radialGradient></defs>
+      <rect width="320" height="200" fill="url(#bg${u})"/>${stripes(18, .06)}
+      <g transform="translate(160 106) skewX(-10)"><text ${TXT} font-size="50" stroke-width="6" fill="#cfdcf5" letter-spacing="1">COMING SOON...</text></g>
       <rect width="320" height="200" fill="url(#vg${u})"/></svg>`;
   },
 };
@@ -219,11 +194,11 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
     const t = document.createElement('button'); t.type = 'button';
     t.className = 'lb-tile' + (m.soon ? ' soon' : '');
     const icon = m.soon ? 'soon' : m.icon;
-    t.innerHTML = (ART[icon] ? ART[icon]() : '') + '<i class="tag"></i><i class="check">✓</i><div class="cap"><span></span><em></em></div>';
+    t.innerHTML = (ART[icon] ? ART[icon]() : '') + '<i class="tag"></i><i class="check">✓</i><div class="cap"><em></em></div>';
     t.querySelector('.tag').textContent = m.soon ? 'WKRÓTCE' : (m.tag || 'TRYB');
-    if (m.soon) { t.disabled = true; t.setAttribute('aria-label', 'Coming soon'); t.querySelector('.cap span').textContent = 'Coming soon...'; t.querySelector('.cap em').textContent = 'Nowy tryb jest w drodze'; }
+    if (m.soon) { t.disabled = true; t.setAttribute('aria-label', 'Coming soon'); t.querySelector('.cap em').textContent = 'Nowy tryb jest w drodze'; }
     else {
-      t.dataset.id = m.id; t.querySelector('.cap span').textContent = m.name; t.querySelector('.cap em').textContent = m.desc;
+      t.dataset.id = m.id; t.querySelector('.cap em').textContent = m.desc; t.setAttribute('aria-label', m.name);
       t.addEventListener('click', () => { mode = m; store.set('fasolka-mode', m.id); renderMode(); });
       t.addEventListener('dblclick', () => closePicker());
     }
