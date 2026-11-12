@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Podgląd materiałów</title>
+    <style>
+      html, body { margin: 0; height: 100%; overflow: hidden; background: #8cc8f5; font-family: system-ui, sans-serif; }
+      #app { position: fixed; inset: 0; }
+      #labels { position: fixed; inset: 0; pointer-events: none; }
+      .lbl { position: absolute; transform: translate(-50%, 0); padding: 2px 8px; border-radius: 999px;
+             background: rgba(10, 22, 60, .62); color: #fff; font-size: 12px; font-weight: 600; white-space: nowrap; }
+      #info { position: fixed; left: 10px; bottom: 10px; padding: 6px 10px; border-radius: 8px; background: rgba(10, 22, 60, .7);
+              color: #dfe9ff; font: 12px/1.4 ui-monospace, monospace; white-space: pre; }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <div id="labels"></div>
+    <div id="info"></div>
+    <script type="module" src="./materials-preview.js"></script>
+  </body>
+</html>

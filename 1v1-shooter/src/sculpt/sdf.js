@@ -15,7 +15,8 @@
  * PRYMITYWY (każdy zwraca obiekt-węzeł; ostatni argument to `opts`):
  *  sphere(c, r) · ellipsoid(c, [rx,ry,rz]) · capsule(a, b, r) · roundCone(a, b, ra, rb)
  *  roundBox(c, [hx,hy,hz], rounding) · torus(c, R, r)  (pierścień w lokalnej płaszczyźnie XZ)
- *  cylinder(a, b, r, rounding) · plane(point, normal)  (półprzestrzeń, tylko do 'sub'/'int')
+ *  cylinder(a, b, r, rounding) · plane(point, normal)  (półprzestrzeń za płaszczyzną; tylko 'sub'/'int';
+ *     z op 'sub' normalna wskazuje część ZACHOWANĄ) · cut(point, normal, region)  (cięcie ograniczone do obszaru)
  *  tube(points, radii) · bezierTube([p0,p1,p2(,p3)], r0, r1, {segments})  → tablice roundCone
  *
  * WSPÓLNE OPCJE `opts`:
@@ -250,6 +251,16 @@ export function plane(point, normal, o = {}) {
   const node = prim(PLANE, [p[0], p[1], p[2], n[0] / l, n[1] / l, n[2] / l], o);
   if (node.op === OP_ADD) throw new Error('sculpt: plane() wymaga op "sub" lub "int"');
   return node;
+}
+
+/**
+ * Cięcie ograniczone do obszaru: usuwa część `region` (węzły) leżącą ZA płaszczyzną (po stronie
+ * przeciwnej do normalnej). Normalna wskazuje część ZACHOWANĄ. Np. skrócenie rękawa bez cięcia tułowia:
+ * cut(punktNaRamieniu, kierunekDoBarku, [capsule(łokieć, nadgarstek, 0.09)], { k: 0.004 }).
+ * opts: { k, bone } — k = promień zaokrąglenia krawędzi cięcia.
+ */
+export function cut(point, normal, region, o = {}) {
+  return group([...flatten(region).map((n) => ({ ...n, op: OP_ADD })), plane(point, normal, { op: 'int' })], { op: 'sub', k: o.k ?? 0, bone: o.bone ?? null });
 }
 
 /** Rurka z kolejnych roundCone przez punkty; radii: liczba albo tablica (na punkt). Zwraca tablicę węzłów. */
@@ -538,165 +549,198 @@ for (let i = 0; i < MAXDEPTH; i++) STK.push(new Float32Array(MAXB));
 export function primDistBatch(T, i, X, Y, Z, n, out) {
   let x = X, y = Y, z = Z;
   if (T.hasX[i]) {
-    const m = T.M, b = i * 12;
-    const m0 = m[b], m1 = m[b + 1], m2 = m[b + 2], m3 = m[b + 3];
-    const m4 = m[b + 4], m5 = m[b + 5], m6 = m[b + 6], m7 = m[b + 7];
-    const m8 = m[b + 8], m9 = m[b + 9], m10 = m[b + 10], m11 = m[b + 11];
-    for (let j = 0; j < n; j++) {
-      const px = X[j], py = Y[j], pz = Z[j];
-      LX[j] = m0 * px + m1 * py + m2 * pz + m3;
-      LY[j] = m4 * px + m5 * py + m6 * pz + m7;
-      LZ[j] = m8 * px + m9 * py + m10 * pz + m11;
-    }
+    toLocal(T.M, i * 12, X, Y, Z, n);
     x = LX; y = LY; z = LZ;
   }
   const P = T.P, o = i * PS;
+  // osobne małe funkcje na typ → monomorficzne pętle, brak kaskady deoptymalizacji
   switch (T.type[i]) {
-    case SPHERE: {
-      const cx = P[o], cy = P[o + 1], cz = P[o + 2], r = P[o + 3];
-      for (let j = 0; j < n; j++) {
-        const dx = x[j] - cx, dy = y[j] - cy, dz = z[j] - cz;
-        out[j] = Math.sqrt(dx * dx + dy * dy + dz * dz) - r;
-      }
-      break;
-    }
-    case ELLIPSOID: {
-      const cx = P[o], cy = P[o + 1], cz = P[o + 2];
-      const ix = 1 / P[o + 3], iy = 1 / P[o + 4], iz = 1 / P[o + 5];
-      const ix2 = ix * ix, iy2 = iy * iy, iz2 = iz * iz;
-      const rmin = Math.min(P[o + 3], P[o + 4], P[o + 5]);
-      for (let j = 0; j < n; j++) {
-        const dx = x[j] - cx, dy = y[j] - cy, dz = z[j] - cz;
-        const ax = dx * ix, ay = dy * iy, az = dz * iz;
-        const bx = dx * ix2, by = dy * iy2, bz = dz * iz2;
-        const k0 = Math.sqrt(ax * ax + ay * ay + az * az);
-        const k1 = Math.sqrt(bx * bx + by * by + bz * bz);
-        out[j] = k1 > 1e-12 ? (k0 * (k0 - 1)) / k1 : -rmin;
-      }
-      break;
-    }
-    case CAPSULE: {
-      const ax = P[o], ay = P[o + 1], az = P[o + 2];
-      const bx = P[o + 3] - ax, by = P[o + 4] - ay, bz = P[o + 5] - az, r = P[o + 6];
-      const ibb = 1 / Math.max(1e-12, bx * bx + by * by + bz * bz);
-      for (let j = 0; j < n; j++) {
-        const px = x[j] - ax, py = y[j] - ay, pz = z[j] - az;
-        let h = (px * bx + py * by + pz * bz) * ibb;
-        h = h < 0 ? 0 : h > 1 ? 1 : h;
-        const dx = px - bx * h, dy = py - by * h, dz = pz - bz * h;
-        out[j] = Math.sqrt(dx * dx + dy * dy + dz * dz) - r;
-      }
-      break;
-    }
-    case ROUNDCONE: {
-      const ax = P[o], ay = P[o + 1], az = P[o + 2];
-      const r1 = P[o + 6], r2 = P[o + 7];
-      const bx = P[o + 8], by = P[o + 9], bz = P[o + 10];
-      const l2 = P[o + 11], rr = P[o + 12], a2 = P[o + 13], il2 = P[o + 14];
-      const srr = rr > 0 ? rr * rr : -rr * rr;
-      for (let j = 0; j < n; j++) {
-        const px = x[j] - ax, py = y[j] - ay, pz = z[j] - az;
-        const yy = px * bx + py * by + pz * bz;
-        const zz = yy - l2;
-        const qx = px * l2 - bx * yy, qy = py * l2 - by * yy, qz = pz * l2 - bz * yy;
-        const x2 = qx * qx + qy * qy + qz * qz;
-        const y2 = yy * yy * l2;
-        const z2 = zz * zz * l2;
-        const k = srr * x2;
-        if ((zz > 0 ? a2 * z2 : zz < 0 ? -a2 * z2 : 0) > k) out[j] = Math.sqrt(x2 + z2) * il2 - r2;
-        else if ((yy > 0 ? a2 * y2 : yy < 0 ? -a2 * y2 : 0) < k) out[j] = Math.sqrt(x2 + y2) * il2 - r1;
-        else out[j] = (Math.sqrt(x2 * a2 * il2) + yy * rr) * il2 - r1;
-      }
-      break;
-    }
-    case ROUNDBOX: {
-      const cx = P[o], cy = P[o + 1], cz = P[o + 2], r = P[o + 6];
-      const hx = P[o + 3] - r, hy = P[o + 4] - r, hz = P[o + 5] - r;
-      for (let j = 0; j < n; j++) {
-        const qx = Math.abs(x[j] - cx) - hx, qy = Math.abs(y[j] - cy) - hy, qz = Math.abs(z[j] - cz) - hz;
-        const mx = qx > 0 ? qx : 0, my = qy > 0 ? qy : 0, mz = qz > 0 ? qz : 0;
-        let mm = qx > qy ? qx : qy;
-        if (qz > mm) mm = qz;
-        out[j] = Math.sqrt(mx * mx + my * my + mz * mz) + (mm < 0 ? mm : 0) - r;
-      }
-      break;
-    }
-    case TORUS: {
-      const cx = P[o], cy = P[o + 1], cz = P[o + 2], R = P[o + 3], r = P[o + 4];
-      for (let j = 0; j < n; j++) {
-        const dx = x[j] - cx, dy = y[j] - cy, dz = z[j] - cz;
-        const qx = Math.sqrt(dx * dx + dz * dz) - R;
-        out[j] = Math.sqrt(qx * qx + dy * dy) - r;
-      }
-      break;
-    }
-    case CYLINDER: {
-      const rd = P[o + 7];
-      const ax = P[o + 8], ay = P[o + 9], az = P[o + 10];
-      const bx = P[o + 11], by = P[o + 12], bz = P[o + 13];
-      const baba = Math.max(1e-12, P[o + 14]), r = P[o + 15];
-      const ibaba = 1 / baba, hb = baba * 0.5;
-      for (let j = 0; j < n; j++) {
-        const px = x[j] - ax, py = y[j] - ay, pz = z[j] - az;
-        const paba = px * bx + py * by + pz * bz;
-        const ux = px * baba - bx * paba, uy = py * baba - by * paba, uz = pz * baba - bz * paba;
-        const xx = Math.sqrt(ux * ux + uy * uy + uz * uz) - r * baba;
-        const yy = Math.abs(paba - hb) - hb;
-        const x2 = xx * xx, y2 = yy * yy * baba;
-        let d;
-        if (xx < 0 && yy < 0) d = -(x2 < y2 ? x2 : y2);
-        else d = (xx > 0 ? x2 : 0) + (yy > 0 ? y2 : 0);
-        out[j] = (d > 0 ? Math.sqrt(d) : -Math.sqrt(-d)) * ibaba - rd;
-      }
-      break;
-    }
-    case PLANE: {
-      const cx = P[o], cy = P[o + 1], cz = P[o + 2], nx = P[o + 3], ny = P[o + 4], nz = P[o + 5];
-      for (let j = 0; j < n; j++) out[j] = (x[j] - cx) * nx + (y[j] - cy) * ny + (z[j] - cz) * nz;
-      break;
-    }
+    case SPHERE: dSphere(P, o, x, y, z, n, out); break;
+    case ELLIPSOID: dEllipsoid(P, o, x, y, z, n, out); break;
+    case CAPSULE: dCapsule(P, o, x, y, z, n, out); break;
+    case ROUNDCONE: dRoundCone(P, o, x, y, z, n, out); break;
+    case ROUNDBOX: dRoundBox(P, o, x, y, z, n, out); break;
+    case TORUS: dTorus(P, o, x, y, z, n, out); break;
+    case CYLINDER: dCylinder(P, o, x, y, z, n, out); break;
+    case PLANE: dPlane(P, o, x, y, z, n, out); break;
   }
   const ds = T.ds[i], inf = T.inf[i];
-  if (ds !== 1 || inf !== 0) for (let j = 0; j < n; j++) out[j] = out[j] * ds - inf;
+  if (ds !== 1 || inf !== 0) scaleOffset(out, n, ds, inf);
+}
+
+function scaleOffset(out, n, ds, inf) {
+  for (let j = 0; j < n; j++) out[j] = out[j] * ds - inf;
+}
+
+function toLocal(m, b, X, Y, Z, n) {
+  const m0 = m[b], m1 = m[b + 1], m2 = m[b + 2], m3 = m[b + 3];
+  const m4 = m[b + 4], m5 = m[b + 5], m6 = m[b + 6], m7 = m[b + 7];
+  const m8 = m[b + 8], m9 = m[b + 9], m10 = m[b + 10], m11 = m[b + 11];
+  for (let j = 0; j < n; j++) {
+    const px = X[j], py = Y[j], pz = Z[j];
+    LX[j] = m0 * px + m1 * py + m2 * pz + m3;
+    LY[j] = m4 * px + m5 * py + m6 * pz + m7;
+    LZ[j] = m8 * px + m9 * py + m10 * pz + m11;
+  }
+}
+
+function dSphere(P, o, x, y, z, n, out) {
+  const cx = P[o], cy = P[o + 1], cz = P[o + 2], r = P[o + 3];
+  for (let j = 0; j < n; j++) {
+    const dx = x[j] - cx, dy = y[j] - cy, dz = z[j] - cz;
+    out[j] = Math.sqrt(dx * dx + dy * dy + dz * dz) - r;
+  }
+}
+
+function dEllipsoid(P, o, x, y, z, n, out) {
+  const cx = P[o], cy = P[o + 1], cz = P[o + 2];
+  const ix = 1 / P[o + 3], iy = 1 / P[o + 4], iz = 1 / P[o + 5];
+  const ix2 = ix * ix, iy2 = iy * iy, iz2 = iz * iz;
+  const rmin = Math.min(P[o + 3], P[o + 4], P[o + 5]);
+  for (let j = 0; j < n; j++) {
+    const dx = x[j] - cx, dy = y[j] - cy, dz = z[j] - cz;
+    const ax = dx * ix, ay = dy * iy, az = dz * iz;
+    const bx = dx * ix2, by = dy * iy2, bz = dz * iz2;
+    const k0 = Math.sqrt(ax * ax + ay * ay + az * az);
+    const k1 = Math.sqrt(bx * bx + by * by + bz * bz);
+    out[j] = k1 > 1e-12 ? (k0 * (k0 - 1)) / k1 : -rmin;
+  }
+}
+
+function dCapsule(P, o, x, y, z, n, out) {
+  const ax = P[o], ay = P[o + 1], az = P[o + 2];
+  const bx = P[o + 3] - ax, by = P[o + 4] - ay, bz = P[o + 5] - az, r = P[o + 6];
+  const ibb = 1 / Math.max(1e-12, bx * bx + by * by + bz * bz);
+  for (let j = 0; j < n; j++) {
+    const px = x[j] - ax, py = y[j] - ay, pz = z[j] - az;
+    let h = (px * bx + py * by + pz * bz) * ibb;
+    h = h < 0 ? 0 : h > 1 ? 1 : h;
+    const dx = px - bx * h, dy = py - by * h, dz = pz - bz * h;
+    out[j] = Math.sqrt(dx * dx + dy * dy + dz * dz) - r;
+  }
+}
+
+function dRoundCone(P, o, x, y, z, n, out) {
+  const ax = P[o], ay = P[o + 1], az = P[o + 2];
+  const r1 = P[o + 6], r2 = P[o + 7];
+  const bx = P[o + 8], by = P[o + 9], bz = P[o + 10];
+  const l2 = P[o + 11], rr = P[o + 12], a2 = P[o + 13], il2 = P[o + 14];
+  const srr = rr > 0 ? rr * rr : -rr * rr;
+  for (let j = 0; j < n; j++) {
+    const px = x[j] - ax, py = y[j] - ay, pz = z[j] - az;
+    const yy = px * bx + py * by + pz * bz;
+    const zz = yy - l2;
+    const qx = px * l2 - bx * yy, qy = py * l2 - by * yy, qz = pz * l2 - bz * yy;
+    const x2 = qx * qx + qy * qy + qz * qz;
+    const y2 = yy * yy * l2;
+    const z2 = zz * zz * l2;
+    const k = srr * x2;
+    if ((zz > 0 ? a2 * z2 : zz < 0 ? -a2 * z2 : 0) > k) out[j] = Math.sqrt(x2 + z2) * il2 - r2;
+    else if ((yy > 0 ? a2 * y2 : yy < 0 ? -a2 * y2 : 0) < k) out[j] = Math.sqrt(x2 + y2) * il2 - r1;
+    else out[j] = (Math.sqrt(x2 * a2 * il2) + yy * rr) * il2 - r1;
+  }
+}
+
+function dRoundBox(P, o, x, y, z, n, out) {
+  const cx = P[o], cy = P[o + 1], cz = P[o + 2], r = P[o + 6];
+  const hx = P[o + 3] - r, hy = P[o + 4] - r, hz = P[o + 5] - r;
+  for (let j = 0; j < n; j++) {
+    const qx = Math.abs(x[j] - cx) - hx, qy = Math.abs(y[j] - cy) - hy, qz = Math.abs(z[j] - cz) - hz;
+    const mx = qx > 0 ? qx : 0, my = qy > 0 ? qy : 0, mz = qz > 0 ? qz : 0;
+    let mm = qx > qy ? qx : qy;
+    if (qz > mm) mm = qz;
+    out[j] = Math.sqrt(mx * mx + my * my + mz * mz) + (mm < 0 ? mm : 0) - r;
+  }
+}
+
+function dTorus(P, o, x, y, z, n, out) {
+  const cx = P[o], cy = P[o + 1], cz = P[o + 2], R = P[o + 3], r = P[o + 4];
+  for (let j = 0; j < n; j++) {
+    const dx = x[j] - cx, dy = y[j] - cy, dz = z[j] - cz;
+    const qx = Math.sqrt(dx * dx + dz * dz) - R;
+    out[j] = Math.sqrt(qx * qx + dy * dy) - r;
+  }
+}
+
+function dCylinder(P, o, x, y, z, n, out) {
+  const rd = P[o + 7];
+  const ax = P[o + 8], ay = P[o + 9], az = P[o + 10];
+  const bx = P[o + 11], by = P[o + 12], bz = P[o + 13];
+  const baba = Math.max(1e-12, P[o + 14]), r = P[o + 15];
+  const ibaba = 1 / baba, hb = baba * 0.5;
+  for (let j = 0; j < n; j++) {
+    const px = x[j] - ax, py = y[j] - ay, pz = z[j] - az;
+    const paba = px * bx + py * by + pz * bz;
+    const ux = px * baba - bx * paba, uy = py * baba - by * paba, uz = pz * baba - bz * paba;
+    const xx = Math.sqrt(ux * ux + uy * uy + uz * uz) - r * baba;
+    const yy = Math.abs(paba - hb) - hb;
+    const x2 = xx * xx, y2 = yy * yy * baba;
+    let d;
+    if (xx < 0 && yy < 0) d = -(x2 < y2 ? x2 : y2);
+    else d = (xx > 0 ? x2 : 0) + (yy > 0 ? y2 : 0);
+    out[j] = (d > 0 ? Math.sqrt(d) : -Math.sqrt(-d)) * ibaba - rd;
+  }
+}
+
+function dPlane(P, o, x, y, z, n, out) {
+  const cx = P[o], cy = P[o + 1], cz = P[o + 2], nx = P[o + 3], ny = P[o + 4], nz = P[o + 5];
+  for (let j = 0; j < n; j++) out[j] = (x[j] - cx) * nx + (y[j] - cy) * ny + (z[j] - cz) * nz;
 }
 
 function combine(acc, d, n, op, k) {
   if (op === OP_ADD) {
-    if (k <= 0) {
-      for (let j = 0; j < n; j++) if (d[j] < acc[j]) acc[j] = d[j];
-    } else {
-      const q = 0.25 / k;
-      for (let j = 0; j < n; j++) {
-        const a = acc[j], b = d[j];
-        const h = k - Math.abs(a - b);
-        const m = a < b ? a : b;
-        acc[j] = h > 0 ? m - h * h * q : m;
-      }
-    }
+    if (k <= 0) cUnion(acc, d, n);
+    else cUnionS(acc, d, n, k);
   } else if (op === OP_SUB) {
-    if (k <= 0) {
-      for (let j = 0; j < n; j++) if (-d[j] > acc[j]) acc[j] = -d[j];
-    } else {
-      const q = 0.25 / k;
-      for (let j = 0; j < n; j++) {
-        const a = acc[j], b = -d[j];
-        const h = k - Math.abs(a - b);
-        const m = a > b ? a : b;
-        acc[j] = h > 0 ? m + h * h * q : m;
-      }
-    }
+    if (k <= 0) cSub(acc, d, n);
+    else cSubS(acc, d, n, k);
   } else if (op === OP_INT) {
-    if (k <= 0) {
-      for (let j = 0; j < n; j++) if (d[j] > acc[j]) acc[j] = d[j];
-    } else {
-      const q = 0.25 / k;
-      for (let j = 0; j < n; j++) {
-        const a = acc[j], b = d[j];
-        const h = k - Math.abs(a - b);
-        const m = a > b ? a : b;
-        acc[j] = h > 0 ? m + h * h * q : m;
-      }
-    }
+    if (k <= 0) cInt(acc, d, n);
+    else cIntS(acc, d, n, k);
+  }
+}
+
+function cUnion(acc, d, n) {
+  for (let j = 0; j < n; j++) if (d[j] < acc[j]) acc[j] = d[j];
+}
+function cUnionS(acc, d, n, k) {
+  const q = 0.25 / k;
+  for (let j = 0; j < n; j++) {
+    const a = acc[j], b = d[j];
+    const h = k - Math.abs(a - b);
+    const m = a < b ? a : b;
+    acc[j] = h > 0 ? m - h * h * q : m;
+  }
+}
+function cSub(acc, d, n) {
+  for (let j = 0; j < n; j++) if (-d[j] > acc[j]) acc[j] = -d[j];
+}
+function cSubS(acc, d, n, k) {
+  const q = 0.25 / k;
+  for (let j = 0; j < n; j++) {
+    const a = acc[j], b = -d[j];
+    const h = k - Math.abs(a - b);
+    const m = a > b ? a : b;
+    acc[j] = h > 0 ? m + h * h * q : m;
+  }
+}
+function cInt(acc, d, n) {
+  for (let j = 0; j < n; j++) if (d[j] > acc[j]) acc[j] = d[j];
+}
+function cIntS(acc, d, n, k) {
+  const q = 0.25 / k;
+  for (let j = 0; j < n; j++) {
+    const a = acc[j], b = d[j];
+    const h = k - Math.abs(a - b);
+    const m = a > b ? a : b;
+    acc[j] = h > 0 ? m + h * h * q : m;
+  }
+}
+
+function shellOp(acc, n, t, off) {
+  for (let j = 0; j < n; j++) {
+    const v = acc[j] - off;
+    acc[j] = (v < 0 ? -v : v) - t;
   }
 }
 
@@ -719,13 +763,7 @@ function runBlock(F, b, X, Y, Z, n, out) {
       acc.fill(BIG, 0, n);
     } else {
       const st = F.gShell[a];
-      if (st > 0) {
-        const t = st * 0.5, off = F.gOff[a];
-        for (let j = 0; j < n; j++) {
-          const v = acc[j] - off;
-          acc[j] = (v < 0 ? -v : v) - t;
-        }
-      }
+      if (st > 0) shellOp(acc, n, st * 0.5, F.gOff[a]);
       const below = STK[lvl - 1];
       combine(below, acc, n, F.gOp[a], F.gK[a]);
       lvl--;
@@ -832,18 +870,22 @@ export function evalPoint(F, x, y, z) {
  * opts.bone       domyślna kość
  * opts.bounds     [minX,minY,minZ,maxX,maxY,maxZ] — ręczne przycięcie obszaru siatkowania
  * opts.margin     margines odcinania prymitywów w blokach (m, domyślnie 4 woksele)
+ * opts.minShell   minimalna grubość skorupy w wokselach (domyślnie 2.2); cieńsze są pogrubiane do wewnątrz
+ *                 (zewnętrzna powierzchnia bez zmian) z ostrzeżeniem w field.warnings — inaczej powstają dziury
  */
 export function compileField(nodes, opts = {}) {
   const h = opts.voxel ?? 0.008;
   const B = opts.blockCells ?? 16;
   if (B % 4 !== 0) throw new Error('sculpt: blockCells musi być wielokrotnością 4');
   const margin = opts.margin ?? 4 * h;
+  const minShell = opts.minShell ?? 2.2;
 
   const primList = []; // { node, k, bone, expand }
   const paintList = [];
   const instr = []; // { kind, arg, match, aabb, keep }
   const groups = []; // { op, k, t, off }
   let maxDepth = 0;
+  const warnings = [];
   // pudło powierzchni
   const sb = [INF, INF, INF, -INF, -INF, -INF];
 
@@ -855,8 +897,16 @@ export function compileField(nodes, opts = {}) {
   function walk(node, ctx) {
     if (node.kind === 'group') {
       const gi = groups.length;
-      const t = node.shell ? node.shell.thickness : 0;
-      const off = node.shell ? node.shell.offset : 0;
+      let t = node.shell ? node.shell.thickness : 0;
+      let off = node.shell ? node.shell.offset : 0;
+      if (node.shell && t < minShell * h) {
+        // ścianka cieńsza niż ~2 woksele "przecieka" między narożnikami siatki (dziury) →
+        // pogrubiamy DO WEWNĄTRZ: zewnętrzna powierzchnia (d = off + t/2) zostaje na miejscu
+        const t2 = minShell * h;
+        warnings.push(`skorupa${node.name ? ' "' + node.name + '"' : ''}: grubość ${(t * 1000).toFixed(1)} mm < ${minShell} woksela → pogrubiona do ${(t2 * 1000).toFixed(1)} mm do wewnątrz (zewnętrzna powierzchnia bez zmian)`);
+        off = off + t * 0.5 - t2 * 0.5;
+        t = t2;
+      }
       const gk = node.k ?? ctx.blend;
       groups.push({ op: node.op, k: gk, t, off });
       const pushIdx = instr.length;
@@ -872,9 +922,36 @@ export function compileField(nodes, opts = {}) {
       };
       maxDepth = Math.max(maxDepth, sub.depth);
       const first = instr.length;
-      for (const c of node.children) walk(c, sub);
+      const sb0 = sb.slice();
+      const direct = []; // indeksy instrukcji bezpośrednich dzieci
+      for (const c of node.children.flat(Infinity)) {
+        direct.push(instr.length);
+        walk(c, sub);
+      }
       for (let i = first; i < instr.length; i++) {
         if (instr[i].kind !== I_POP) grow(gbb, instr[i].aabb, 0);
+      }
+      // dziecko z op 'int' o skończonym AABB ogranicza całą grupę (np. naszywka = skorupa ∩ obszar):
+      // przycinamy AABB grupy i pudło powierzchni → bloki poza obszarem nie liczą tej grupy
+      for (const di of direct) {
+        const ins = instr[di];
+        if (!ins || !ins.keep || ins.kind === I_POP) continue;
+        const a = ins.aabb;
+        if (!(Number.isFinite(a[0]) && Number.isFinite(a[3]) && Number.isFinite(a[1]) && Number.isFinite(a[4]) && Number.isFinite(a[2]) && Number.isFinite(a[5]))) continue;
+        const e = gk;
+        for (let j = 0; j < 3; j++) {
+          gbb[j] = Math.max(gbb[j], a[j] - e);
+          gbb[j + 3] = Math.min(gbb[j + 3], a[j + 3] + e);
+        }
+        if (ctx.surface && node.op === OP_ADD) {
+          const part = sb.slice();
+          for (let j = 0; j < 3; j++) {
+            part[j] = Math.max(part[j], a[j] - e);
+            part[j + 3] = Math.min(part[j + 3], a[j + 3] + e);
+          }
+          for (let j = 0; j < 6; j++) sb[j] = sb0[j];
+          if (part[0] < part[3] && part[1] < part[4] && part[2] < part[5]) grow(sb, part, 0);
+        }
       }
       instr.push({ kind: I_POP, arg: gi, match: pushIdx, aabb: gbb, keep: true });
       instr[pushIdx].match = instr.length - 1;
@@ -1047,6 +1124,73 @@ export function compileField(nodes, opts = {}) {
     bones,
     empty,
     surfaceBox: sb.slice(),
+    warnings,
     stats: { prims: prims.n, paints: paints.n, instr: nI, blocks: nBlocks, avgProg: totalLen / Math.max(1, nBlocks) },
   };
+}
+
+// ---------------------------------------------------------------------------
+// kubełkowanie wierzchołków w siatce komórek (wagi skinningu, malowanie)
+// ---------------------------------------------------------------------------
+
+/**
+ * Grupuje wierzchołki (pozycje przeplatane xyz) w sześcienne komórki o krawędzi `cell` (m).
+ * Zwraca { nc, start: Int32Array(nc+1), order: Int32Array(n), cx, cy, cz: Float32Array(nc) (środki), half }
+ * gdzie wierzchołki komórki c to order[start[c] .. start[c+1]).
+ */
+export function bucketByCell(pos, n, cell) {
+  let x0 = INF, y0 = INF, z0 = INF, x1 = -INF, y1 = -INF, z1 = -INF;
+  for (let i = 0; i < n; i++) {
+    const x = pos[i * 3], y = pos[i * 3 + 1], z = pos[i * 3 + 2];
+    if (x < x0) x0 = x; if (x > x1) x1 = x;
+    if (y < y0) y0 = y; if (y > y1) y1 = y;
+    if (z < z0) z0 = z; if (z > z1) z1 = z;
+  }
+  if (n === 0) return { nc: 0, start: new Int32Array(1), order: new Int32Array(0), cx: new Float32Array(0), cy: new Float32Array(0), cz: new Float32Array(0), half: 0 };
+  const gx = Math.floor((x1 - x0) / cell) + 1, gy = Math.floor((y1 - y0) / cell) + 1, gz = Math.floor((z1 - z0) / cell) + 1;
+  const ng = gx * gy * gz;
+  const cid = new Int32Array(n);
+  const cnt = new Int32Array(ng + 1);
+  for (let i = 0; i < n; i++) {
+    const a = Math.min(gx - 1, Math.floor((pos[i * 3] - x0) / cell));
+    const b = Math.min(gy - 1, Math.floor((pos[i * 3 + 1] - y0) / cell));
+    const c = Math.min(gz - 1, Math.floor((pos[i * 3 + 2] - z0) / cell));
+    const id = a + gx * (b + gy * c);
+    cid[i] = id;
+    cnt[id + 1]++;
+  }
+  // kompaktowanie zajętych komórek
+  const remap = new Int32Array(ng).fill(-1);
+  let nc = 0;
+  for (let g = 0; g < ng; g++) if (cnt[g + 1] > 0) remap[g] = nc++;
+  const start = new Int32Array(nc + 1);
+  const cx = new Float32Array(nc), cy = new Float32Array(nc), cz = new Float32Array(nc);
+  for (let g = 0; g < ng; g++) {
+    const r = remap[g];
+    if (r < 0) continue;
+    start[r + 1] = cnt[g + 1];
+    const a = g % gx, b = Math.floor(g / gx) % gy, c = Math.floor(g / (gx * gy));
+    cx[r] = x0 + (a + 0.5) * cell; cy[r] = y0 + (b + 0.5) * cell; cz[r] = z0 + (c + 0.5) * cell;
+  }
+  for (let r = 0; r < nc; r++) start[r + 1] += start[r];
+  const fill = start.slice(0, nc);
+  const order = new Int32Array(n);
+  for (let i = 0; i < n; i++) order[fill[remap[cid[i]]]++] = i;
+  return { nc, start, order, cx, cy, cz, half: cell * Math.sqrt(3) * 0.5 };
+}
+
+/** Odległości (surowe, bez CSG) wszystkich prymitywów tablicy T od środków komórek → Float32Array(T.n * nc). */
+export function primDistToCells(T, cells, sel = null) {
+  const nc = cells.nc;
+  const D = new Float32Array(T.n * nc);
+  const out = new Float32Array(MAXB);
+  for (let p = 0; p < T.n; p++) {
+    if (sel && !sel[p]) continue;
+    for (let a = 0; a < nc; a += MAXB) {
+      const m = Math.min(MAXB, nc - a);
+      primDistBatch(T, p, cells.cx.subarray(a, a + m), cells.cy.subarray(a, a + m), cells.cz.subarray(a, a + m), m, out);
+      D.set(out.subarray(0, m), p * nc + a);
+    }
+  }
+  return D;
 }

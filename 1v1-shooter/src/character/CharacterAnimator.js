@@ -7,21 +7,34 @@ const ease = (t) => t * t * (3 - 2 * t);
 
 // ---------- pozy broni ----------
 // TPP: pozycja chwytu w układzie klatki piersiowej, rotacja względem kierunku celowania
-const TPP = {
-  hip: { pos: [0.2, -0.05, -0.3], rot: [0, 0, 0] },
-  ads: { pos: [0.13, 0.07, -0.32], rot: [0, 0, 0] },
-  sprint: { pos: [0.04, -0.13, -0.24], rot: [-0.6, 0.8, 0.35] },
-  reload: { pos: [0.11, -0.06, -0.3], rot: [0.28, 0.12, 0.7] },
+export const TPP = {
+  // kolba w zagłębieniu prawego barku, lewy łokieć ugięty (~50°) — chwyt łoża w zasięgu ręki
+  hip: { pos: [0.02, 0.09, -0.31], rot: [0, 0, 0] },
+  ads: { pos: [-0.04, 0.19, -0.31], rot: [0, 0, 0] },
+  sprint: { pos: [-0.07, -0.06, -0.25], rot: [-0.6, 0.8, 0.35] },
+  reload: { pos: [-0.05, 0.0, -0.31], rot: [0.28, 0.12, 0.7] },
 };
+// menu (lobby): luźna poza, karabin opuszczony ~45° w poprzek ciała
+const LOBBY = { pos: [-0.02, -0.1, -0.27], rot: [-0.78, 0.55, 0.25] };
 // FPP: pozycja chwytu w układzie kamery (viewmodel)
 const VIEW = {
-  hip: { pos: [0.2, -0.24, -0.46], rot: [0, 0, 0] },
-  ads: { pos: [0, -0.165, -0.36], rot: [0, 0, 0] },
-  sprint: { pos: [0.1, -0.3, -0.38], rot: [-0.55, 0.6, 0.35] },
-  reload: { pos: [0.15, -0.26, -0.44], rot: [0.32, 0.12, 0.7] },
+  hip: { pos: [0.14, -0.2, -0.15], rot: [0, 0, 0] },
+  ads: { pos: [0, -0.142, -0.09], rot: [0, 0, 0] },
+  sprint: { pos: [0.09, -0.26, -0.1], rot: [-0.55, 0.6, 0.35] },
+  reload: { pos: [0.12, -0.22, -0.12], rot: [0.32, 0.12, 0.7] },
 };
 
-const POUCH = new THREE.Vector3(-0.17, -0.12, -0.16); // saszetka na biodrze (układ hips)
+const POUCH = new THREE.Vector3(-0.17, -0.12, -0.16); // saszetka na biodrze (układ hips) — domyślna, model może podać własną (model.pouch)
+
+// skala broni w dłoniach, kierunki łokci (układ klatki) i punkty chwytu karabinu (AssaultRifle: gripR / gripL)
+export const WEAPON_SCALE = 0.85;
+// skręt tułowia przy trzymaniu broni (lewy bark do przodu — lewa dłoń sięga łoża); głowa kompensuje
+export const BLADE = 0.58;
+export const ARM_POLES = { R: [0.55, -0.7, 0.45], L: [-0.45, -0.85, 0.05] };
+export const GRIP_REF = { R: [0, -0.045, 0.03], L: [0, -0.03, -0.34] };
+const _poleR = new THREE.Vector3(...ARM_POLES.R).normalize();
+const _poleL = new THREE.Vector3(...ARM_POLES.L).normalize();
+const _gripFallbackL = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, -0.5));
 
 // tymczasowe obiekty
 const _s = new THREE.Vector3();
@@ -107,7 +120,10 @@ export class CharacterAnimator {
     this.weaponPivot = new THREE.Group();
     this.b.chest.add(this.weaponPivot);
     this.weaponPivot.add(weapon.group);
-    this.weaponScale = 0.85;
+    this.weaponScale = WEAPON_SCALE;
+    this.pouch = model.pouch || POUCH;
+    this.gripR = model.gripQ ? model.gripQ.R : new THREE.Quaternion();
+    this.gripL = model.gripQ ? model.gripQ.L : _gripFallbackL;
 
     this.L1 = model.armUpperLen;
     this.L2 = model.armLowerLen;
@@ -123,6 +139,7 @@ export class CharacterAnimator {
     this.landDip = 0;
     this.reloadW = 0;
     this.emoteW = 0;
+    this.lobbyW = 0;
     this.recoil = 0;
     this.flinch = 0;
     this.flinchSide = 1;
@@ -154,6 +171,7 @@ export class CharacterAnimator {
     this.ads = damp(this.ads, st.ads ? 1 : 0, 16, dt);
     this.air = damp(this.air, st.grounded ? 0 : 1, st.grounded ? 16 : 7, dt);
     this.emoteW = damp(this.emoteW, st.emote ? 1 : 0, 7, dt);
+    this.lobbyW = damp(this.lobbyW, st.lobby ? 1 : 0, 6, dt);
     this.flinch = damp(this.flinch, 0, 9, dt);
     if (st.landImpact > 2) this.landDip = Math.min(0.13, st.landImpact * 0.011);
     this.landDip = damp(this.landDip, 0, 8, dt);
@@ -192,6 +210,11 @@ export class CharacterAnimator {
     b.hips.rotation.y = this.hipYaw;
     b.spine.rotation.y = -this.hipYaw * 0.6;
     b.chest.rotation.y = -this.hipYaw * 0.4;
+    const blade = BLADE * (1 - this.emoteW);
+    b.spine.rotation.y -= blade * 0.55;
+    b.chest.rotation.y -= blade * 0.45;
+    b.neck.rotation.y += blade * 0.5;
+    b.head.rotation.y += blade * 0.5;
 
     // cykl kroku
     b.thighL.rotation.x = sinP * A;
@@ -247,9 +270,33 @@ export class CharacterAnimator {
 
     // poły fartucha: odchylają się przy biegu / skoku, zakrywają kolana przy kucaniu
     if (b.coat) {
-      b.coat.rotation.x = -0.12 * amt - 0.32 * this.sprint * Math.min(1, amt) - 0.3 * air + 0.45 * c + ld * 2;
+      // przy kucaniu poła podąża za udami (przednie panele mają też własne wagi uda)
+      const thighMean = 0.5 * (b.thighL.rotation.x + b.thighR.rotation.x);
+      b.coat.rotation.x = -0.12 * amt - 0.32 * this.sprint * Math.min(1, amt) - 0.3 * air + 0.4 * Math.max(0, thighMean) * c + ld * 2;
+      b.coat.rotation.x += 0.12 * c;
       b.coat.rotation.z = -sinP * 0.04 * amt;
+      // w kucaniu poła lekko się rozszerza (kolana nie przebijają materiału)
+      b.coat.scale.set(1 + 0.08 * c, 1, 1 + 0.06 * c);
       if (this.emoteW > 0.001) b.coat.rotation.z += Math.sin(st.emoteTime * Math.PI * 2) * 0.08 * this.emoteW;
+    }
+
+    // menu: kontrapost (ciężar na prawej nodze), tułów obrócony ~25° do kamery, głowa patrzy w obiektyw
+    if (this.lobbyW > 0.001) {
+      const l = this.lobbyW * (1 - this.emoteW);
+      b.hips.position.x += 0.035 * l;
+      b.hips.rotation.z += 0.07 * l;
+      b.hips.rotation.y += 0.32 * l;
+      b.spine.rotation.z -= 0.09 * l;
+      b.chest.rotation.z -= 0.03 * l;
+      b.thighR.rotation.z += 0.02 * l;
+      b.thighL.rotation.z -= 0.1 * l;
+      b.thighL.rotation.x += 0.12 * l;
+      b.shinL.rotation.x -= 0.22 * l;
+      b.footL.rotation.x += 0.08 * l;
+      b.thighR.rotation.z -= 0.07 * l;
+      b.neck.rotation.y -= 0.18 * l;
+      b.head.rotation.y -= 0.14 * l;
+      b.head.rotation.z += 0.05 * l;
     }
 
     // trafienie — szarpnięcie
@@ -313,6 +360,12 @@ export class CharacterAnimator {
     // ---- pozycja broni ----
     const P = st.fpp ? VIEW : TPP;
     blendPose(P, this.ads, this.sprint * (1 - this.ads), this.reloadW, _pos, _rot);
+    if (!st.fpp && this.lobbyW > 0.001) {
+      _a.fromArray(LOBBY.pos);
+      _b.fromArray(LOBBY.rot);
+      _pos.lerp(_a, this.lobbyW);
+      _rot.lerp(_b, this.lobbyW);
+    }
     _pos.z += this.recoil * (st.fpp ? 0.045 : 0.06);
     _pos.y += this.recoil * 0.01;
     _rot.x += this.recoil * (st.fpp ? 0.05 : 0.09);
@@ -342,13 +395,31 @@ export class CharacterAnimator {
     _m2.decompose(this.weaponPivot.position, this.weaponPivot.quaternion, this.weaponPivot.scale);
     this.weaponPivot.updateMatrixWorld(true);
 
+    // ---- zasięg rąk: jeśli chwyt jest poza zasięgiem ramienia, broń cofa się wzdłuż własnej osi ----
+    const reach = 0.97 * (this.L1 + this.L2);
+    for (let it = 0; it < 3; it++) {
+      let excess = 0;
+      for (const [grip, upper] of [[w.gripL, b.upperArmL], [w.gripR, b.upperArmR]]) {
+        upper.getWorldPosition(_s);
+        w.group.localToWorld(_t.copy(grip.position));
+        excess = Math.max(excess, _t.distanceTo(_s) - reach);
+      }
+      if (excess <= 0.002) break;
+      // przód broni = lokalne -Z → cofnięcie = +Z broni (w świecie)
+      w.group.getWorldQuaternion(_q);
+      _tmp.set(0, 0, 1).applyQuaternion(_q).multiplyScalar(excess * 1.05);
+      this.weaponPivot.parent.worldToLocal(_tmp.add(this.weaponPivot.getWorldPosition(_e)));
+      this.weaponPivot.position.copy(_tmp);
+      this.weaponPivot.updateMatrixWorld(true);
+    }
+
     // ---- lewa dłoń: łoże albo animacja przeładowania ----
     const leftLocal = _b.copy(w.gripL.position);
     w.magGroup.position.copy(w.magRest);
     if (rp >= 0) {
       const guard = w.gripL.position;
       const grab = w.magGrab;
-      _c.copy(POUCH);
+      _c.copy(this.pouch);
       b.hips.localToWorld(_c);
       w.group.worldToLocal(_c);
       const pouch = _c;
@@ -375,12 +446,13 @@ export class CharacterAnimator {
     const rightT = w.gripR.getWorldPosition(new THREE.Vector3());
     const leftT = w.group.localToWorld(leftLocal.clone());
     chest.getWorldQuaternion(_pq);
-    const poleR = new THREE.Vector3(0.55, -0.7, 0.45).normalize().applyQuaternion(_pq);
-    const poleL = new THREE.Vector3(-0.6, -0.7, 0.2).normalize().applyQuaternion(_pq);
+    const poleR = _poleR.clone().applyQuaternion(_pq);
+    const poleL = _poleL.clone().applyQuaternion(_pq);
     solveTwoBone(b.upperArmR, b.forearmR, this.L1, this.L2, rightT, poleR);
     solveTwoBone(b.upperArmL, b.forearmL, this.L1, this.L2, leftT, poleL);
-    setWorldQuaternion(b.handR, weaponQ);
-    setWorldQuaternion(b.handL, weaponQ.clone().multiply(_q2.setFromEuler(_euler.set(0, 0, -0.5))));
+    // dłonie wyrzeźbione w chwycie: orientacja = broń · korekta chwytu z modelu
+    setWorldQuaternion(b.handR, weaponQ.clone().multiply(this.gripR));
+    setWorldQuaternion(b.handL, weaponQ.clone().multiply(this.gripL));
 
     // ---- taniec: ręce przejmują pozę taneczną ----
     if (this.emoteW > 0.001) {

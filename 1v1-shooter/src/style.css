@@ -143,6 +143,7 @@ html, body {
   transition: transform .08s, box-shadow .08s;
 }
 #play-btn:hover { transform: translateY(-2px); }
+#play-btn:disabled { opacity: .75; cursor: wait; transform: none; filter: saturate(.6); }
 #play-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #b06d00; }
 #menu-note { margin-top: 12px; font-size: 13px; color: #c6d6f5; }
 #menu .menu-controls { margin-top: 18px; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; font-size: 13px; color: #e5ecff; }

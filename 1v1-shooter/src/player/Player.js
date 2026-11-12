@@ -217,6 +217,7 @@ export class Player {
       yawRate,
       emote: this.emoting,
       emoteTime: this.emoteTime,
+      lobby: this.showcase && !active,
     });
     root.updateMatrixWorld(true);
 
@@ -273,9 +274,10 @@ export class Player {
     _q.setFromEuler(_e.set(this.aimPitch, this.aimYaw, 0, 'YXZ'));
 
     // TPP: kamera zza prawego ramienia; ADS = przybliżenie
-    const ox = lerp(lerp(0.72, 0.62, c.ads), 0, c.emote);
-    const oy = lerp(lerp(0.24, 0.08, c.ads), 0.1, c.emote);
-    const oz = lerp(lerp(2.9, 1.35, c.ads), 3.6, c.emote);
+    // (bliżej niż wcześniej: postać zajmuje ~45–50% wysokości kadru, broń dobrze widoczna)
+    const ox = lerp(lerp(0.6, 0.58, c.ads), 0, c.emote);
+    const oy = lerp(lerp(0.28, 0.1, c.ads), 0.1, c.emote);
+    const oz = lerp(lerp(2.3, 1.3, c.ads), 3.6, c.emote);
     _tpp.set(ox, oy, oz).applyQuaternion(_q);
     _tpp.x += this.position.x;
     _tpp.y += c.pivotY;
@@ -283,7 +285,7 @@ export class Player {
     if (_tpp.y < 0.3) _tpp.y = 0.3;
 
     if (fpp) {
-      _eye.set(0, 0.18, -0.05);
+      _eye.set(0, 0.122, -0.09); // między oczami (model: heroSculpt EYE_L/R po skali głowy)
       this.model.bones.head.localToWorld(_eye);
       cam.position.copy(_eye);
     } else {

@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Laboratorium rzeźbienia SDF</title>
+    <style>
+      html, body { margin: 0; height: 100%; overflow: hidden; background: #9fd4ff; font-family: system-ui, sans-serif; }
+      #panel {
+        position: fixed; top: 10px; left: 10px; width: 300px; max-height: calc(100% - 20px); overflow: auto;
+        background: rgba(15, 20, 30, 0.78); color: #e8eef7; border-radius: 10px; padding: 12px 14px; font-size: 12px; line-height: 1.45;
+        box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
+      }
+      #panel h1 { font-size: 14px; margin: 0 0 8px; }
+      #panel label { display: block; margin: 6px 0 2px; color: #b8c6d8; }
+      #panel select, #panel input[type='range'], #panel button { width: 100%; box-sizing: border-box; }
+      #panel button { margin-top: 8px; padding: 6px; border: 0; border-radius: 6px; background: #2f86ea; color: #fff; cursor: pointer; }
+      #panel .row { display: flex; gap: 8px; align-items: center; }
+      #panel .row input[type='checkbox'] { margin: 0; }
+      #stats { margin-top: 10px; white-space: pre; font-family: ui-monospace, monospace; font-size: 11px; color: #cfe3ff; }
+      #err { color: #ff8f8f; white-space: pre-wrap; }
+    </style>
+  </head>
+  <body>
+    <div id="panel">
+      <h1>Laboratorium rzeźbienia SDF</h1>
+      <label>Figura</label>
+      <select id="fig">
+        <option value="simple">Prosta (tułów + ręka + głowa)</option>
+        <option value="bench">Pełna postać (benchmark, 12 warstw)</option>
+      </select>
+      <label>Widok</label>
+      <select id="view">
+        <option value="shaded">Cieniowany (PBR)</option>
+        <option value="ao">Tylko AO (atrybut color)</option>
+        <option value="normals">Normalne</option>
+        <option value="weights">Wagi kości przedramienia</option>
+        <option value="wire">Siatka</option>
+      </select>
+      <label>Zgięcie łokcia: <span id="elbowVal">0</span>°</label>
+      <input id="elbow" type="range" min="0" max="140" value="0" />
+      <div class="row"><input id="anim" type="checkbox" /><span>animuj w czasie</span></div>
+      <button id="rebuild">Przebuduj (pomiar czasu)</button>
+      <div id="stats"></div>
+      <div id="err"></div>
+    </div>
+    <script type="module" src="./lab.js"></script>
+  </body>
+</html>

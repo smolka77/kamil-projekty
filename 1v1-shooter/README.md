@@ -27,6 +27,18 @@ Otwórz http://localhost:5173 i kliknij **GRAJ**.
   liczby obrażeń, headshot ×1.5, eliminacja i odrodzenie.
 - HUD: tarcza/zdrowie, amunicja, celownik reagujący na rozrzut, hitmarker.
 
+## Grafika
+
+- Potok renderowania (`src/render/Pipeline.js`): HDR → GTAO (okluzja otoczenia) → subtelny bloom →
+  korekcja nasycenia → tone mapping ACES → SMAA (+ MSAA 4× na wysokiej jakości).
+- Jakość: `?quality=high|medium|low` (low = bez post-processingu). Bez parametru: `high` z automatycznym
+  obniżaniem jakości, gdy klatki są za wolne (najpierw AO/MSAA, potem rozdzielczość, na końcu bloom).
+  Dodatkowo `?autoquality=1|0`, `?tonemap=aces|agx|neutral`, `?exposure=1.0`.
+- Oświetlenie (`src/world/Sky.js`): niebo z chmurami, środowisko IBL (PMREM) z tego samego nieba,
+  słońce z miękkimi cieniami podążającymi za graczem.
+- Materiały "stylized PBR" (`src/style/materials.js`): skóra, tkaniny, skóra naturalna, guma, tworzywo,
+  metal, włosy, oczy, szkło świecące, emisja, murawa. Podgląd: http://localhost:5173/dev/materials.html
+
 ## Sterowanie
 
 | Klawisz | Akcja |
@@ -54,7 +66,10 @@ src/
   player/Input.js                 klawiatura, mysz, pointer lock
   combat/Combat.js                strzelanie, efekty
   combat/Sfx.js                   dźwięki (Web Audio, bez plików)
-  style/toon.js                   cieniowanie kreskówkowe + kontur
+  render/Pipeline.js              renderer + post-processing + jakość
+  style/materials.js              materiały stylized PBR (triplanar, AO z wierzchołków)
+  style/toon.js                   cieniowanie kreskówkowe + kontur (do wycofania)
+  world/Sky.js                    niebo, IBL, słońce i cienie
   world/World.js                  pusta mapa
   ui/HUD.js                       interfejs
   Dummy.js                        przeciwnik treningowy
