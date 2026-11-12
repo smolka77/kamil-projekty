@@ -1,6 +1,7 @@
-// Lobby z fasolką: niebo, chmury, las i góry w tle, trawiasta ziemia, duży przycisk GRAJ.
+// Lobby z fasolką: hangar z autami sportowymi w tle (hangar.js), wybór trybu, duży przycisk GRAJ.
 // Użycie: createLobby({renderer, bean, animate, onPlay(modeId), modes}) – bean to THREE.Object3D ~1,5 m, przodem do -Z.
 import * as THREE from 'three';
+import { buildHangar } from './hangar.js';
 
 const CSS = `
 #lb-ui{position:fixed;inset:0;z-index:20;pointer-events:none;font-family:'Anton',Impact,'Arial Narrow Bold',sans-serif;color:#fff;
@@ -270,243 +271,10 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
   nick.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') nick.blur(); });
   nick.addEventListener('keyup', e => e.stopPropagation());
 
-  // ---------- scena ----------
+  // ---------- scena: hangar z autami, skrzyniami, bronią i pieniędzmi ----------
   const scene = new THREE.Scene();
-  const HORIZON = new THREE.Color(0xcfe9ff);
-  scene.fog = new THREE.FogExp2(HORIZON, 0.0068);   // lekka mgła: przy postaci niewidoczna, gęstnieje z odległością
-  const camera = new THREE.PerspectiveCamera(32, innerWidth / innerHeight, 0.1, 1200);
-
-  // niebo: gradient na kuli
-  const skyU = { top: { value: new THREE.Color(0x1d63d8) }, mid: { value: new THREE.Color(0x5fb0ff) }, bot: { value: HORIZON } };
-  const SKY_GLSL = `uniform vec3 top,mid,bot;
-    vec3 skyCol(float h){vec3 c=mix(bot,mid,smoothstep(0.,.18,h));return mix(c,top,smoothstep(.18,.75,h));}`;
-  scene.add(new THREE.Mesh(new THREE.SphereGeometry(600, 32, 16), new THREE.ShaderMaterial({
-    side: THREE.BackSide, depthWrite: false, fog: false, uniforms: skyU,
-    vertexShader: 'varying vec3 vP;void main(){vP=normalize(position);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
-    fragmentShader: `${SKY_GLSL} varying vec3 vP;
-      void main(){gl_FragColor=vec4(skyCol(vP.y),1.);
-      #include <colorspace_fragment>
-      }`,
-  })));
-  // materiał gór "za mgłą": kolor nieba w tym kierunku zmieszany z barwą góry (amt = ile góry widać)
-  const SUN_DIR = new THREE.Vector3(7, 13, 6).normalize();
-  function hazeMat(tint, amt, fullAt) {
-    return new THREE.ShaderMaterial({
-      fog: false,
-      uniforms: { ...skyU, tint: { value: new THREE.Color(tint) }, amt: { value: amt }, fullAt: { value: fullAt }, sunDir: { value: SUN_DIR } },
-      vertexShader: 'varying vec3 vW;void main(){vec4 w=modelMatrix*vec4(position,1.);vW=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}',
-      fragmentShader: `${SKY_GLSL} uniform vec3 tint,sunDir;uniform float amt,fullAt;varying vec3 vW;
-        void main(){
-          vec3 d=normalize(vW-cameraPosition),n=normalize(cross(dFdx(vW),dFdy(vW)));if(dot(n,d)>0.)n=-n;
-          float l=.8+.25*max(dot(n,sunDir),0.);
-          float k=amt*(.3+.7*smoothstep(-6.,fullAt,vW.y));          // u podnóża więcej mgły
-          gl_FragColor=vec4(mix(skyCol(max(d.y,0.)),tint*l,k),1.);
-          #include <colorspace_fragment>
-        }`,
-    });
-  }
-  const rnd2 = rng(19), R2 = (a, b) => a + (b - a) * rnd2();   // osobny generator, żeby nie ruszać układu lasu
-
-  // słońce z poświatą
-  const glowTex = (() => {
-    const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d');
-    const g = x.createRadialGradient(64, 64, 0, 64, 64, 64);
-    g.addColorStop(0, 'rgba(255,255,240,1)'); g.addColorStop(.18, 'rgba(255,250,220,.95)');
-    g.addColorStop(.4, 'rgba(255,240,190,.35)'); g.addColorStop(1, 'rgba(255,240,190,0)');
-    x.fillStyle = g; x.fillRect(0, 0, 128, 128);
-    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
-  })();
-  const sunSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, fog: false, depthWrite: false, transparent: true }));
-  sunSprite.position.set(150, 150, -420); sunSprite.scale.setScalar(150); scene.add(sunSprite);
-
-  // światła
-  scene.add(new THREE.HemisphereLight(0xd6ecff, 0x557a33, 1.35));
-  const sun = new THREE.DirectionalLight(0xfff0d2, 2.6);
-  sun.position.set(7, 13, 6); sun.castShadow = true;
-  sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -0.0005; sun.shadow.normalBias = 0.02;
-  Object.assign(sun.shadow.camera, { left: -14, right: 14, top: 14, bottom: -14, near: 1, far: 50 });
-  scene.add(sun, sun.target);
-
-  // teren: płaski w środku, łagodne pagórki dalej
-  const heightAt = (x, z) => {
-    const d = Math.hypot(x, z * 1.2);
-    const k = THREE.MathUtils.smoothstep(d, 45, 110);
-    return k * (Math.sin(x * 0.05) * Math.cos(z * 0.045) * 2 + Math.sin(x * 0.017 + 1.3) * 2.5 + 2);
-  };
-  const grassTex = (() => {
-    const c = document.createElement('canvas'); c.width = c.height = 256; const x = c.getContext('2d');
-    x.fillStyle = '#62b33d'; x.fillRect(0, 0, 256, 256);
-    const r = rng(3);
-    for (let i = 0; i < 900; i++) {
-      const l = r();
-      x.fillStyle = l < .5 ? `rgba(70,140,40,${.25 + r() * .3})` : `rgba(140,205,80,${.2 + r() * .3})`;
-      x.beginPath(); x.arc(r() * 256, r() * 256, 2 + r() * 9, 0, 7); x.fill();
-    }
-    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(90, 90);
-    t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t;
-  })();
-  const groundGeo = new THREE.PlaneGeometry(700, 700, 140, 140); groundGeo.rotateX(-Math.PI / 2);
-  { const p = groundGeo.attributes.position; for (let i = 0; i < p.count; i++) p.setY(i, heightAt(p.getX(i), p.getZ(i))); groundGeo.computeVertexNormals(); }
-  const ground = new THREE.Mesh(groundGeo, new THREE.MeshStandardMaterial({ map: grassTex, roughness: 1 }));
-  ground.receiveShadow = true; scene.add(ground);
-
-  // góry na horyzoncie (bliższe pasmo, lekko zamglone)
-  const mountMat = hazeMat(0x6f9cc0, .78, 40);
-  const snowMat = hazeMat(0xf4f8ff, .82, 40);
-  for (let i = 0; i < 12; i++) {
-    const h = R(28, 52), r = h * R(1.3, 1.8), g = new THREE.Group();
-    const m = new THREE.Mesh(new THREE.ConeGeometry(r, h, 9), mountMat); m.position.y = h / 2; g.add(m);
-    const s = new THREE.Mesh(new THREE.ConeGeometry(r * .26, h * .26, 9), snowMat); s.position.y = h * .87 + .1; g.add(s);
-    g.position.set(-330 + i * 60 + R(-20, 20), -6, R(-300, -250)); g.rotation.y = R(0, 6); scene.add(g);
-  }
-  // dalekie pasmo: ogromne, ledwo widoczne zza mgły
-  const farMat = hazeMat(0x4f74a6, .26, 120), farSnow = hazeMat(0xffffff, .2, 120);
-  for (let i = 0; i < 16; i++) {
-    const h = R2(80, 150), r = h * R2(1.4, 2.1), g = new THREE.Group();
-    const m = new THREE.Mesh(new THREE.ConeGeometry(r, h, 10), farMat); m.position.y = h / 2; g.add(m);
-    const sn = new THREE.Mesh(new THREE.ConeGeometry(r * .22, h * .22, 10), farSnow); sn.position.y = h * .89 + .2; g.add(sn);
-    g.position.set(-800 + i * 105 + R2(-30, 30), -10, R2(-640, -540)); g.rotation.y = R2(0, 6); scene.add(g);
-  }
-
-  // chmury
-  const cloudMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x9fb8d8, emissiveIntensity: .6, roughness: 1, fog: false });
-  const cloudGeo = new THREE.SphereGeometry(1, 18, 12);
-  const clouds = [];
-  for (let i = 0; i < 16; i++) {
-    const c = new THREE.Group(), n = 5 + Math.floor(R(0, 4));
-    for (let j = 0; j < n; j++) {
-      const p = new THREE.Mesh(cloudGeo, cloudMat), s = R(5, 10) * (1 - Math.abs(j - n / 2) / n);
-      p.scale.set(s, s * .8, s); p.position.set((j - n / 2) * 6 + R(-2, 2), R(0, 3), R(-3, 3)); c.add(p);
-    }
-    const flat = new THREE.Mesh(cloudGeo, cloudMat); flat.scale.set(n * 3.6, 2.2, 7); flat.position.y = -1.5; c.add(flat);
-    c.position.set(R(-320, 320), R(45, 110), R(-380, -120)); c.scale.setScalar(R(.8, 1.6));
-    c.userData.v = R(.6, 1.6); scene.add(c); clouds.push(c);
-  }
-
-  // ptaki: kilka kluczy przelatuje po niebie, machają skrzydłami i czasem szybują
-  const birdMat = new THREE.MeshBasicMaterial({ color: 0x2c3746, side: THREE.DoubleSide, fog: false });
-  const wingGeo = new THREE.BufferGeometry();
-  wingGeo.setAttribute('position', new THREE.Float32BufferAttribute([.24, 0, 0, -.22, 0, 0, -.16, 0, .82], 3));
-  const birdBody = new THREE.ConeGeometry(.07, .5, 5); birdBody.rotateZ(-Math.PI / 2);   // dziób w +X
-  function makeBird() {
-    const g = new THREE.Group(), L = new THREE.Mesh(wingGeo, birdMat), Rw = new THREE.Mesh(wingGeo, birdMat);
-    Rw.scale.z = -1; g.add(new THREE.Mesh(birdBody, birdMat), L, Rw);
-    g.userData = { L, R: Rw, ph: rnd2() * 6.28, f: R2(8, 10.5) }; return g;
-  }
-  const flocks = [];
-  // lot po skosie (nie idealnie w poprzek kadru), żeby z ziemi było widać rozpiętość skrzydeł
-  function launchFlock(f, first) {
-    const dir = rnd2() < .5 ? 1 : -1, tilt = (rnd2() < .5 ? 1 : -1) * R2(.6, .85);
-    const h = dir > 0 ? tilt : Math.PI - tilt;                       // obrót wokół Y; lokalne +X = kierunek lotu
-    f.v = new THREE.Vector3(Math.cos(h), 0, -Math.sin(h)); f.group.rotation.y = h;
-    f.speed = R2(5.5, 8.5); f.y = R2(13, 21);
-    const cross = new THREE.Vector3(R2(-18, 18), f.y, R2(-105, -70));   // gdzie klucz przetnie środek kadru
-    const back = first ? R2(5, 25) : R2(90, 200);
-    f.group.position.copy(cross).addScaledVector(f.v, -back);
-    f.left = back + 140;                                              // ile jeszcze leci, zanim wróci na start
-  }
-  for (let i = 0; i < 3; i++) {
-    const group = new THREE.Group(), n = 3 + Math.floor(R2(0, 5)), birds = [];
-    for (let j = 0; j < n; j++) {                       // formacja V za przewodnikiem
-      const b = makeBird(), row = Math.ceil(j / 2), side = j % 2 ? 1 : -1;
-      b.position.set(-row * 1.7 + R2(-.3, .3), R2(-.35, .35), row * side * 1.5); b.scale.setScalar(R2(1.9, 2.4));
-      group.add(b); birds.push(b);
-    }
-    const f = { group, birds, bob: R2(0, 6) }; launchFlock(f, i === 0); scene.add(group); flocks.push(f);
-  }
-
-  // drzewa
-  const trunkMat = new THREE.MeshStandardMaterial({ color: 0x7a4a26, roughness: 1, flatShading: true });
-  const pineMats = [0x2f7d3a, 0x3a8f45, 0x276b33, 0x44994c].map(c => new THREE.MeshStandardMaterial({ color: c, roughness: 1, flatShading: true }));
-  const leafMats = [0x5fae3c, 0x4f9e34, 0x78c043, 0x8acb4c].map(c => new THREE.MeshStandardMaterial({ color: c, roughness: 1, flatShading: true }));
-  const trunkGeo = new THREE.CylinderGeometry(.13, .2, 1, 6);
-  const coneGeo = new THREE.ConeGeometry(1, 1, 7);
-  const blobGeo = new THREE.IcosahedronGeometry(1, 1);
-  const swaying = [];
-  function tree(x, z, s, shadow) {
-    const g = new THREE.Group();
-    const pine = rnd() < .55;
-    const trunk = new THREE.Mesh(trunkGeo, trunkMat);
-    const th = pine ? .9 : 1.3; trunk.scale.set(1, th, 1); trunk.position.y = th / 2; g.add(trunk);
-    const crown = new THREE.Group(); crown.position.y = th * .85; g.add(crown);
-    if (pine) {
-      const m = pineMats[Math.floor(rnd() * pineMats.length)];
-      for (let k = 0; k < 3; k++) {
-        const c = new THREE.Mesh(coneGeo, m), w = 1.25 - k * .3, h = 1.5 - k * .2;
-        c.scale.set(w, h, w); c.position.y = k * .85 + h / 2; c.rotation.y = rnd() * 3; crown.add(c);
-      }
-    } else {
-      const m = leafMats[Math.floor(rnd() * leafMats.length)];
-      for (let k = 0; k < 3; k++) {
-        const b = new THREE.Mesh(blobGeo, m), r = k ? R(.6, .8) : R(.95, 1.15);
-        b.scale.setScalar(r); b.position.set(k ? (k === 1 ? .6 : -.55) : 0, k ? R(.6, 1) : 1.1, k ? R(-.3, .3) : 0); crown.add(b);
-      }
-    }
-    g.traverse(o => { if (o.isMesh) { o.castShadow = shadow; o.receiveShadow = shadow; } });
-    g.position.set(x, heightAt(x, z) - .05, z); g.scale.setScalar(s); g.rotation.y = rnd() * 6;
-    crown.userData.ph = rnd() * 6; swaying.push(crown);
-    scene.add(g);
-  }
-  // las za postacią i po bokach (ramka kadru)
-  for (let i = 0; i < 520; i++) {
-    const x = R(-130, 130), z = R(-140, 4);
-    const d = Math.hypot(x, z * 1.15);
-    if (d < 16) continue;                                  // polana wokół fasolki
-    if (d > 70 && rnd() < .5) continue;
-    tree(x, z, R(1.15, 1.9), d < 30);
-  }
-  [[-9.5, -6], [10.5, -7.5], [-14, -1], [15, -2.5], [-6, -13], [7.5, -15]].forEach(([x, z]) => tree(x, z, R(1.3, 1.7), true));
-
-  // krzaki, kamienie
-  const rockMat = new THREE.MeshStandardMaterial({ color: 0x9aa3a8, roughness: 1, flatShading: true });
-  const rockGeo = new THREE.DodecahedronGeometry(1, 0);
-  [[-2.8, -2.2, .32], [3.4, -2.8, .45], [2.3, 1.0, .18], [-3.9, .3, .24], [6, -7, .7], [-7, -9, .9]].forEach(([x, z, s]) => {
-    const r = new THREE.Mesh(rockGeo, rockMat); r.scale.set(s * 1.3, s * .8, s); r.position.set(x, s * .35, z);
-    r.rotation.set(rnd(), rnd() * 6, rnd()); r.castShadow = r.receiveShadow = true; scene.add(r);
-  });
-  [[-3.4, -3], [4.2, -1.6], [-2, -5.5], [2.8, -6], [-5.6, -1.5], [6.5, -3]].forEach(([x, z]) => {
-    const b = new THREE.Group();
-    for (let k = 0; k < 3; k++) {
-      const m = new THREE.Mesh(blobGeo, leafMats[k % 4]); const s = R(.32, .5);
-      m.scale.set(s, s * .8, s); m.position.set(R(-.35, .35), s * .55, R(-.25, .25)); m.castShadow = m.receiveShadow = true; b.add(m);
-    }
-    b.position.set(x, 0, z); scene.add(b);
-  });
-
-  // kępki trawy i kwiatki (instancje)
-  const bladeGeo = new THREE.ConeGeometry(.025, .2, 3); bladeGeo.translate(0, .1, 0);
-  const blades = new THREE.InstancedMesh(bladeGeo, new THREE.MeshStandardMaterial({ roughness: 1 }), 2600);
-  const flowerGeo = new THREE.IcosahedronGeometry(.03, 0);
-  const flowers = new THREE.InstancedMesh(flowerGeo, new THREE.MeshStandardMaterial({ roughness: .7, emissive: 0x222222 }), 260);
-  {
-    const m = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), sc = new THREE.Vector3(), p = new THREE.Vector3(), col = new THREE.Color();
-    const greens = [0x5aa935, 0x6dbd3f, 0x4e9a2e, 0x86cf4f];
-    for (let i = 0; i < blades.count; i++) {
-      const a = rnd() * 6.283, r = .55 + Math.pow(rnd(), .7) * 16;
-      p.set(Math.cos(a) * r, 0, Math.sin(a) * r * .9 - 2); if (p.z > 2.5) p.z = R(-12, 2.5); p.y = heightAt(p.x, p.z);
-      e.set(R(-.35, .35), rnd() * 6, R(-.35, .35)); q.setFromEuler(e); const s = R(.6, 1.2); sc.set(s, s * R(.8, 1.3), s);
-      blades.setMatrixAt(i, m.compose(p, q, sc)); blades.setColorAt(i, col.set(greens[i % 4]));
-    }
-    const petals = [0xffffff, 0xffe14a, 0xff7eb6, 0xb58cff, 0xff9a3c];
-    for (let i = 0; i < flowers.count; i++) {
-      const a = rnd() * 6.283, r = 1.1 + rnd() * 13;
-      p.set(Math.cos(a) * r, 0, Math.sin(a) * r * .9 - 2); if (p.z > 2.5) p.z = R(-12, 2.5); p.y = heightAt(p.x, p.z) + R(.1, .2);
-      q.identity(); sc.setScalar(R(.8, 1.5));
-      flowers.setMatrixAt(i, m.compose(p, q, sc)); flowers.setColorAt(i, col.set(petals[i % petals.length]));
-    }
-  }
-  blades.receiveShadow = true; scene.add(blades, flowers);
-
-  // pyłki unoszące się w powietrzu
-  const POLLEN = 140;
-  const pollenGeo = new THREE.BufferGeometry();
-  const pp = new Float32Array(POLLEN * 3);
-  for (let i = 0; i < POLLEN; i++) { pp[i * 3] = R(-8, 8); pp[i * 3 + 1] = R(0, 5); pp[i * 3 + 2] = R(-8, 4); }
-  pollenGeo.setAttribute('position', new THREE.BufferAttribute(pp, 3));
-  const pollen = new THREE.Points(pollenGeo, new THREE.PointsMaterial({
-    size: .07, map: glowTex, transparent: true, depthWrite: false, color: 0xfff6c8, opacity: .9,
-  }));
-  scene.add(pollen);
+  const camera = new THREE.PerspectiveCamera(32, innerWidth / innerHeight, 0.1, 200);
+  const env = buildHangar(scene, renderer);
 
   // cień kontaktowy pod fasolką
   const blob = (() => {
@@ -529,8 +297,8 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
   function frameCamera() {
     camera.aspect = innerWidth / innerHeight;
     const portrait = camera.aspect < 0.8;
-    camera.fov = portrait ? 42 : 30;
-    camZ = portrait ? 6.2 : 6;
+    camera.fov = portrait ? 44 : 36;
+    camZ = portrait ? 6.0 : 5.3;
     lookAt.set(0, portrait ? 1.2 : 1.0, 0);
     camera.updateProjectionMatrix();
   }
@@ -567,24 +335,7 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
     camera.position.set(cmx * .35, .8 - cmy * .1, camZ);
     camera.lookAt(lookAt);
 
-    swaying.forEach(c => { c.rotation.z = Math.sin(t * 1.1 + c.userData.ph) * .025; });
-    clouds.forEach(c => { c.position.x += c.userData.v * dt; if (c.position.x > 360) c.position.x = -360; });
-    flocks.forEach(f => {
-      const p = f.group.position;
-      p.addScaledVector(f.v, f.speed * dt); p.y = f.y + Math.sin(t * .45 + f.bob) * .8;
-      f.left -= f.speed * dt; if (f.left < 0) launchFlock(f, false);
-      f.birds.forEach(b => {
-        const u = b.userData, glide = THREE.MathUtils.smoothstep(Math.sin(t * .35 + u.ph), .45, .8);
-        const a = THREE.MathUtils.lerp(.15 + Math.sin(t * u.f + u.ph) * .6, .1, glide);
-        u.L.rotation.x = -a; u.R.rotation.x = a; b.position.y += Math.cos(t * u.f + u.ph) * .002;
-      });
-    });
-    const pa = pollenGeo.attributes.position;
-    for (let i = 0; i < POLLEN; i++) {
-      let y = pa.getY(i) + dt * (.12 + (i % 5) * .03); if (y > 5) y = 0;
-      pa.setY(i, y); pa.setX(i, pa.getX(i) + Math.sin(t * .8 + i) * dt * .08);
-    }
-    pa.needsUpdate = true;
+    env.update(t, dt);
 
     renderer.render(scene, camera);
 
