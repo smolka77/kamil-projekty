@@ -33,22 +33,22 @@ function shipBar(){
 function stars(r){return `<span class="stars" aria-hidden="true">${I('star',14)}</span>`}
 function pcard(p){
   const wish=store.get('pb_wish',[]).includes(p.id);
-  const badges=[p.badge?`<span class="pill ${p.badge==='Promocja'?'pill--orange':p.badge==='Nowość'?'pill--green':'pill--navy'}">${p.badge}</span>`:'',p.tags.includes('bio')?'<span class="pill pill--green">Bio</span>':''].join('');
+  const badges=[p.badge?`<span class="pill">${p.badge}</span>`:'',p.tags.includes('bio')?'<span class="pill">Bio</span>':''].join('');
   return `<article class="pcard"><div class="pcard-img"><a href="produkt.html?id=${p.id}" tabindex="-1" aria-hidden="true">${A.productArt(p)}</a><div class="pcard-badges">${badges}</div>
   <button class="wish" data-wish="${p.id}" aria-pressed="${wish}" aria-label="Dodaj do ulubionych: ${esc(p.name)}">${I('heart',20)}</button></div>
-  <div class="pcard-body"><span class="pcard-cat">${cat(p.cat).name}</span><h3 class="pcard-title"><a href="produkt.html?id=${p.id}">${p.name}</a></h3>
+  <div class="pcard-body"><h3 class="pcard-title"><a href="produkt.html?id=${p.id}">${p.name}</a></h3>
   <div class="pcard-meta">${stars()}<span>${p.rating.toFixed(1).replace('.',',')} · ${p.size}</span></div>
   <div class="pcard-foot"><span class="price">${p.oldPrice?`<del>${zl(p.oldPrice)}</del><ins>${zl(p.price)}</ins>`:zl(p.price)}</span>
-  <button class="add-btn" data-add="${p.id}" aria-label="Dodaj do koszyka: ${esc(p.name)}">${I('plus',22)}</button></div></div></article>`;
+  <button class="add-btn" data-add="${p.id}" aria-label="Dodaj do koszyka: ${esc(p.name)}">${I('plus',20)}</button></div></div></article>`;
 }
 function rcard(r,pill=true){
-  return `<article class="rcard"><div class="rcard-img">${A.recipeArt(r)}${pill?`<span class="pill">${r.cat}</span>`:''}</div>
-  <div class="rcard-body"><h3><a href="przepis.html?id=${r.id}">${r.title}</a></h3>
+  return `<article class="rcard"><div class="rcard-img">${A.recipeArt(r)}</div>
+  <div class="rcard-body"><span class="kicker">${r.cat}</span><h3><a href="przepis.html?id=${r.id}">${r.title}</a></h3>
   <div class="meta"><span>${I('clock',16)} ${r.time} min</span><span>${I('users',16)} ${r.serv} porcji</span><span>${I('flame',16)} ${r.kcal} kcal</span></div>
   <span class="link-arrow" style="margin-top:auto">Zobacz przepis ${I('chevron',18)}</span></div></article>`;
 }
 function vcard(v,dark=false){
-  return `<button class="vcard" data-video="${v.id}"><div class="vthumb">${A.videoArt(v)}<span class="pill pill--orange soon">Wkrótce</span><span class="play"><span>${I('play',26)}</span></span><span class="dur">${v.dur}</span></div>
+  return `<button class="vcard" data-video="${v.id}"><div class="vthumb">${A.videoArt(v)}<span class="pill soon">Wkrótce</span><span class="play"><span>${I('play',22)}</span></span><span class="dur">${v.dur}</span></div>
   <div><span class="vcat">${v.cat}</span><h3>${v.title}</h3></div></button>`;
 }
 
@@ -59,9 +59,9 @@ function chrome(){
   const curP=k=>({sklep:['sklep','produkt'],blog:['blog','przepis']}[k]||[k]).includes(page)?' aria-current="page"':'';
   document.body.insertAdjacentHTML('afterbegin',`
   <a class="skip" href="#main">Przejdź do treści</a>
-  <div class="announce"><span class="demo">Prototyp</span>Dane produktów, przepisów i filmów są <b>demonstracyjne</b> · Darmowa dostawa od ${PB.freeShip} zł</div>
+  <div class="announce">Darmowa dostawa od ${PB.freeShip} zł · wysyłka w 24 h <span class="demo">Prototyp – dane demonstracyjne</span></div>
   <header class="site-header"><div class="container">
-   <a class="logo" href="index.html" aria-label="ProBazar – strona główna">${A.logoMark(46)}<span class="logo-text">Pro<span>Bazar</span></span></a>
+   <a class="logo" href="index.html" aria-label="ProBazar – strona główna">${A.logoMark(40)}<span class="logo-text">Pro<span>Bazar</span></span></a>
    <nav class="nav" aria-label="Główne">${NAV.map(n=>`<a href="${n[2]}"${curP(n[0])}>${n[1]}</a>`).join('')}</nav>
    <button class="icon-btn" id="openSearch" aria-label="Szukaj">${I('search',24)}</button>
    <button class="icon-btn" id="openCart" aria-label="Koszyk">${I('cart',24)}<span class="badge-count" id="cartCount" data-n="0"></span></button>
@@ -75,18 +75,18 @@ function chrome(){
   <div class="search-panel" id="searchPanel" role="dialog" aria-label="Wyszukiwarka"><div class="container">
    <form class="search-box" action="sklep.html" role="search"><label class="sr" for="q">Szukaj produktów i przepisów</label><input class="input" id="q" name="q" type="search" placeholder="Szukaj produktów i przepisów…" autocomplete="off">
    <button class="btn btn--navy" type="submit">Szukaj</button><button class="icon-btn" type="button" data-close aria-label="Zamknij wyszukiwarkę">${I('close',24)}</button></form>
-   <div id="srRes"><div class="sr-group"><h3>Popularne</h3><div class="chips">${['Migdały','Miód','Matcha','Chia','Olej kokosowy'].map(t=>`<a class="chip" href="sklep.html?q=${encodeURIComponent(t)}">${t}</a>`).join('')}</div></div></div></div></div>
+   <div id="srRes"><div class="sr-group"><h3>Popularne</h3><div class="chips">${['Migdały','Miód','Matcha','Granola','Oliwa'].map(t=>`<a class="chip" href="sklep.html?q=${encodeURIComponent(t)}">${t}</a>`).join('')}</div></div></div></div></div>
   <aside class="drawer" id="drawer" aria-label="Koszyk"><div class="drawer-head"><h2>Twój koszyk</h2><button class="icon-btn" data-close aria-label="Zamknij koszyk">${I('close',24)}</button></div><div class="drawer-body" id="drawerBody"></div><div class="drawer-foot" id="drawerFoot"></div></aside>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>`);
   document.body.insertAdjacentHTML('beforeend',`
   <footer class="footer"><div class="container">
    <div class="footer-grid">
-    <div class="footer-brand"><a class="logo" href="index.html" style="margin-bottom:14px">${A.logoMark(52)}<span class="logo-text">Pro<span>Bazar</span></span></a>
+    <div class="footer-brand"><a class="logo" href="index.html" style="margin-bottom:14px">${A.logoMark(44)}<span class="logo-text">Pro<span>Bazar</span></span></a>
      <p style="max-width:36ch">Zdrowa żywność, prosta kuchnia i przepisy, które naprawdę wychodzą. Sklep, blog i wideo – wszystko w jednym miejscu.</p><div class="pay-row"><span>BLIK</span><span>Karta</span><span>Przelew</span><span>Pobranie</span></div></div>
-    <div><h3>Sklep</h3><ul>${PB.categories.slice(0,5).map(c=>`<li><a href="sklep.html?kat=${c.id}">${c.name}</a></li>`).join('')}</ul></div>
+    <div><h3>Sklep</h3><ul>${PB.categories.map(c=>`<li><a href="sklep.html?kat=${c.id}">${c.name}</a></li>`).join('')}</ul></div>
     <div><h3>ProBazar</h3><ul><li><a href="blog.html">Blog Moniki</a></li><li><a href="wideo.html">Wideo</a></li><li><a href="o-nas.html">O nas</a></li><li><a href="faq.html">FAQ i dostawa</a></li><li><a href="kontakt.html">Kontakt</a></li></ul></div>
    </div>
-   <div class="footer-bottom"><span>© 2026 ProBazar · Prototyp wizualny – wszystkie dane są demonstracyjne</span><span><a href="faq.html">Regulamin</a> · <a href="faq.html">Polityka prywatności</a></span></div></div></footer>`);
+   <div class="footer-bottom"><span>© 2026 ProBazar · Prototyp wizualny – dane demonstracyjne · Zdjęcia: Unsplash</span><span><a href="faq.html">Regulamin</a> · <a href="faq.html">Polityka prywatności</a></span></div></div></footer>`);
   if(!$('main#main')){}
   bindChrome();
 }
@@ -146,47 +146,45 @@ const $main=()=>$('#main');
 const R={};
 
 R.home=()=>{
-  const feat=['migdaly','miod','matcha','olej-kokosowy','oliwa','maslo-orzechowe','chia','jaglana'].map(prod);
+  const feat=['migdaly','miod','matcha','granola','oliwa','czekolada','mix-goji','platki-owsiane'].map(prod);
+  const V=[['leaf','Naturalne składy','Czytamy etykiety za Ciebie – bez zbędnej chemii i ukrytego cukru.'],['shield','Sprawdzeni dostawcy','Mali producenci i certyfikowane uprawy, które znamy z imienia.'],['book','Przepis do każdego produktu','Od razu wiesz, co ugotować z tego, co kupujesz.'],['recycle','Mniej odpadów','Szkło i papier wszędzie tam, gdzie to możliwe.']];
   $main().innerHTML=`
   <section class="hero"><div class="container hero-grid">
-   <div><span class="eyebrow">Sklep · Blog · Wideo</span>
-    <h1>Jedz <em>dobrze.</em><br>Gotuj z <span class="o">przyjemnością.</span></h1>
-    <p class="lead">ProBazar to sklep ze zdrową żywnością i blog kulinarny Moniki. Wybieraj proste, naturalne produkty – a przepisy podpowiedzą, co z nich ugotować.</p>
-    <div class="hero-cta"><a class="btn btn--primary" href="sklep.html">Wejdź do sklepu ${I('chevron',20)}</a><a class="btn btn--ghost" href="blog.html">Przepisy Moniki</a></div>
-    <div class="trust"><span>${I('leaf',20)} Naturalne składy</span><span>${I('truck',20)} Wysyłka w 24 h</span><span>${I('shield',20)} 30 dni na zwrot</span></div></div>
-   <div class="hero-art" aria-hidden="false"><div class="hero-blob"></div>
-    <div class="hero-card a">${A.productArt(prod('miod'))}</div><div class="hero-card b">${A.productArt(prod('matcha'))}</div><div class="hero-card c">${A.productArt(prod('migdaly'))}</div>
-    <div class="hero-chip x"><span class="dot">${I('truck',20)}</span><span><b>Dostawa w 24 h</b>zamów do 14:00</span></div>
-    <div class="hero-chip y"><span class="dot">${I('book',20)}</span><span><b>Przepis tygodnia</b>Jaglanka z goji</span></div></div>
+   <div class="hero-tx"><span class="eyebrow">Sklep ze zdrową żywnością i blog kulinarny</span>
+    <h1>Dobre jedzenie<br>zaczyna się od <em>dobrych składników</em></h1>
+    <p class="lead">Wybieramy proste, naturalne produkty, a Monika pokazuje na blogu, co z nich ugotować.</p>
+    <div class="hero-cta"><a class="btn btn--navy" href="sklep.html">Zobacz sklep</a><a class="btn btn--ghost" href="blog.html">Przepisy Moniki</a></div>
+    <ul class="trust"><li>${I('leaf',18)} Naturalne składy</li><li>${I('truck',18)} Wysyłka w 24 h</li><li>${I('shield',18)} 30 dni na zwrot</li></ul></div>
+   <div class="hero-art"><div class="hero-main">${A.img('hero','Stół ze śniadaniem: miseczki z owsianką, owocami i miodem',1100,1300,1)}</div>
+    <a class="hero-note" href="przepis.html?id=owsianka"><span class="th">${A.recipeArt(rec('owsianka'))}</span><span><small>Przepis tygodnia</small><b>Kremowa owsianka z owocami</b></span></a></div>
   </div></section>
 
-  <section class="section"><div class="container"><div class="sec-head"><div><span class="eyebrow">Kategorie</span><h2>Znajdź swoje smaki</h2></div><a class="link-arrow" href="sklep.html">Cały sklep ${I('chevron',18)}</a></div>
-   <div class="catgrid">${PB.categories.map(c=>`<a class="cat" href="sklep.html?kat=${c.id}"><div class="im">${A.categoryArt(c)}</div><div class="tx"><b>${c.name}</b><small>${PB.products.filter(p=>p.cat===c.id).length} produktów</small></div></a>`).join('')}</div></div></section>
+  <section class="section"><div class="container"><div class="sec-head"><div><span class="eyebrow">Kategorie</span><h2>Czego dziś szukasz?</h2></div><a class="link-arrow" href="sklep.html">Cały sklep ${I('chevron',16)}</a></div>
+   <div class="catgrid">${PB.categories.map(c=>`<a class="cat" href="sklep.html?kat=${c.id}"><div class="im">${A.categoryArt(c)}</div><b>${c.name}</b><small>${PB.products.filter(p=>p.cat===c.id).length} produktów</small></a>`).join('')}</div></div></section>
 
-  <section class="section section--sand"><div class="container"><div class="sec-head"><div><span class="eyebrow">Polecamy</span><h2>Ulubieńcy naszych klientów</h2><p>Produkty, do których wracacie najczęściej – sprawdzone w kuchni Moniki.</p></div><a class="link-arrow" href="sklep.html">Zobacz wszystkie ${I('chevron',18)}</a></div>
+  <section class="section section--tint"><div class="container"><div class="sec-head"><div><span class="eyebrow">Polecamy</span><h2>Ulubione w naszej spiżarni</h2><p>Produkty, do których wracacie najczęściej – sprawdzone w kuchni Moniki.</p></div><a class="link-arrow" href="sklep.html">Zobacz wszystkie ${I('chevron',16)}</a></div>
    <div class="pgrid p4">${feat.map(pcard).join('')}</div></div></section>
 
-  <section class="section"><div class="container"><div class="sec-head"><div><span class="eyebrow">Blog kulinarny</span><h2>Najnowsze od Moniki</h2><p>Przepisy, w których użyjesz produktów z naszego sklepu – składniki dodasz do koszyka jednym kliknięciem.</p></div><a class="link-arrow" href="blog.html">Wszystkie przepisy ${I('chevron',18)}</a></div>
+  <section class="section"><div class="container"><div class="sec-head"><div><span class="eyebrow">Blog kulinarny</span><h2>Najnowsze od Moniki</h2><p>Przepisy z produktami z naszego sklepu – składniki dodasz do koszyka jednym kliknięciem.</p></div><a class="link-arrow" href="blog.html">Wszystkie przepisy ${I('chevron',16)}</a></div>
    <div class="rgrid r3">${PB.recipes.slice(0,3).map(r=>rcard(r)).join('')}</div></div></section>
 
-  <section class="section section--navy"><div class="container"><div class="sec-head"><div><span class="eyebrow" style="color:var(--orange)">Wideo</span><h2>Kanał ProBazar – już wkrótce</h2><p>Gotujemy, testujemy i pokazujemy, skąd bierzemy nasze produkty. Poniżej zapowiedź tego, co przygotowujemy.</p></div><a class="btn btn--light" href="wideo.html">Zobacz zapowiedzi</a></div>
+  <section class="section section--sand"><div class="container about-teaser"><div class="ph">${A.avatar()}</div>
+   <div><span class="eyebrow">Poznaj Monikę</span><p class="quote">„Zdrowe jedzenie nie musi być nudne ani drogie. Wystarczą dobre składniki i pięć minut dobrego pomysłu.”</p><p class="muted" style="max-width:54ch">Monika od lat gotuje dla rodziny i znajomych. W ProBazarze dzieli się przepisami i wybiera produkty, które sama kładzie do swojego koszyka.</p><a class="link-arrow" href="o-nas.html">Poznaj naszą historię ${I('chevron',16)}</a></div></div></section>
+
+  <section class="section"><div class="container"><div class="sec-head"><div><span class="eyebrow">Wideo</span><h2>Kanał ProBazar już wkrótce</h2><p>Gotujemy, testujemy i pokazujemy, skąd bierzemy nasze produkty. Poniżej zapowiedź tego, co przygotowujemy.</p></div><a class="link-arrow" href="wideo.html">Zobacz zapowiedzi ${I('chevron',16)}</a></div>
    <div class="grid grid-3">${PB.videos.slice(0,3).map(v=>vcard(v)).join('')}</div></div></section>
 
-  <section class="section"><div class="container"><div class="sec-head"><div><span class="eyebrow">Dlaczego ProBazar</span><h2>Prosto, uczciwie, smacznie</h2></div></div>
-   <div class="values">${[['leaf','Naturalne składy','Czytamy etykiety za Ciebie – bez zbędnej chemii i ukrytego cukru.','#E7F2E2','#2B6E30'],['shield','Sprawdzeni dostawcy','Współpracujemy z małymi producentami i certyfikowanymi plantacjami bio.','#E3F0F8','#1D5C8C'],['book','Wiedza i przepisy','Każdy produkt ma przepis od Moniki – wiesz, co z nim zrobić.','#FDEEDC','#B4530B'],['recycle','Mniej odpadów','Opakowania nadające się do recyklingu, szkło tam, gdzie to możliwe.','#E7F2E2','#2B6E30']].map(v=>`<div class="value"><div class="vi" style="background:${v[3]};color:${v[4]}">${I(v[0],28)}</div><div><h3>${v[1]}</h3><p>${v[2]}</p></div></div>`).join('')}</div></div></section>
+  <section class="section section--tint"><div class="container"><div class="values">${V.map(v=>`<div class="value"><div class="vi">${I(v[0],26)}</div><div><h3>${v[1]}</h3><p>${v[2]}</p></div></div>`).join('')}</div></div></section>
 
-  <section class="section section--sand"><div class="container about-teaser"><div class="ph">${A.avatar(260)}</div>
-   <div><span class="eyebrow">Poznaj Monikę</span><p class="quote">„Zdrowe jedzenie nie musi być nudne ani drogie. Wystarczą dobre składniki i pięć minut dobrego pomysłu.”</p><p style="color:var(--muted);max-width:56ch">Monika od lat gotuje dla rodziny i znajomych. W ProBazarze dzieli się przepisami – i wybiera produkty, które sama kładzie do swojego koszyka.</p><a class="btn btn--navy" href="o-nas.html">Poznaj naszą historię</a></div></div></section>
-
-  <section class="section"><div class="container"><div class="news"><div><h2>Przepis w każdy czwartek</h2><p>Zapisz się na newsletter i odbierz <b>10% rabatu</b> na pierwsze zakupy (kod ${PB.coupon.code}).</p></div>
-   <form data-newsletter><label class="sr" for="nl">Adres e-mail</label><input class="input" id="nl" type="email" required placeholder="Twój adres e-mail"><button class="btn btn--primary" type="submit">Zapisz mnie</button></form></div></div></section>`;
+  <section class="news-band">${A.img('news','',1400,700)}<div class="container"><div class="news"><span class="eyebrow">Newsletter</span><h2>Jeden przepis w każdy czwartek</h2><p>Zapisz się i odbierz 10% rabatu na pierwsze zakupy (kod ${PB.coupon.code}).</p>
+   <form data-newsletter><label class="sr" for="nl">Adres e-mail</label><input class="input" id="nl" type="email" required placeholder="Twój adres e-mail"><button class="btn btn--navy" type="submit">Zapisz mnie</button></form></div></div></section>`;
 };
 
 R.sklep=()=>{
   const S={cat:qs.get('kat')||'',tags:new Set(),max:60,sort:'pop',q:qs.get('q')||''};
   const cnt=id=>PB.products.filter(p=>p.cat===id).length;
   $main().innerHTML=`<div class="container"><nav class="crumbs" aria-label="Okruszki"><a href="index.html">Strona główna</a>${I('chevron',14)}<span>Sklep</span></nav>
-  <div class="page-head"><h1 id="shopTitle">Sklep</h1><p class="lead" id="shopLead">Zdrowa żywność wybrana przez Monikę. Filtruj, sortuj i dodawaj do koszyka.</p></div>
+  <div class="page-head"><span class="eyebrow">Sklep</span><h1 id="shopTitle">Sklep</h1><p class="lead" id="shopLead">Zdrowa żywność wybrana przez Monikę. Filtruj, sortuj i dodawaj do koszyka.</p></div>
   <div class="catpills" id="pills"></div>
   <div class="shop"><aside class="filters" id="filters" aria-label="Filtry"><div class="fhead"><h2 style="font-size:1.4rem;margin:0">Filtry</h2><button class="icon-btn" data-close aria-label="Zamknij filtry">${I('close',24)}</button></div>
    <h3>Kategoria</h3><label class="fopt"><span class="l"><input type="radio" name="cat" value="" ${!S.cat?'checked':''}>Wszystkie</span><small>${PB.products.length}</small></label>
@@ -200,7 +198,7 @@ R.sklep=()=>{
   const render=()=>{
     let L=PB.products.filter(p=>(!S.cat||p.cat===S.cat)&&[...S.tags].every(t=>p.tags.includes(t))&&p.price<=S.max&&(!S.q||(p.name+p.desc+cat(p.cat).name).toLowerCase().includes(S.q.toLowerCase())));
     L.sort({pop:(a,b)=>b.rev-a.rev,asc:(a,b)=>a.price-b.price,desc:(a,b)=>b.price-a.price,name:(a,b)=>a.name.localeCompare(b.name,'pl')}[S.sort]);
-    $('#list').innerHTML=L.length?L.map(pcard).join(''):`<div class="empty" style="grid-column:1/-1"><div class="art-wrap">${A.productArt(prod('chia'))}</div><h3>Nic nie znaleźliśmy</h3><p>Zmień filtry lub wyszukaj coś innego.</p><button class="btn btn--navy" id="reset2">Wyczyść filtry</button></div>`;
+    $('#list').innerHTML=L.length?L.map(pcard).join(''):`<div class="empty" style="grid-column:1/-1"><div class="art-wrap">${A.productArt(prod('migdaly'))}</div><h3>Nic nie znaleźliśmy</h3><p>Zmień filtry lub wyszukaj coś innego.</p><button class="btn btn--navy" id="reset2">Wyczyść filtry</button></div>`;
     $('#count').textContent=`${L.length} ${L.length===1?'produkt':L.length<5&&L.length>1?'produkty':'produktów'}`;$('#applyBtn').textContent=`Pokaż produkty (${L.length})`;
     const c=cat(S.cat);$('#shopTitle').textContent=S.q?`Wyniki: „${S.q}”`:c?c.name:'Sklep';$('#shopLead').textContent=c?c.desc:'Zdrowa żywność wybrana przez Monikę. Filtruj, sortuj i dodawaj do koszyka.';document.title=($('#shopTitle').textContent)+' – ProBazar';
     $('#pills').innerHTML=`<button class="chip" aria-pressed="${!S.cat}" data-pill="">Wszystko</button>`+PB.categories.map(c=>`<button class="chip" aria-pressed="${S.cat===c.id}" data-pill="${c.id}">${c.name}</button>`).join('');
@@ -225,10 +223,10 @@ R.produkt=()=>{
   const sim=PB.products.filter(x=>x.cat===p.cat&&x.id!==p.id).concat(PB.products.filter(x=>x.cat!==p.cat&&x.id!==p.id)).slice(0,4);
   const N=['Wartość energetyczna','Tłuszcz','w tym kwasy nasycone','Węglowodany','w tym cukry','Błonnik','Białko','Sól'],U=[' kcal',' g',' g',' g',' g',' g',' g',' g'];
   $main().innerHTML=`<div class="container"><nav class="crumbs" aria-label="Okruszki"><a href="index.html">Strona główna</a>${I('chevron',14)}<a href="sklep.html">Sklep</a>${I('chevron',14)}<a href="sklep.html?kat=${c.id}">${c.name}</a>${I('chevron',14)}<span>${p.name}</span></nav>
-  <div class="pdp"><div class="pdp-gal">${A.productArt(p)}</div>
-   <div class="pdp-info"><div class="chips" style="margin-bottom:12px">${p.badge?`<span class="pill pill--orange">${p.badge}</span>`:''}${p.tags.map(t=>`<span class="pill pill--green">${PB.tags[t]}</span>`).join('')}</div>
-    <h1>${p.name}</h1><div class="meta"><span class="stars" style="gap:2px">${[1,2,3,4,5].map(()=>I('star',16)).join('')}</span><span><b>${p.rating.toFixed(1).replace('.',',')}</b> (${p.rev} opinii)</span><span>${c.name}</span></div>
-    <div class="pdp-price"><span class="price">${p.oldPrice?`<del>${zl(p.oldPrice)}</del><ins>${zl(p.price)}</ins>`:zl(p.price)}</span><span style="color:var(--muted)">${p.size} · ${zl(p.price/parseFloat(p.size)*100)}/100 ${p.size.includes('ml')?'ml':'g'}</span></span></div>
+  <div class="pdp"><div class="pdp-gal">${A.productArt(p,1)}</div>
+   <div class="pdp-info"><div class="chips" style="margin-bottom:12px">${p.badge?`<span class="pill pill--line">${p.badge}</span>`:''}${p.tags.map(t=>`<span class="pill pill--line">${PB.tags[t]}</span>`).join('')}</div>
+    <h1>${p.name}</h1><div class="meta"><span class="stars" style="gap:2px">${[1,2,3,4,5].map(()=>I('star',14)).join('')}</span><span><b>${p.rating.toFixed(1).replace('.',',')}</b> (${p.rev} opinii)</span><span>${c.name}</span></div>
+    <div class="pdp-price"><span class="price">${p.oldPrice?`<del>${zl(p.oldPrice)}</del><ins>${zl(p.price)}</ins>`:zl(p.price)}</span><span style="color:var(--muted)">${p.size} · ${zl(p.price/(p.per||parseFloat(p.size))*100)}/100 ${p.size.includes('ml')?'ml':'g'}</span></span></div>
     <p class="lead" style="color:var(--muted)">${p.desc}</p>
     <div class="pdp-buy"><div class="qty"><button id="qm" aria-label="Mniej">${I('minus',18)}</button><output id="qv" aria-live="polite">1</output><button id="qp" aria-label="Więcej">${I('plus',18)}</button></div><button class="btn btn--primary" id="buy">${I('cart',20)} Dodaj do koszyka</button></div>
     <ul class="perks"><li>${I('truck',22)} Wysyłka w 24 h · darmowa od ${PB.freeShip} zł</li><li>${I('shield',22)} 30 dni na zwrot bez podania przyczyny</li><li>${I('leaf',22)} Pakowane w opakowania nadające się do recyklingu</li></ul></div></div>
@@ -273,7 +271,7 @@ R.zamowienie=()=>{
   const f=(id,l,t='text',x='',ac='')=>`<div class="field"><label for="${id}">${l}</label><input class="input" id="${id}" name="${id}" type="${t}" ${x} autocomplete="${ac}"><div class="err-msg">Uzupełnij to pole.</div></div>`;
   const form=()=>{
     const L=Cart.lines();
-    if(!L.length)return `<div class="container"><div class="empty"><div class="art-wrap">${A.productArt(prod('chia'))}</div><h2>Brak produktów do zamówienia</h2><p>Dodaj produkty do koszyka, aby przejść dalej.</p><a class="btn btn--primary" href="sklep.html">Idź do sklepu</a></div></div>`;
+    if(!L.length)return `<div class="container"><div class="empty"><div class="art-wrap">${A.productArt(prod('migdaly'))}</div><h2>Brak produktów do zamówienia</h2><p>Dodaj produkty do koszyka, aby przejść dalej.</p><a class="btn btn--primary" href="sklep.html">Idź do sklepu</a></div></div>`;
     const T=Cart.totals(ship);
     return `<div class="container"><div class="stepper"><span class="s done"><span class="n">${I('check',14)}</span>Koszyk</span><span class="sep"></span><span class="s on"><span class="n">2</span>Dane i dostawa</span><span class="sep"></span><span class="s"><span class="n">3</span>Potwierdzenie</span></div>
     <div class="page-head" style="padding-top:8px"><h1>Zamówienie</h1></div>
@@ -312,7 +310,7 @@ R.zamowienie=()=>{
 R.blog=()=>{
   const cats=['Wszystkie',...new Set(PB.recipes.map(r=>r.cat))];let cur='Wszystkie';
   $main().innerHTML=`<div class="container"><nav class="crumbs" aria-label="Okruszki"><a href="index.html">Strona główna</a>${I('chevron',14)}<span>Blog Moniki</span></nav>
-  <div class="page-head"><span class="eyebrow">Blog kulinarny</span><h1>Kuchnia Moniki</h1><p class="lead">Proste, sezonowe przepisy z produktami, które znajdziesz w naszym sklepie. Do każdego – lista zakupów jednym kliknięciem.</p></div>
+  <div class="page-head page-head--img">${A.img('blog','',1400,700,1)}<div><span class="eyebrow">Blog kulinarny</span><h1>Kuchnia Moniki</h1><p class="lead">Proste, sezonowe przepisy z produktami, które znajdziesz w naszym sklepie. Do każdego – lista zakupów jednym kliknięciem.</p></div></div>
   <div id="feat"></div><div class="chips" style="margin:28px 0 24px" id="bchips"></div><div class="rgrid r3" id="blist" style="padding-bottom:56px"></div></div>`;
   const draw=()=>{const f=PB.recipes[0];
     $('#feat').innerHTML=cur==='Wszystkie'?`<article class="feat"><div class="im">${A.recipeArt(f)}</div><div class="tx"><span class="eyebrow">Przepis tygodnia</span><h2><a href="przepis.html?id=${f.id}">${f.title}</a></h2><p style="color:var(--muted)">${f.intro}</p><div class="meta"><span>${I('clock',16)} ${f.time} min</span><span>${I('users',16)} ${f.serv} porcji</span><span>${I('flame',16)} ${f.kcal} kcal</span></div><span class="link-arrow">Czytaj przepis ${I('chevron',18)}</span></div></article>`:'';
@@ -326,14 +324,14 @@ R.przepis=()=>{
   const ids=[...new Set(r.ing.map(i=>i[1]).filter(Boolean))],shop=ids.map(prod),sum=shop.reduce((a,p)=>a+p.price,0);
   const others=PB.recipes.filter(x=>x.id!==r.id).slice(0,3);
   $main().innerHTML=`<div class="container"><nav class="crumbs" aria-label="Okruszki"><a href="index.html">Strona główna</a>${I('chevron',14)}<a href="blog.html">Blog</a>${I('chevron',14)}<span>${r.cat}</span></nav>
-  <div class="recipe-hero"><div><span class="pill pill--green" style="margin-bottom:14px">${r.cat}</span><h1 style="font-size:clamp(1.9rem,5vw,3rem)">${r.title}</h1><p class="lead" style="color:var(--muted)">${r.intro}</p>
+  <div class="recipe-hero"><div><span class="eyebrow">${r.cat}</span><h1 style="font-size:clamp(1.9rem,5vw,3rem)">${r.title}</h1><p class="lead" style="color:var(--muted)">${r.intro}</p>
    <div class="stat-row"><div class="stat">${I('clock',24)}<span><b>${r.time} min</b><small>czas</small></span></div><div class="stat">${I('users',24)}<span><b>${r.serv}</b><small>porcji</small></span></div><div class="stat">${I('chef',24)}<span><b>${r.level}</b><small>poziom</small></span></div><div class="stat">${I('flame',24)}<span><b>${r.kcal} kcal</b><small>na porcję</small></span></div></div>
-   <div class="chips">${r.tags.map(t=>`<span class="pill pill--green">${PB.tags[t]}</span>`).join('')}<button class="chip" onclick="window.print()">Drukuj przepis</button></div></div><div class="im">${A.recipeArt(r)}</div></div>
+   <div class="chips">${r.tags.map(t=>`<span class="pill pill--line">${PB.tags[t]}</span>`).join('')}<button class="chip" onclick="window.print()">Drukuj przepis</button></div></div><div class="im">${A.recipeArt(r,1)}</div></div>
   <div class="recipe-body"><aside><div class="card" style="margin-bottom:20px"><h2 style="font-size:1.5rem">Składniki</h2><ul class="ings">${r.ing.map((i,k)=>`<li><label><input type="checkbox"><span>${i[0]}${i[1]?` <a class="shop-tag" href="produkt.html?id=${i[1]}" title="Kup w sklepie">${I('cart',12)} sklep</a>`:''}</span></label></li>`).join('')}</ul></div>
    ${shop.length?`<div class="buy-box"><h3>${I('cart',24)} Kup składniki</h3><p style="color:var(--muted);font-size:.92rem;margin-bottom:6px">Produkty z tego przepisu dostępne w ProBazarze:</p>${shop.map(p=>`<a class="buy-item" href="produkt.html?id=${p.id}"><span class="th">${A.productArt(p)}</span><span><b>${p.name}</b><small>${p.size}</small></span><span class="price">${zl(p.price)}</span></a>`).join('')}
     <button class="btn btn--primary btn--block" id="addAll" style="margin-top:16px">Dodaj wszystko do koszyka · ${zl(sum)}</button></div>`:''}</aside>
    <div><h2>Przygotowanie</h2><ol class="steps">${r.steps.map(s=>`<li><p>${s}</p></li>`).join('')}</ol><div class="tip"><b>Wskazówka Moniki:</b> ${r.tip}</div>
-   <div class="author" style="margin-top:28px"><div class="ph">${A.avatar(72)}</div><div><b>Monika</b><br><span style="color:var(--muted);font-size:.92rem">Autorka bloga. Gotuje prosto, sezonowo i bez kompromisów w smaku.</span> <a href="o-nas.html">Poznaj ją</a></div></div></div></div>
+   <div class="author" style="margin-top:28px"><div class="ph">${A.avatar()}</div><div><b>Monika</b><br><span style="color:var(--muted);font-size:.92rem">Autorka bloga. Gotuje prosto, sezonowo i bez kompromisów w smaku.</span> <a href="o-nas.html">Poznaj ją</a></div></div></div></div>
   <section class="section"><div class="sec-head"><h2>Zobacz też</h2></div><div class="rgrid r3">${others.map(x=>rcard(x)).join('')}</div></section></div>`;
   const b=$('#addAll');if(b)b.onclick=()=>{ids.forEach(i=>Cart.add(i));toast(`Dodano ${ids.length} produkty do koszyka`,['koszyk.html','Koszyk'])};
 };
@@ -342,14 +340,14 @@ R.wideo=()=>{
   const f=PB.videos[0],cats=['Wszystkie',...new Set(PB.videos.map(v=>v.cat))];let cur='Wszystkie';
   $main().innerHTML=`<div class="container"><nav class="crumbs" aria-label="Okruszki"><a href="index.html">Strona główna</a>${I('chevron',14)}<span>Wideo</span></nav>
   <div class="page-head"><span class="eyebrow">Kanał ProBazar</span><h1>Wideo</h1><p class="lead">Kanał na YouTube dopiero powstaje. Poniżej zapowiedź tego, co przygotowujemy – miniatury i tytuły są poglądowe.</p></div>
-  <div class="video-hero" style="margin-bottom:40px"><button class="vcard" data-video="${f.id}" style="flex:1"><div class="vthumb">${A.videoArt(f)}<span class="pill pill--orange soon">Wkrótce</span><span class="play"><span>${I('play',26)}</span></span><span class="dur">${f.dur}</span></div></button>
-   <div><span class="eyebrow">Na start</span><h2>${f.title}</h2><p style="color:var(--muted)">Pierwszy odcinek pokaże pięć śniadań, które przygotujesz w kwadrans – z produktów ze sklepu ProBazar.</p><a class="btn btn--primary" href="#" onclick="return false" aria-disabled="true">${I('play',18)} Subskrybuj kanał (wkrótce)</a></div></div>
+  <div class="video-hero" style="margin-bottom:40px"><button class="vcard" data-video="${f.id}" style="flex:1"><div class="vthumb">${A.videoArt(f)}<span class="pill soon">Wkrótce</span><span class="play"><span>${I('play',22)}</span></span><span class="dur">${f.dur}</span></div></button>
+   <div><span class="eyebrow">Na start</span><h2>${f.title}</h2><p style="color:var(--muted)">Pierwszy odcinek pokaże pięć śniadań, które przygotujesz w kwadrans – z produktów ze sklepu ProBazar.</p><a class="btn btn--ghost" href="#" onclick="return false" aria-disabled="true">Subskrybuj kanał (wkrótce)</a></div></div>
   <div class="chips" id="vchips" style="margin-bottom:24px"></div><div class="grid grid-3" id="vlist" style="padding-bottom:56px"></div></div>`;
   const draw=()=>{$('#vchips').innerHTML=cats.map(c=>`<button class="chip" aria-pressed="${c===cur}" data-c="${c}">${c}</button>`).join('');$('#vlist').innerHTML=PB.videos.filter(v=>cur==='Wszystkie'||v.cat===cur).map(v=>vcard(v)).join('')};
   $main().addEventListener('click',e=>{const b=e.target.closest('[data-c]');if(b){cur=b.dataset.c;draw()}});draw();
 };
 
-R.static=()=>{const m=$('[data-ph="avatar"]');if(m)m.innerHTML=A.avatar(320);$$('[data-icon]').forEach(e=>e.innerHTML=I(e.dataset.icon,+e.dataset.size||24));
+R.static=()=>{const m=$('[data-ph="avatar"]');if(m)m.innerHTML=A.avatar();$$('[data-icon]').forEach(e=>e.innerHTML=I(e.dataset.icon,+e.dataset.size||24));
   $$('[data-recipes]').forEach(e=>e.innerHTML=PB.recipes.slice(0,3).map(r=>rcard(r)).join(''))};
 
 chrome();
