@@ -89,7 +89,10 @@ const CSS = `
   #lb-ui .lb-dock{left:16px;right:16px;width:auto;bottom:max(20px,env(safe-area-inset-bottom))}
   #lb-ui .lb-hint{display:none}
   #lb-ui .lb-plate{font-size:18px}
-  #lb-ui .lb-tiles{grid-template-columns:1fr;max-width:340px}
+  #lb-ui .lb-tiles{grid-template-columns:minmax(0,1fr);max-width:340px;padding:0 6px}
+  #lb-ui .lb-picker{justify-content:flex-start;overflow-y:auto;padding-top:max(20px,env(safe-area-inset-top))}
+  #lb-ui .lb-picker h2{font-size:clamp(24px,8vw,34px)}
+  #lb-ui .lb-tile.sel,#lb-ui .lb-tile:hover{transform:none}
   #lb-ui .lb-tile .cap span{font-size:28px}
 }
 `;
@@ -135,6 +138,14 @@ function bigText(u, y, size, plain, spans, depth = '#1c0b16') {
     ${[7, 5.5, 4, 2.5].map(d => `<text ${TXT} y="${d}" x="${d * .35}" font-size="${size}" fill="${depth}" stroke="${depth}" stroke-width="${sw}">${plain}</text>`).join('')}
     <text ${TXT} font-size="${size}" stroke="#120a1c" stroke-width="${sw}" paint-order="stroke">${spans}</text></g>`;
 }
+// pojedynczy znak z wytłoczeniem (do układu 1 VS 1)
+function glyph(u, x, base, size, ch, fill, depth = '#1c0b16') {
+  const sw = size * .085;
+  return `<g transform="translate(${x} ${base}) skewX(-10)">
+    <text ${TXT} y="${-size * .02}" font-size="${size}" fill="#fff" opacity=".4" filter="url(#bl${u})">${ch}</text>
+    ${[8, 6, 4, 2].map(d => `<text ${TXT} y="${d}" x="${d * .35}" font-size="${size}" fill="${depth}" stroke="${depth}" stroke-width="${sw}">${ch}</text>`).join('')}
+    <text ${TXT} font-size="${size}" stroke="#120a1c" stroke-width="${sw}" paint-order="stroke" fill="${fill}">${ch}</text></g>`;
+}
 const finish = u => `<rect width="320" height="200" fill="url(#vg${u})"/><rect width="320" height="200" filter="url(#gr${u})"/>`;
 const halftone = u => `<rect width="320" height="200" fill="url(#ht${u})" opacity=".14" mask="url(#mk${u})"/>`;
 const stripes = (n, op) => `<g stroke="#fff" stroke-opacity="${op}" stroke-width="2">${Array.from({ length: n }, (_, i) => `<line x1="${-60 + i * 22}" y1="200" x2="${i * 22}" y2="0"/>`).join('')}</g>`;
@@ -168,13 +179,14 @@ const ART = {
   duel() {
     const u = ++artN, T = tear(u, 186, 134);
     return `<svg class="art" viewBox="0 0 320 200" preserveAspectRatio="xMidYMid slice"><defs>${DEFS(u)}
-      <linearGradient id="rd${u}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff5a3a"/><stop offset=".6" stop-color="#c3122f"/><stop offset="1" stop-color="#5e0620"/></linearGradient>
-      <linearGradient id="bu${u}" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5ab4ff"/><stop offset=".6" stop-color="#1846c8"/><stop offset="1" stop-color="#0a1c66"/></linearGradient></defs>
-      <polygon points="${T.red}" fill="url(#rd${u})"/><polygon points="${T.blue}" fill="url(#bu${u})"/>
+      <linearGradient id="rd${u}" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff5a3a"/><stop offset=".6" stop-color="#c3122f"/><stop offset="1" stop-color="#5e0620"/></linearGradient>
+      <linearGradient id="bu${u}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5ab4ff"/><stop offset=".6" stop-color="#1846c8"/><stop offset="1" stop-color="#0a1c66"/></linearGradient></defs>
+      <polygon points="${T.red}" fill="url(#bu${u})"/><polygon points="${T.blue}" fill="url(#rd${u})"/>
       ${stripes(18, .07)}${halftone(u)}<rect width="320" height="200" fill="url(#hl${u})"/>
       <polygon points="${T.paper}" fill="#fff" opacity=".55" filter="url(#bl${u})"/>
       <polygon points="${T.paper}" fill="#f7f4ec" filter="url(#ds${u})"/>
-      ${bigText(u, 100, 100, '1VS1', '<tspan fill="url(#slv' + u + ')">1</tspan><tspan fill="url(#gold' + u + ')">VS</tspan><tspan fill="url(#slv' + u + ')">1</tspan>')}
+      ${glyph(u, 74, 142, 92, '1', `url(#slv${u})`, '#0a1c5a')}${glyph(u, 250, 152, 92, '1', `url(#slv${u})`, '#4a0718')}
+      ${glyph(u, 196, 162, 112, 'S', `url(#gold${u})`, '#3a1a04')}${glyph(u, 140, 150, 134, 'V', `url(#gold${u})`, '#3a1a04')}
       ${finish(u)}</svg>`;
   },
   soon() {
