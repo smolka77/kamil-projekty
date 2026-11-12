@@ -2,6 +2,7 @@
 // Użycie: createLobby({renderer, bean, animate, onPlay(modeId), modes}) – bean to THREE.Object3D ~1,5 m, przodem do -Z.
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { buildVillage } from './village.js';
 
 const CSS = `
 #lb-ui{position:fixed;inset:0;z-index:20;pointer-events:none;font-family:'Anton',Impact,'Arial Narrow Bold',sans-serif;color:#fff;
@@ -323,9 +324,9 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
   // światła
   scene.add(new THREE.HemisphereLight(0xd6ecff, 0x557a33, 1.35));
   const sun = new THREE.DirectionalLight(0xfff0d2, 2.6);
-  sun.position.set(7, 13, 6); sun.castShadow = true;
+  sun.position.set(7, 13, -4); sun.target.position.set(0, 0, -10); sun.castShadow = true;   // cień obejmuje też wioskę
   sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -0.0005; sun.shadow.normalBias = 0.02;
-  Object.assign(sun.shadow.camera, { left: -14, right: 14, top: 14, bottom: -14, near: 1, far: 50 });
+  Object.assign(sun.shadow.camera, { left: -20, right: 20, top: 20, bottom: -20, near: 1, far: 60 });
   scene.add(sun, sun.target);
 
   // teren: płaski w środku, łagodne pagórki dalej
@@ -416,6 +417,9 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
     const f = { group, birds, bob: R2(0, 6) }; launchFlock(f, i === 0); scene.add(group); flocks.push(f);
   }
 
+  // ---------- wioska ~20 m za graczem ----------
+  const village = buildVillage(scene, heightAt);
+
   // ---------- las: gęsty, zwarty, z nieregularnymi koronami (instancje, kołysanie na wietrze) ----------
   const hash3 = (x, y, z) => { const v = Math.sin(x * 127.1 + y * 311.7 + z * 74.7) * 43758.5453; return v - Math.floor(v); };
   const jitter = (g, amt, seed) => { const p = g.attributes.position;                 // te same punkty przesuwają się tak samo (brak dziur)
@@ -471,7 +475,7 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
   // granica lasu: z tyłu dalej (żeby było widać niebo i góry), po bokach bliżej (rama kadru), nieregularna
   const edgeR = th => 24 + 26 * Math.pow(Math.max(0, Math.cos(th)), 1.5) + 4 * Math.sin(th * 5 + 1.3) + 2.5 * Math.sin(th * 11 + .4);
   const lists = TREES.map(() => ({ near: [], far: [] }));
-  const put = (type, x, z, sc, near) => lists[type][near ? 'near' : 'far'].push({ x, z, y: heightAt(x, z) - .1, s: sc, ry: rnd() * 6.28, sx: R(.88, 1.12), sy: R(.9, 1.12) });
+  const put = (type, x, z, sc, near) => village.zones.some(v => Math.hypot(x - v.x, z - v.z) < v.r) ? 0 : lists[type][near ? 'near' : 'far'].push({ x, z, y: heightAt(x, z) - .1, s: sc, ry: rnd() * 6.28, sx: R(.88, 1.12), sy: R(.9, 1.12) });
   const plant = (x, z, d, e) => {
     const nearEdge = d < e + 6, pine = rnd() < (nearEdge ? .48 : .66);
     const type = pine ? (rnd() < .6 ? 0 : 1) : (rnd() < .55 ? 2 : 3);
@@ -492,7 +496,7 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
   }
   // pojedyncze drzewa i małe kępy na łące w różnych odległościach – dają głębię
   [[-10.5, -5.5, 2], [11.5, -7, 0], [-16, -1.5, 1], [17, -3, 3],
-   [-14, -17, 0], [-12.4, -18.5, 3], [15, -21, 2], [16.6, -22.5, 0], [-21, -28, 1], [-6.5, -27, 2], [8, -33, 0], [22, -34, 3], [-26, -15, 0], [27, -14, 2]]
+   [-16.5, -13.5, 0], [-15.6, -25, 3], [17.5, -25, 2], [18.6, -21.5, 0], [-21, -30, 1], [-10, -31, 2], [9, -33, 0], [22, -34, 3], [-26, -15, 0], [27, -14, 2]]
     .forEach(([x, z, t]) => put(t, x, z, R(.95, 1.2), Math.hypot(x, z) < 24));
   const dummy = new THREE.Object3D(), tint = new THREE.Color();
   lists.forEach((L, type) => { for (const [arr, cast] of [[L.near, true], [L.far, false]]) {
@@ -620,7 +624,7 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
     camera.position.set(cmx * .35, .8 - cmy * .1, camZ);
     camera.lookAt(lookAt);
 
-    wind.value = t;
+    wind.value = t; village.update(t, dt);
     clouds.forEach(c => { c.position.x += c.userData.v * dt; if (c.position.x > 360) c.position.x = -360; });
     flocks.forEach(f => {
       const p = f.group.position;
