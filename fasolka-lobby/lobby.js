@@ -177,19 +177,24 @@ const ART = {
       ${finish(u)}</svg>`;
   },
   duel() {
-    // jak na szkicu: niebieski | gładki biały pas lekko wygięty | czerwony, napis 1VS1 na środku
+    // niebieski | biała błyskawica | czerwony; duże jedynki, mniejsze złote VS, wszystko na środku
     const u = ++artN;
-    const band = 'M147 -2 C145 60 141 130 136 202 L156 202 C160 130 164 60 168 -2 Z';
+    const Rg = [[187, -4], [168, 42], [192, 42], [160, 156], [180, 156], [148, 204]];   // prawa krawędź błyskawicy
+    const Lf = [[169, -4], [150, 58], [174, 58], [142, 172], [160, 172], [130, 204]];   // lewa krawędź
+    const P = a => a.map(q => q.join(',')).join(' ');
+    const bolt = `${P(Rg)} ${P(Lf.slice().reverse())}`;
     return `<svg class="art" viewBox="0 0 320 200" preserveAspectRatio="xMidYMid slice"><defs>${DEFS(u)}
       <linearGradient id="bu${u}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#21b0f2"/><stop offset="1" stop-color="#0577c4"/></linearGradient>
       <linearGradient id="rd${u}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff3a3a"/><stop offset="1" stop-color="#c8101c"/></linearGradient>
-      <linearGradient id="wb${u}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#e9eef5"/><stop offset=".45" stop-color="#ffffff"/><stop offset="1" stop-color="#dfe6ef"/></linearGradient></defs>
+      <linearGradient id="wb${u}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#eef2f8"/><stop offset=".5" stop-color="#ffffff"/><stop offset="1" stop-color="#dfe6ef"/></linearGradient></defs>
       <rect width="320" height="200" fill="url(#rd${u})"/>
-      <path d="M-2 -2 L148 -2 C146 60 142 130 137 202 L-2 202 Z" fill="url(#bu${u})"/>
+      <polygon points="-4,-4 ${P(Lf)} -4,204" fill="url(#bu${u})"/>
       ${stripes(18, .06)}<rect width="320" height="200" fill="url(#hl${u})"/>
-      <path d="${band}" fill="#000" opacity=".35" transform="translate(3 0)" filter="url(#bl${u})"/>
-      <path d="${band}" fill="url(#wb${u})"/>
-      ${bigText(u, 100, 104, '1VS1', '<tspan fill="url(#slv' + u + ')">1</tspan><tspan fill="url(#gold' + u + ')">VS</tspan><tspan fill="url(#slv' + u + ')">1</tspan>')}
+      <polygon points="${bolt}" fill="#fff" opacity=".55" filter="url(#bl${u})"/>
+      <polygon points="${bolt}" fill="#000" opacity=".3" transform="translate(3 2)"/>
+      <polygon points="${bolt}" fill="url(#wb${u})" stroke="#fff" stroke-width="1" stroke-linejoin="miter"/>
+      ${glyph(u, 96, 136, 100, '1', `url(#slv${u})`, '#0a2a66')}${glyph(u, 228, 136, 100, '1', `url(#slv${u})`, '#5a0712')}
+      ${glyph(u, 162, 124, 66, 'VS', `url(#gold${u})`, '#3a1a04')}
       ${finish(u)}</svg>`;
   },
   soon() {
