@@ -179,8 +179,8 @@ const ART = {
   duel() {
     // niebieski | biała błyskawica | czerwony; duże jedynki, mniejsze złote VS, wszystko na środku
     const u = ++artN;
-    const Rg = [[187, -4], [168, 42], [192, 42], [160, 156], [180, 156], [148, 204]];   // prawa krawędź błyskawicy
-    const Lf = [[169, -4], [150, 58], [174, 58], [142, 172], [160, 172], [130, 204]];   // lewa krawędź
+    const Rg = [[200, -4], [166, 128], [208, 128], [164, 204]];   // jeden zygzak na środku: / _ /   // prawa krawędź błyskawicy
+    const Lf = [[182, -4], [146, 143], [188, 143], [146, 204]];   // lewa krawędź
     const P = a => a.map(q => q.join(',')).join(' ');
     const bolt = `${P(Rg)} ${P(Lf.slice().reverse())}`;
     return `<svg class="art" viewBox="0 0 320 200" preserveAspectRatio="xMidYMid slice"><defs>${DEFS(u)}
@@ -194,7 +194,7 @@ const ART = {
       <polygon points="${bolt}" fill="#000" opacity=".3" transform="translate(3 2)"/>
       <polygon points="${bolt}" fill="url(#wb${u})" stroke="#fff" stroke-width="1" stroke-linejoin="miter"/>
       ${glyph(u, 96, 136, 100, '1', `url(#slv${u})`, '#0a2a66')}${glyph(u, 228, 136, 100, '1', `url(#slv${u})`, '#5a0712')}
-      ${glyph(u, 162, 124, 66, 'VS', `url(#gold${u})`, '#3a1a04')}
+      ${glyph(u, 162, 117, 56, 'VS', `url(#gold${u})`, '#3a1a04')}
       ${finish(u)}</svg>`;
   },
   soon() {
