@@ -1,6 +1,7 @@
 // Lobby z fasolką: niebo, chmury, las i góry w tle, trawiasta ziemia, duży przycisk GRAJ.
 // Użycie: createLobby({renderer, bean, animate, onPlay(modeId), modes}) – bean to THREE.Object3D ~1,5 m, przodem do -Z.
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 const CSS = `
 #lb-ui{position:fixed;inset:0;z-index:20;pointer-events:none;font-family:'Anton',Impact,'Arial Narrow Bold',sans-serif;color:#fff;
@@ -415,47 +416,96 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
     const f = { group, birds, bob: R2(0, 6) }; launchFlock(f, i === 0); scene.add(group); flocks.push(f);
   }
 
-  // drzewa
-  const trunkMat = new THREE.MeshStandardMaterial({ color: 0x7a4a26, roughness: 1, flatShading: true });
-  const pineMats = [0x2f7d3a, 0x3a8f45, 0x276b33, 0x44994c].map(c => new THREE.MeshStandardMaterial({ color: c, roughness: 1, flatShading: true }));
-  const leafMats = [0x5fae3c, 0x4f9e34, 0x78c043, 0x8acb4c].map(c => new THREE.MeshStandardMaterial({ color: c, roughness: 1, flatShading: true }));
-  const trunkGeo = new THREE.CylinderGeometry(.13, .2, 1, 6);
-  const coneGeo = new THREE.ConeGeometry(1, 1, 7);
-  const blobGeo = new THREE.IcosahedronGeometry(1, 1);
-  const swaying = [];
-  function tree(x, z, s, shadow) {
-    const g = new THREE.Group();
-    const pine = rnd() < .55;
-    const trunk = new THREE.Mesh(trunkGeo, trunkMat);
-    const th = pine ? .9 : 1.3; trunk.scale.set(1, th, 1); trunk.position.y = th / 2; g.add(trunk);
-    const crown = new THREE.Group(); crown.position.y = th * .85; g.add(crown);
-    if (pine) {
-      const m = pineMats[Math.floor(rnd() * pineMats.length)];
-      for (let k = 0; k < 3; k++) {
-        const c = new THREE.Mesh(coneGeo, m), w = 1.25 - k * .3, h = 1.5 - k * .2;
-        c.scale.set(w, h, w); c.position.y = k * .85 + h / 2; c.rotation.y = rnd() * 3; crown.add(c);
-      }
-    } else {
-      const m = leafMats[Math.floor(rnd() * leafMats.length)];
-      for (let k = 0; k < 3; k++) {
-        const b = new THREE.Mesh(blobGeo, m), r = k ? R(.6, .8) : R(.95, 1.15);
-        b.scale.setScalar(r); b.position.set(k ? (k === 1 ? .6 : -.55) : 0, k ? R(.6, 1) : 1.1, k ? R(-.3, .3) : 0); crown.add(b);
-      }
+  // ---------- las: gęsty, zwarty, z nieregularnymi koronami (instancje, kołysanie na wietrze) ----------
+  const hash3 = (x, y, z) => { const v = Math.sin(x * 127.1 + y * 311.7 + z * 74.7) * 43758.5453; return v - Math.floor(v); };
+  const jitter = (g, amt, seed) => { const p = g.attributes.position;                 // te same punkty przesuwają się tak samo (brak dziur)
+    for (let i = 0; i < p.count; i++) { const x = p.getX(i), y = p.getY(i), z = p.getZ(i), n = o => hash3(x * 3.1 + o + seed, y * 3.7 + o, z * 2.9) - .5;
+      p.setXYZ(i, x + n(1) * amt, y + n(5) * amt * .6, z + n(9) * amt); } return g; };
+  const paint = (g, fn) => { const p = g.attributes.position, c = new Float32Array(p.count * 3), col = new THREE.Color();
+    for (let i = 0; i < p.count; i++) { fn(p.getX(i), p.getY(i), p.getZ(i), col); c.set([col.r, col.g, col.b], i * 3); }
+    g.setAttribute('color', new THREE.BufferAttribute(c, 3)); return g; };
+  const prep = g => { g = g.index ? g.toNonIndexed() : g; g.deleteAttribute('uv'); return g; };
+  const TRUNK = new THREE.Color(0x6b4426), tmpC = new THREE.Color();
+  const trunkPart = (h, r0, r1) => { const g = new THREE.CylinderGeometry(r1, r0, h, 7); g.translate(0, h / 2, 0); return paint(prep(jitter(g, .04, 3)), (x, y, z, c) => c.copy(TRUNK).multiplyScalar(.75 + .25 * y / h)); };
+  function pineGeo(layers, h, r0, seed, dark, light) {
+    const parts = [trunkPart(1.5, .27, .16)], D = new THREE.Color(dark), L = new THREE.Color(light);
+    for (let k = 0; k < layers; k++) {
+      const t = k / (layers - 1), r = r0 * (1 - .74 * t), ch = 2.1 - .7 * t, y0 = .55 + t * (h - .55 - ch);
+      const g = new THREE.ConeGeometry(r, ch, 10, 2); const p = g.attributes.position;
+      for (let i = 0; i < p.count; i++) if (p.getY(i) < -ch / 2 + .01) { const a = Math.atan2(p.getZ(i), p.getX(i)); p.setY(i, p.getY(i) - (Math.round(a / (Math.PI / 5)) % 2 ? .28 : 0) * r / r0); }   // poszarpany, opadający brzeg
+      g.translate(0, y0 + ch / 2, 0); jitter(g, .22 * r / r0 + .08, seed + k);
+      parts.push(paint(prep(g), (x, y, z, c) => { c.lerpColors(D, L, Math.min(1, y / h * .9 + .1)); const edge = Math.hypot(x, z) / r; c.multiplyScalar(.8 + .3 * edge); }));
     }
-    g.traverse(o => { if (o.isMesh) { o.castShadow = shadow; o.receiveShadow = shadow; } });
-    g.position.set(x, heightAt(x, z) - .05, z); g.scale.setScalar(s); g.rotation.y = rnd() * 6;
-    crown.userData.ph = rnd() * 6; swaying.push(crown);
-    scene.add(g);
+    return mergeGeometries(parts);
   }
-  // las za postacią i po bokach (ramka kadru)
-  for (let i = 0; i < 520; i++) {
-    const x = R(-130, 130), z = R(-140, 4);
-    const d = Math.hypot(x, z * 1.15);
-    if (d < 16) continue;                                  // polana wokół fasolki
-    if (d > 70 && rnd() < .5) continue;
-    tree(x, z, R(1.15, 1.9), d < 30);
+  function leafGeo(blobs, trunkH, seed, base) {
+    const parts = [trunkPart(trunkH, .28, .17)], B = new THREE.Color(base);
+    for (const [x, y, z, r] of blobs) {
+      const g = new THREE.IcosahedronGeometry(r, 1); g.translate(x, y, z); jitter(g, .32 * r, seed + x * 7);
+      const tint = .85 + hash3(x, y, z) * .3;
+      parts.push(paint(prep(g), (px, py, pz, c) => { c.copy(B).multiplyScalar(tint * (.62 + .5 * THREE.MathUtils.clamp((py - y + r) / (2 * r), 0, 1))); }));
+    }
+    return mergeGeometries(parts);
   }
-  [[-9.5, -6], [10.5, -7.5], [-14, -1], [15, -2.5], [-6, -13], [7.5, -15]].forEach(([x, z]) => tree(x, z, R(1.3, 1.7), true));
+  const TREES = [
+    pineGeo(5, 6.4, 1.75, 11, 0x1d5a2a, 0x46a04c),                  // świerk
+    pineGeo(4, 5.4, 1.95, 23, 0x235f2c, 0x52a650),                  // jodła, szersza
+    leafGeo([[0, 3.3, 0, 1.6], [1.05, 2.8, .3, 1.15], [-.95, 2.95, -.4, 1.2], [.2, 4.1, -.45, 1.05], [-.35, 2.55, .95, 1.0], [.65, 3.75, .85, .95]], 2.3, 31, 0x5fae3c),
+    leafGeo([[0, 3.9, 0, 1.35], [.7, 3.2, .4, 1.05], [-.7, 3.4, -.3, 1.05], [.1, 4.9, .1, 1.0], [-.2, 2.8, -.8, .9], [.4, 2.7, .9, .85]], 2.6, 47, 0x4f9e34),
+    leafGeo([[0, .55, 0, .75], [.6, .45, .25, .55], [-.55, .5, -.2, .6], [.1, .9, -.35, .5]], .1, 59, 0x4c9a32),   // krzak podszytu
+  ];
+  const wind = { value: 0 };
+  const treeMat = new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: .95 });
+  treeMat.onBeforeCompile = sh => {
+    sh.uniforms.uTime = wind;
+    sh.vertexShader = 'uniform float uTime;\n' + sh.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
+      #ifdef USE_INSTANCING
+        vec3 wp = (instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
+      #else
+        vec3 wp = vec3(0.0);
+      #endif
+      float hh = max(position.y - 1.2, 0.0);
+      transformed.x += sin(uTime * 1.3 + wp.x * .17 + wp.z * .11) * .022 * hh;
+      transformed.z += cos(uTime * 1.05 + wp.z * .13 + wp.x * .07) * .016 * hh;`);
+  };
+  // granica lasu: z tyłu dalej (żeby było widać niebo i góry), po bokach bliżej (rama kadru), nieregularna
+  const edgeR = th => 17 + 16 * Math.pow(Math.max(0, Math.cos(th)), 1.5) + 2.6 * Math.sin(th * 5 + 1.3) + 1.6 * Math.sin(th * 11 + .4);
+  const lists = TREES.map(() => ({ near: [], far: [] }));
+  const put = (type, x, z, sc, near) => lists[type][near ? 'near' : 'far'].push({ x, z, y: heightAt(x, z) - .1, s: sc, ry: rnd() * 6.28, sx: R(.88, 1.12), sy: R(.9, 1.12) });
+  const plant = (x, z, d, e) => {
+    const nearEdge = d < e + 6, pine = rnd() < (nearEdge ? .48 : .66);
+    const type = pine ? (rnd() < .6 ? 0 : 1) : (rnd() < .55 ? 2 : 3);
+    put(type, x, z, pine ? R(.88, 1.22) : R(.85, 1.2), d < 24);
+  };
+  for (const [step, dmin, dmax, prob] of [[2.6, 0, 70, .86], [4.1, 70, 150, .55]]) {
+    for (let gx = -150; gx <= 150; gx += step) for (let gz = -160; gz <= 6; gz += step) {
+      const x = gx + R(-.45, .45) * step, z = gz + R(-.45, .45) * step, d = Math.hypot(x, z), th = Math.atan2(x, -z), e = edgeR(th);
+      if (d < Math.max(e, dmin) || d >= dmax) continue;
+      const clump = .72 + .5 * (Math.sin(x * .09 + 1.7) * Math.cos(z * .08 - .6) * .5 + .5);       // gęstsze kępy i luźniejsze miejsca
+      if (rnd() > (d < e + 3 ? .98 : prob * clump)) continue;
+      plant(x, z, d, e);
+    }
+  }
+  for (let i = 0; i < 260; i++) {                                          // podszyt wzdłuż skraju lasu
+    const th = R(-2.3, 2.3), r = edgeR(th) + R(-1.6, 4), x = Math.sin(th) * r, z = -Math.cos(th) * r;
+    if (z > 6) continue; put(4, x, z, R(.8, 1.7), r < 22);
+  }
+  [[-9.5, -6, 2], [10.5, -7.5, 0], [-14, -1, 1], [15, -2.5, 3], [-6.5, -13, 0], [7.5, -15, 2]].forEach(([x, z, t]) => put(t, x, z, R(1.0, 1.2), true));
+  const dummy = new THREE.Object3D(), tint = new THREE.Color();
+  lists.forEach((L, type) => { for (const [arr, cast] of [[L.near, true], [L.far, false]]) {
+    if (!arr.length) continue;
+    const m = new THREE.InstancedMesh(TREES[type], treeMat, arr.length);
+    arr.forEach((t, i) => { dummy.position.set(t.x, t.y, t.z); dummy.rotation.set(0, t.ry, 0); dummy.scale.set(t.s * t.sx, t.s * t.sy, t.s * t.sx); dummy.updateMatrix();
+      m.setMatrixAt(i, dummy.matrix); m.setColorAt(i, tint.setRGB(R(.84, 1.06), R(.88, 1.08), R(.8, 1.0))); });
+    m.castShadow = cast; m.receiveShadow = true; scene.add(m);
+  } });
+  // ciemniejsza ściółka pod drzewami
+  { const p = groundGeo.attributes.position, c = new Float32Array(p.count * 3);
+    for (let i = 0; i < p.count; i++) { const x = p.getX(i), z = p.getZ(i), d = Math.hypot(x, z), k = 1 - .38 * THREE.MathUtils.smoothstep(d, edgeR(Math.atan2(x, -z)) - 1, edgeR(Math.atan2(x, -z)) + 7);
+      c.set([k, k * .97 + .03 * (1 - k), k], i * 3); }
+    groundGeo.setAttribute('color', new THREE.BufferAttribute(c, 3)); ground.material.vertexColors = true; ground.material.needsUpdate = true; }
+  const leafMats = [0x5fae3c, 0x4f9e34, 0x78c043, 0x8acb4c].map(c => new THREE.MeshStandardMaterial({ color: c, roughness: 1, flatShading: true }));
+  const blobGeo = new THREE.IcosahedronGeometry(1, 1);
 
   // krzaki, kamienie
   const rockMat = new THREE.MeshStandardMaterial({ color: 0x9aa3a8, roughness: 1, flatShading: true });
@@ -567,7 +617,7 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
     camera.position.set(cmx * .35, .8 - cmy * .1, camZ);
     camera.lookAt(lookAt);
 
-    swaying.forEach(c => { c.rotation.z = Math.sin(t * 1.1 + c.userData.ph) * .025; });
+    wind.value = t;
     clouds.forEach(c => { c.position.x += c.userData.v * dt; if (c.position.x > 360) c.position.x = -360; });
     flocks.forEach(f => {
       const p = f.group.position;
