@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { buildVillage } from './village.js';
+import { buildBattlefield } from './battlefield.js';
 
 const CSS = `
 #lb-ui{position:fixed;inset:0;z-index:20;pointer-events:none;font-family:'Anton',Impact,'Arial Narrow Bold',sans-serif;color:#fff;
@@ -274,12 +275,12 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
 
   // ---------- scena ----------
   const scene = new THREE.Scene();
-  const HORIZON = new THREE.Color(0xcfe9ff);
+  const HORIZON = new THREE.Color(0xf4a46e);                        // zachód słońca: ciepły horyzont
   scene.fog = new THREE.FogExp2(HORIZON, 0.0105);   // lekka mgła: przy postaci niewidoczna, gęstnieje z odległością
   const camera = new THREE.PerspectiveCamera(32, innerWidth / innerHeight, 0.1, 1200);
 
   // niebo: gradient na kuli
-  const skyU = { top: { value: new THREE.Color(0x1d63d8) }, mid: { value: new THREE.Color(0x5fb0ff) }, bot: { value: HORIZON } };
+  const skyU = { top: { value: new THREE.Color(0x2b2f6b) }, mid: { value: new THREE.Color(0xc8657c) }, bot: { value: HORIZON } };
   const SKY_GLSL = `uniform vec3 top,mid,bot;
     vec3 skyCol(float h){vec3 c=mix(bot,mid,smoothstep(0.,.18,h));return mix(c,top,smoothstep(.18,.75,h));}`;
   scene.add(new THREE.Mesh(new THREE.SphereGeometry(600, 32, 16), new THREE.ShaderMaterial({
@@ -291,7 +292,7 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
       }`,
   })));
   // materiał gór "za mgłą": kolor nieba w tym kierunku zmieszany z barwą góry (amt = ile góry widać)
-  const SUN_DIR = new THREE.Vector3(7, 13, 6).normalize();
+  const SUN_DIR = new THREE.Vector3(-.55, .32, -.77).normalize();   // nisko, z lewej za wioską
   function hazeMat(tint, amt, fullAt) {
     return new THREE.ShaderMaterial({
       fog: false,
@@ -319,12 +320,13 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
     const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
   })();
   const sunSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, fog: false, depthWrite: false, transparent: true }));
-  sunSprite.position.set(150, 150, -420); sunSprite.scale.setScalar(150); scene.add(sunSprite);
+  sunSprite.position.set(-150, 58, -430); sunSprite.scale.setScalar(240); sunSprite.material.color.set(0xffc078); scene.add(sunSprite);
 
   // światła
-  scene.add(new THREE.HemisphereLight(0xd6ecff, 0x557a33, 1.35));
-  const sun = new THREE.DirectionalLight(0xfff0d2, 2.6);
-  sun.position.set(7, 13, -4); sun.target.position.set(0, 0, -10); sun.castShadow = true;   // cień obejmuje też wioskę
+  scene.add(new THREE.HemisphereLight(0xffb898, 0x3d3324, 1.15));
+  const sun = new THREE.DirectionalLight(0xff9a52, 2.9);
+  sun.target.position.set(0, 0, -10); sun.position.copy(SUN_DIR).multiplyScalar(32).add(sun.target.position); sun.castShadow = true;   // cień obejmuje też wioskę
+  const fillL = new THREE.DirectionalLight(0x9aa6d8, 1.05); fillL.position.set(4, 6, 10); scene.add(fillL);   // chłodne doświetlenie od kamery
   sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -0.0005; sun.shadow.normalBias = 0.02;
   Object.assign(sun.shadow.camera, { left: -20, right: 20, top: 20, bottom: -20, near: 1, far: 60 });
   scene.add(sun, sun.target);
@@ -353,8 +355,8 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
   ground.receiveShadow = true; scene.add(ground);
 
   // góry na horyzoncie (bliższe pasmo, lekko zamglone)
-  const mountMat = hazeMat(0x6f9cc0, .78, 40);
-  const snowMat = hazeMat(0xf4f8ff, .82, 40);
+  const mountMat = hazeMat(0x5b4a6c, .8, 40);
+  const snowMat = hazeMat(0xffcfc0, .82, 40);
   for (let i = 0; i < 12; i++) {
     const h = R(28, 52), r = h * R(1.3, 1.8), g = new THREE.Group();
     const m = new THREE.Mesh(new THREE.ConeGeometry(r, h, 9), mountMat); m.position.y = h / 2; g.add(m);
@@ -362,7 +364,7 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
     g.position.set(-330 + i * 60 + R(-20, 20), -6, R(-300, -250)); g.rotation.y = R(0, 6); scene.add(g);
   }
   // dalekie pasmo: ogromne, ledwo widoczne zza mgły
-  const farMat = hazeMat(0x4f74a6, .26, 120), farSnow = hazeMat(0xffffff, .2, 120);
+  const farMat = hazeMat(0x6a4f72, .3, 120), farSnow = hazeMat(0xffd8c8, .22, 120);
   for (let i = 0; i < 16; i++) {
     const h = R2(80, 150), r = h * R2(1.4, 2.1), g = new THREE.Group();
     const m = new THREE.Mesh(new THREE.ConeGeometry(r, h, 10), farMat); m.position.y = h / 2; g.add(m);
@@ -371,7 +373,7 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
   }
 
   // chmury
-  const cloudMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x9fb8d8, emissiveIntensity: .6, roughness: 1, fog: false });
+  const cloudMat = new THREE.MeshStandardMaterial({ color: 0xffc9a8, emissive: 0xa0506a, emissiveIntensity: .55, roughness: 1, fog: false });
   const cloudGeo = new THREE.SphereGeometry(1, 18, 12);
   const clouds = [];
   for (let i = 0; i < 16; i++) {
@@ -419,6 +421,8 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
 
   // ---------- wioska ~20 m za graczem ----------
   const village = buildVillage(scene, heightAt);
+  const battle = buildBattlefield(scene, heightAt);
+  village.zones.push(...battle.zones);   // drzewa omijają też okopy, czołgi i leje
 
   // ---------- las: gęsty, zwarty, z nieregularnymi koronami (instancje, kołysanie na wietrze) ----------
   const hash3 = (x, y, z) => { const v = Math.sin(x * 127.1 + y * 311.7 + z * 74.7) * 43758.5453; return v - Math.floor(v); };
@@ -517,7 +521,7 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
   // krzaki, kamienie
   const rockMat = new THREE.MeshStandardMaterial({ color: 0x9aa3a8, roughness: 1, flatShading: true });
   const rockGeo = new THREE.DodecahedronGeometry(1, 0);
-  [[-2.8, -2.2, .32], [3.4, -2.8, .45], [2.3, 1.0, .18], [-3.9, .3, .24], [6, -7, .7], [-7, -9, .9]].forEach(([x, z, s]) => {
+  [[-2.8, -2.2, .32], [3.4, -2.8, .45], [2.3, 1.0, .18], [-3.9, .3, .24], [7.4, -8.2, .7]].forEach(([x, z, s]) => {
     const r = new THREE.Mesh(rockGeo, rockMat); r.scale.set(s * 1.3, s * .8, s); r.position.set(x, s * .35, z);
     r.rotation.set(rnd(), rnd() * 6, rnd()); r.castShadow = r.receiveShadow = true; scene.add(r);
   });
@@ -624,7 +628,7 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
     camera.position.set(cmx * .35, .8 - cmy * .1, camZ);
     camera.lookAt(lookAt);
 
-    wind.value = t; village.update(t, dt);
+    wind.value = t; village.update(t, dt); battle.update(t, dt);
     clouds.forEach(c => { c.position.x += c.userData.v * dt; if (c.position.x > 360) c.position.x = -360; });
     flocks.forEach(f => {
       const p = f.group.position;
