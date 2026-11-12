@@ -178,39 +178,74 @@ function makeBean(color){
 }
 
 // ================= karabin (proceduralny) =================
-function buildRifle(){
-  const g=new THREE.Group();
-  const steel=new THREE.MeshStandardMaterial({color:0x2c3038,roughness:.45,metalness:.65});
-  const dark=new THREE.MeshStandardMaterial({color:0x17191e,roughness:.55,metalness:.4});
-  const acc=new THREE.MeshStandardMaterial({color:0xe8a43c,roughness:.5,metalness:.2});
-  const add=(geom,mat,x,y,z,rx=0,ry=0,rz=0)=>{const m=new THREE.Mesh(geom,mat);m.position.set(x,y,z);m.rotation.set(rx,ry,rz);m.castShadow=true;g.add(m);return m};
-  const B=(w,h,d)=>new THREE.BoxGeometry(w,h,d),C=(r,l,s=14)=>new THREE.CylinderGeometry(r,r,l,s);
-  add(B(.056,.086,.31),steel,0,0,-.04);                       // komora zamkowa
-  add(B(.04,.014,.40),dark,0,.05,-.07);                       // szyna
-  add(B(.052,.064,.27),dark,0,-.004,-.335);                   // łoże
-  add(B(.056,.02,.26),steel,0,.038,-.335);
-  add(C(.011,.24),steel,0,0,-.58,Math.PI/2).rotation.x=Math.PI/2;      // lufa
-  add(C(.018,.07),steel,0,0,-.705).rotation.x=Math.PI/2;               // hamulec wylotowy
-  add(B(.01,.045,.01),dark,0,.067,-.60);add(B(.026,.012,.026),dark,0,.048,-.60);   // muszka
-  add(B(.03,.03,.012),dark,-.0,.065,.02);                     // szczerbinka
-  add(B(.008,.03,.012),dark,-.017,.07,.02);add(B(.008,.03,.012),dark,.017,.07,.02);
-  const st=add(B(.046,.095,.21),dark,0,-.012,.2);st.rotation.x=-.06;  // kolba
-  add(B(.05,.11,.02),acc,0,-.014,.305,-.06);                  // stopka kolby
-  const pg=add(B(.042,.115,.05),dark,0,-.1,.065);pg.rotation.x=.32;     // chwyt pistoletowy
-  const mag=add(B(.04,.15,.07),acc,0,-.125,-.1);mag.rotation.x=-.16;    // magazynek
-  const ejector=add(B(.012,.03,.07),steel,.03,.016,-.01);
-  const muzzle=new THREE.Object3D();muzzle.position.set(0,0,-.745);g.add(muzzle);
-  // płomień wylotowy
-  const c=document.createElement('canvas');c.width=c.height=128;const x=c.getContext('2d');
-  const gr=x.createRadialGradient(64,64,2,64,64,62);gr.addColorStop(0,'rgba(255,255,230,1)');gr.addColorStop(.3,'rgba(255,200,90,.9)');gr.addColorStop(1,'rgba(255,120,20,0)');x.fillStyle=gr;x.fillRect(0,0,128,128);
-  const ft=new THREE.CanvasTexture(c);
-  const fm=new THREE.MeshBasicMaterial({map:ft,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide,fog:false});
-  const flash=new THREE.Group();
-  for(let i=0;i<2;i++){const p=new THREE.Mesh(new THREE.PlaneGeometry(.26,.26),fm);p.rotation.z=i*Math.PI/2;flash.add(p);}
-  const p3=new THREE.Mesh(new THREE.PlaneGeometry(.26,.26),fm);p3.rotation.y=Math.PI/2;flash.add(p3);
-  flash.position.set(0,0,-.77);flash.visible=false;g.add(flash);
-  const flashLight=new THREE.PointLight(0xffb45a,0,6,2);flashLight.position.set(0,0,-.85);g.add(flashLight);
-  return{group:g,muzzle,flash,flashLight,mag,gripR:V3(0,-.12,.062),gripL:V3(0,-.05,-.335)};
+const RIFLE_MATS={
+  steel:new THREE.MeshStandardMaterial({color:0x3a3f49,roughness:.38,metalness:.75}),
+  dark:new THREE.MeshStandardMaterial({color:0x1b1d22,roughness:.6,metalness:.35}),
+  poly:new THREE.MeshStandardMaterial({color:0x2a2c31,roughness:.85,metalness:.05}),
+  acc:new THREE.MeshStandardMaterial({color:0xe8a43c,roughness:.5,metalness:.2}),
+  lens:new THREE.MeshStandardMaterial({color:0x9fd4ff,roughness:.1,metalness:.2,transparent:true,opacity:.1,depthWrite:false,side:THREE.DoubleSide}),
+  dot:new THREE.MeshBasicMaterial({color:0xff2a1a,fog:false}),
+};
+let flashTex=null;
+function buildRifle(opts={}){
+  const fx=opts.fx!==false;
+  const g=new THREE.Group(),M=RIFLE_MATS;
+  const add=(geom,mat,x,y,z,rx=0,ry=0,rz=0)=>{const m=new THREE.Mesh(geom,mat);m.position.set(x,y,z);m.rotation.set(rx,ry,rz);m.castShadow=fx;g.add(m);return m};
+  const B=(w,h,d)=>new THREE.BoxGeometry(w,h,d);
+  const C=(r,l,s=16,r2=r)=>{const c=new THREE.CylinderGeometry(r2,r,l,s);c.rotateX(Math.PI/2);return c};   // walec wzdłuż Z
+  // --- komora zamkowa ---
+  add(B(.05,.05,.25),M.steel,0,.012,-.03);                       // górna
+  add(B(.044,.04,.17),M.dark,0,-.03,.005);                       // dolna
+  add(B(.046,.055,.072),M.dark,0,-.045,-.088);                   // gniazdo magazynka
+  add(B(.004,.022,.06),M.dark,.0262,.016,-.035);                 // okno wyrzutowe
+  add(B(.03,.012,.022),M.dark,0,.041,.088);                      // rączka przeładowania
+  add(B(.052,.012,.02),M.acc,0,.012,.094);                       // akcent z tyłu komory
+  // --- spust i chwyt ---
+  add(B(.008,.005,.062),M.dark,0,-.076,.012);add(B(.008,.028,.005),M.dark,0,-.063,-.018);   // kabłąk
+  add(B(.006,.022,.008),M.steel,0,-.058,.012,.25);               // spust
+  add(B(.036,.1,.044),M.poly,0,-.098,.07,.3);                    // chwyt pistoletowy
+  // --- magazynek (łukowy, 2 segmenty) ---
+  const mag=new THREE.Group();g.add(mag);
+  const mg=(geom,mat,x,y,z,rx)=>{const m=new THREE.Mesh(geom,mat);m.position.set(x,y,z);m.rotation.x=rx;m.castShadow=fx;mag.add(m)};
+  mg(B(.036,.085,.056),M.steel,0,-.105,-.094,-.1);mg(B(.036,.08,.056),M.steel,0,-.178,-.112,-.3);mg(B(.04,.012,.062),M.acc,0,-.218,-.126,-.3);
+  // --- kolba ---
+  const stock=[add(C(.014,.17),M.steel,0,.012,.18),              // rura bufora
+    add(B(.04,.085,.115),M.poly,0,-.008,.255),                   // kolba
+    add(B(.034,.02,.1),M.poly,0,.04,.225),                       // poduszka policzkowa
+    add(B(.044,.1,.016),M.acc,0,-.012,.32)];                     // stopka
+  // --- łoże, szyna, lufa ---
+  add(B(.046,.05,.25),M.poly,0,.008,-.28);                       // łoże
+  for(let i=0;i<4;i++){add(B(.05,.012,.03),M.dark,0,.012,-.19-i*.058);}          // otwory wentylacyjne (po bokach)
+  add(B(.022,.01,.45),M.dark,0,.042,-.175);                      // szyna górna
+  for(let i=0;i<18;i++)add(B(.026,.005,.009),M.steel,0,.0485,.03-i*.024);        // zęby szyny
+  add(B(.03,.066,.03),M.poly,0,-.05,-.3);                        // chwyt przedni
+  add(B(.03,.034,.03),M.steel,0,.006,-.42);                      // blok gazowy
+  add(C(.0095,.17),M.steel,0,0,-.485);                           // lufa
+  add(C(.0155,.058),M.dark,0,0,-.588);                           // urządzenie wylotowe
+  add(C(.017,.008),M.steel,0,0,-.572);add(C(.017,.008),M.steel,0,0,-.604);
+  add(B(.006,.012,.006),M.dark,0,.054,-.39);                     // niska muszka zapasowa (poniżej linii celowania)
+  // --- kolimator: rama + szkło + czerwona kropka; nic nie zasłania punktu celowania ---
+  const OY=.094,OZ=-.03;                                          // środek okna kolimatora
+  add(B(.03,.016,.07),M.dark,0,.058,OZ);                         // podstawa
+  add(B(.003,.052,.04),M.dark,-.031,OY,OZ);add(B(.003,.052,.04),M.dark,.031,OY,OZ);         // boki
+  add(B(.065,.003,.04),M.dark,0,OY+.0265,OZ);add(B(.065,.004,.04),M.dark,0,OY-.026,OZ);     // góra / dół
+  const lens=add(new THREE.PlaneGeometry(.059,.05),M.lens,0,OY,OZ-.016);lens.castShadow=false;
+  const dot=add(new THREE.CircleGeometry(.0013,12),M.dot,0,OY,OZ-.0175);dot.castShadow=false;
+  const muzzle=new THREE.Object3D();muzzle.position.set(0,0,-.62);g.add(muzzle);
+  const out={group:g,muzzle,mag,stock,gripR:V3(0,-.105,.068),gripL:V3(0,-.06,-.3),sightY:OY};
+  if(fx){
+    if(!flashTex){const c=document.createElement('canvas');c.width=c.height=128;const x=c.getContext('2d');
+      const gr=x.createRadialGradient(64,64,2,64,64,62);gr.addColorStop(0,'rgba(255,255,230,1)');gr.addColorStop(.3,'rgba(255,200,90,.9)');gr.addColorStop(1,'rgba(255,120,20,0)');x.fillStyle=gr;x.fillRect(0,0,128,128);
+      flashTex=new THREE.CanvasTexture(c);}
+    const fm=new THREE.MeshBasicMaterial({map:flashTex,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide,fog:false});
+    const flash=new THREE.Group();
+    for(let i=0;i<2;i++){const p=new THREE.Mesh(new THREE.PlaneGeometry(.24,.24),fm);p.rotation.z=i*Math.PI/2;flash.add(p);}
+    const p3=new THREE.Mesh(new THREE.PlaneGeometry(.24,.24),fm);p3.rotation.y=Math.PI/2;flash.add(p3);
+    flash.position.set(0,0,-.66);flash.visible=false;g.add(flash);
+    const flashLight=new THREE.PointLight(0xffb45a,0,6,2);flashLight.position.set(0,0,-.75);g.add(flashLight);
+    out.flash=flash;out.flashLight=flashLight;
+  }
+  return out;
 }
 const rifle=buildRifle();
 
@@ -222,15 +257,27 @@ meHolder.position.set(0,1.02,0);
 // widok z pierwszej osoby: viewmodel przypięty do kamery + własne ręce fasolki
 const viewModel=new THREE.Group();camera.add(viewModel);
 const fpsSkin=new THREE.MeshStandardMaterial({color:0xf0b440,roughness:.55});
-const fpsArmR=makeArm(armR,fpsSkin),fpsArmL=makeArm(armL,fpsSkin);
+// prostowanie ręki: odejmujemy od wierzchołków wygięcie osi (środki przekrojów wzdłuż ręki)
+function straighten(geo,L,amount){
+  const g=geo.clone(),p=g.attributes.position,N=20,sx=new Float32Array(N),sy=new Float32Array(N),cn=new Float32Array(N);
+  const bin=z=>clamp(Math.floor(z/L*N),0,N-1);
+  for(let i=0;i<p.count;i++){const b=bin(p.getZ(i));sx[b]+=p.getX(i);sy[b]+=p.getY(i);cn[b]++}
+  for(let b=0;b<N;b++){if(cn[b]){sx[b]/=cn[b];sy[b]/=cn[b]}else if(b){sx[b]=sx[b-1];sy[b]=sy[b-1]}}
+  const at=(arr,z)=>{const f=clamp(z/L*N-.5,0,N-1),i=Math.floor(f),j=Math.min(N-1,i+1),t=f-i;return arr[i]*(1-t)+arr[j]*t};
+  for(let i=0;i<p.count;i++){const z=p.getZ(i);p.setX(i,p.getX(i)-at(sx,z)*amount);p.setY(i,p.getY(i)-at(sy,z)*amount)}
+  p.needsUpdate=true;g.computeVertexNormals();return g;
+}
+const armLStraight={...armL,geo:straighten(armL.geo,armL.L,.9)};
+const fpsArmR=makeArm(armR,fpsSkin),fpsArmL=makeArm(armLStraight,fpsSkin);
 viewModel.add(fpsArmR,fpsArmL);
-const VM_HIP=V3(.19,-.185,-.38),VM_ADS=V3(0,-.046,-.3);
+const VM_HIP=V3(.19,-.2,-.36);
 const _gr=V3(),_gl=V3(),_s=V3();
-const VIEW_LABEL={fps:'',tps:'Widok zza ramienia (V - zmień widok)',front:'Widok z przodu (V - wróć do FPS)'};
 const VM_SCALE=.72;
+const VM_ADS=V3(0,-rifle.sightY*VM_SCALE,-.25);          // oko dokładnie na osi kolimatora
+const VIEW_LABEL={fps:'',tps:'Widok zza ramienia (V - zmień widok)',front:'Widok z przodu (V - wróć do FPS)'};
 function attachRifle(view){
   if(view==='fps'){viewModel.add(rifle.group);me.visible=false;fpsArmR.visible=fpsArmL.visible=true;}
-  else{meHolder.add(rifle.group);rifle.group.position.set(-.04,-.06,-.5);rifle.group.rotation.set(0,0,0);rifle.group.scale.setScalar(1);me.visible=true;fpsArmR.visible=fpsArmL.visible=false;}
+  else{meHolder.add(rifle.group);rifle.group.position.set(-.04,-.06,-.5);rifle.group.rotation.set(0,0,0);rifle.group.scale.setScalar(1);for(const m of rifle.stock)m.visible=true;me.visible=true;fpsArmR.visible=fpsArmL.visible=false;}
   player.view=view;$('vlabel').textContent=VIEW_LABEL[view];
 }
 attachRifle('fps');
@@ -268,6 +315,10 @@ function makeEnemy(i){
   const e={root,hp:100,dead:0,t:rnd()*10,dir:rnd()*6.28,speed:1.1+rnd()*.7,turn:2+rnd()*3,flash:0,fall:0,phase:rnd()*6,mats:root.userData.mats};
   root.position.copy(spawnPos());
   root.traverse(o=>{if(o.isMesh&&o.geometry!==undefined){o.userData.enemy=e;enemyMeshes.push(o)}});
+  // karabin w rękach (bez efektów strzału; siatki karabinu nie są celem dla pocisków)
+  const holder=new THREE.Group();holder.position.set(0,1.02,0);root.add(holder);
+  const r=buildRifle({fx:false});r.group.position.set(-.04,-.06,-.5);holder.add(r.group);
+  e.holder=holder;e.rifle=r;
   // pozycja rąk wrogów: opuszczone na boki
   enemies.push(e);return e;
 }
@@ -443,12 +494,13 @@ function poseViewmodel(dt){
   rifle.group.position.set(base.x+gun.sway.x,base.y+gun.sway.y-.17*rl+gun.kick.y,base.z+gun.kick.z);
   rifle.group.rotation.set(gun.kickRot-.5*rl+gun.sway.y*1.2,-gun.sway.x*1.5,.35*rl,'XYZ');
   rifle.group.scale.setScalar(VM_SCALE);
+  for(const m of rifle.stock)m.visible=player.ads<.3;          // przy celowaniu kolba jest za okiem i tylko zasłaniałaby ekran
   // ręce: ręce wchodzą od dołu ekranu, dłonie trafiają w chwyty
   rifle.group.updateWorldMatrix(true,false);viewModel.updateWorldMatrix(true,false);
   _gr.copy(rifle.gripR);rifle.group.localToWorld(_gr);viewModel.worldToLocal(_gr);
   _gl.copy(rifle.gripL);rifle.group.localToWorld(_gl);viewModel.worldToLocal(_gl);
   const L=armR.L;
-  const dR=V3(-.26,.55,-.8).normalize(),dL=V3(.62,.4,-.68).normalize();
+  const dR=V3(-.26,.55,-.8).normalize(),dL=V3(.42,.3,-.86).normalize();
   aimArm(fpsArmR,_s.copy(_gr).addScaledVector(dR,-L),_gr);
   aimArm(fpsArmL,_s.copy(_gl).addScaledVector(dL,-L),_gl);
 }
@@ -492,9 +544,12 @@ function stepEnemies(dt){
     e.phase+=dt*e.speed*3.4;const sw=Math.sin(e.phase)*.7;
     r.userData.legs[0].rotation.x=sw;r.userData.legs[1].rotation.x=-sw;
     r.userData.body.position.y=Math.abs(Math.cos(e.phase))*.022;
-    // ręce opuszczone wzdłuż ciała, kołyszą się
-    const sh=r.userData;aimArm(sh.arms[0],sh.shoulderR,V3(sh.shoulderR.x+.05,sh.shoulderR.y-.5,sh.shoulderR.z+Math.sin(e.phase+3)*.18));
-    aimArm(sh.arms[1],sh.shoulderL,V3(sh.shoulderL.x-.05,sh.shoulderL.y-.5,sh.shoulderL.z+Math.sin(e.phase)*.18));
+    // karabin lekko pracuje w rytm kroków; dłonie trzymają chwyt i chwyt przedni
+    e.holder.rotation.x=-.12+Math.sin(e.phase*2)*.025;e.holder.rotation.y=Math.sin(e.phase)*.05;
+    const sh=r.userData;r.updateWorldMatrix(true,true);
+    _gr.copy(e.rifle.gripR);e.rifle.group.localToWorld(_gr);r.worldToLocal(_gr);
+    _gl.copy(e.rifle.gripL);e.rifle.group.localToWorld(_gl);r.worldToLocal(_gl);
+    aimArm(sh.arms[0],sh.shoulderR,_gr);aimArm(sh.arms[1],sh.shoulderL,_gl);
     if(e.flash>0){e.flash-=dt;e.mats.skin.emissive.setScalar(.9)}else e.mats.skin.emissive.setScalar(0);
   }
 }
