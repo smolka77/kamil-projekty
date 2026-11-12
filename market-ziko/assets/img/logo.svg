@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 64" role="img" aria-label="ZIKO">
+<path d="M10 6h40l-4 9H27l23 20-6 9H8l4-9h19L10 15z" fill="#e10600"/>
+<path d="M14 50c10-5 28-6 40-2-12 0-26 1-40 2z" fill="#222"/>
+<text x="64" y="46" font-family="Oswald,Arial Narrow,Arial,sans-serif" font-weight="600" font-size="40" letter-spacing="6" fill="#3a3a3a">ZIKO</text>
+</svg>
