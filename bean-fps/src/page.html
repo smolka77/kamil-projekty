@@ -141,7 +141,8 @@ const legDefs=legsC.map(l=>{
     const t=clamp((ky-y)/band*.5+.5,0,1);si[i*4+1]=1;sw[i*4]=1-t;sw[i*4+1]=t;
   }
   g.setAttribute('skinIndex',new THREE.Uint16BufferAttribute(si,4));g.setAttribute('skinWeight',new THREE.Float32BufferAttribute(sw,4));
-  return{geo:g,hip,len,knee:V3(kx/kn,ky,kz/kn),side:Math.sign(l.c.x)};
+  let rr=0,rn=0;const sy=-len*.28;for(let i=0;i<gp.count;i++)if(Math.abs(gp.getY(i)-sy)<len*.03){rr+=Math.hypot(gp.getX(i)-kx/kn,gp.getZ(i)-kz/kn);rn++}
+  return{geo:g,hip,len,knee:V3(kx/kn,ky,kz/kn),r:rn?rr/rn:.02,side:Math.sign(l.c.x)};
 });
 function makeLeg(def,mat){
   const hip=new THREE.Bone(),knee=new THREE.Bone();knee.position.copy(def.knee);hip.add(knee);
@@ -168,18 +169,23 @@ function poseLegs(ud,phi,run,air,crouch){
   }
 }
 // ręce: ręka + palce; oś = od barku do środka dłoni, ułożona wzdłuż +Z
+const LIMB_R=Math.min(...legDefs.map(d=>d.r))*1.05;
 const armDefs=armsC.map(a=>{
   const fs=fingC.filter(f=>nearest(f,armsC)===a);
-  // bark: wierzchołki ręki najbliższe osi ciała
+  // bark: wierzchołki ręki najbliższe osi ciała; dłoń: środek palców
   const ap=a.g.attributes.position;let minAbs=1e9;for(let i=0;i<ap.count;i++)minAbs=Math.min(minAbs,Math.abs(ap.getX(i)));
   const sh=V3(),T=V3();let k=0;for(let i=0;i<ap.count;i++)if(Math.abs(ap.getX(i))<minAbs+0.12*S*1.0+0.03){sh.add(V3(ap.getX(i),ap.getY(i),ap.getZ(i)));k++}sh.multiplyScalar(1/k);
   fs.forEach(f=>T.add(f.c));T.multiplyScalar(1/fs.length);
-  const L=sh.distanceTo(T),axis=T.clone().sub(sh).normalize(),q=new THREE.Quaternion().setFromUnitVectors(axis,Z);
-  // ręka jako prosta rurka o grubości oryginału; dłoń (palce) z modelu na końcu
-  const sz=a.g.boundingBox.getSize(V3()),r=Math.min(sz.x,sz.y,sz.z)*.5*.9;
-  const fingers=mergeGeometries(fs.map(f=>f.g.clone()));fingers.translate(-sh.x,-sh.y,-sh.z);fingers.applyQuaternion(q);
-  const tube=new THREE.CapsuleGeometry(r,L,6,14);tube.deleteAttribute('uv');tube.rotateX(Math.PI/2);tube.translate(0,0,L/2);
-  return{geo:mergeGeometries([tube,fingers]),shoulder:sh,L,r,side:Math.sign(a.c.x)};
+  const L=sh.distanceTo(T)*.92,q=new THREE.Quaternion().setFromUnitVectors(T.clone().sub(sh).normalize(),Z);
+  const fingers=mergeGeometries(fs.map(f=>f.g.clone()));fingers.translate(-T.x,-T.y,-T.z);fingers.applyQuaternion(q);fingers.translate(0,0,L);
+  // rurka wzdłuż +Z: 0 = bark, L/2 = łokieć, L = nadgarstek; zaokrąglone końce
+  const tube=new THREE.CapsuleGeometry(LIMB_R,L,6,12,28);tube.deleteAttribute('uv');tube.rotateX(Math.PI/2);tube.translate(0,0,L/2);
+  const g=mergeGeometries([tube,fingers]),gp=g.attributes.position,si=new Uint16Array(gp.count*4),sw=new Float32Array(gp.count*4),band=L*.08;
+  for(let i=0;i<gp.count;i++){const t=clamp((gp.getZ(i)-L/2)/band*.5+.5,0,1);si[i*4+1]=1;sw[i*4]=1-t;sw[i*4+1]=t}
+  g.setAttribute('skinIndex',new THREE.Uint16BufferAttribute(si,4));g.setAttribute('skinWeight',new THREE.Float32BufferAttribute(sw,4));
+  // cieńsza wersja do widoku z pierwszej osoby (blisko kamery ręka wydaje się grubsza)
+  const thin=g.clone(),tp=thin.attributes.position;for(let i=0;i<tp.count;i++){tp.setX(i,tp.getX(i)*.68);tp.setY(i,tp.getY(i)*.68)}thin.computeVertexNormals();
+  return{geo:g,thin,shoulder:sh,L,side:Math.sign(a.c.x)};
 });
 const armR=armDefs.find(d=>d.side>0),armL=armDefs.find(d=>d.side<0);
 
@@ -187,38 +193,47 @@ function beanMats(color){
   return{skin:new THREE.MeshStandardMaterial({color,roughness:.55,metalness:0}),
     eyeW:new THREE.MeshStandardMaterial({color:0xffffff,roughness:.3}),eyeB:new THREE.MeshStandardMaterial({color:0x111111,roughness:.3})};
 }
-// jedna ręka: pivot -> rozciągliwa grupa -> siatka
-function makeArm(def,mat){
-  const pivot=new THREE.Group(),stretch=new THREE.Group();
-  const m=new THREE.Mesh(def.geo,mat);m.castShadow=true;stretch.add(m);pivot.add(stretch);
-  pivot.userData={stretch,L:def.L};return pivot;
+// jedna ręka: pivot (bark) -> SkinnedMesh z kośćmi ramię/przedramię
+function makeArm(def,mat,thin){
+  const up=new THREE.Bone(),lo=new THREE.Bone();lo.position.set(0,0,def.L/2);up.add(lo);
+  const m=new THREE.SkinnedMesh(thin?def.thin:def.geo,mat);m.add(up);m.updateMatrixWorld(true);m.bind(new THREE.Skeleton([up,lo]));
+  m.castShadow=true;m.frustumCulled=false;
+  const pivot=new THREE.Group();pivot.add(m);pivot.userData={up,lo,a:def.L/2,b:def.L/2};return pivot;
+}
+// IK dwóch kości: bark S, dłoń T, łokieć wypychany w stronę wektora pole
+const _ik={d:V3(),p:V3(),e:V3(),q:new THREE.Quaternion(),l:V3()};
+function ikArm(arm,S,T,pole,outE){
+  const {a,b,up,lo}=arm.userData,d=_ik.d.copy(T).sub(S);let dist=d.length();d.multiplyScalar(1/dist);
+  const reach=a+b,k=dist>reach*.999?Math.min(dist/(reach*.999),1.25):1;     // dalej niż sięga: lekkie rozciągnięcie
+  const dd=clamp(dist/k,Math.abs(a-b)+.01,reach*.999);
+  const x=(a*a-b*b+dd*dd)/(2*dd),h=Math.sqrt(Math.max(0,a*a-x*x));
+  const p=_ik.p.copy(pole).addScaledVector(d,-pole.dot(d));if(p.lengthSq()<1e-6)p.set(0,-1,0);p.normalize();
+  const E=_ik.e.copy(S).addScaledVector(d,x*k).addScaledVector(p,h*k);if(outE)outE.copy(E);
+  arm.position.copy(S);arm.scale.set(1,1,1);
+  arm.quaternion.setFromUnitVectors(Z,_ik.l.copy(E).sub(S).normalize());
+  const lf=_ik.l.copy(T).sub(E).normalize().applyQuaternion(_ik.q.copy(arm.quaternion).invert());
+  lo.quaternion.setFromUnitVectors(Z,lf);up.quaternion.identity();
+  lo.position.set(0,0,a*k);
 }
 const BODY=(()=>{const b=bodyGeo.boundingBox;return{cx:(b.min.x+b.max.x)/2,cz:(b.min.z+b.max.z)/2,rx:(b.max.x-b.min.x)/2,rz:(b.max.z-b.min.z)/2}})();
 const angDiff=(a,b)=>Math.atan2(Math.sin(a-b),Math.cos(a-b));
 const inBody=(x,z,m)=>((x-BODY.cx)/(BODY.rx+m))**2+((z-BODY.cz)/(BODY.rz+m))**2<1;
-function shoulderFor(def,T,out){        // bark wędruje po obwodzie korpusu w stronę chwytu, aż ręka nie wchodzi w ciało
-  const a0=Math.atan2(def.shoulder.x-BODY.cx,-(def.shoulder.z-BODY.cz)),at=Math.atan2(T.x-BODY.cx,-(T.z-BODY.cz)),da=angDiff(at,a0);
-  for(const f of[0,.15,.3,.45,.6,.75,.9,1]){
-    const a=a0+da*f;
-    out.set(BODY.cx+BODY.rx*.92*Math.sin(a),def.shoulder.y,BODY.cz-BODY.rz*.92*Math.cos(a));
-    let ok=true;for(let t=.18;t<=1.001;t+=.082){if(inBody(out.x+(T.x-out.x)*t,out.z+(T.z-out.z)*t,def.r*.9)){ok=false;break}}
-    if(ok)return out;
+const _E=V3(),_pole=V3();
+const POLES=[[1,-.55,-.15],[.85,-.5,-.5],[.6,-.45,-.8],[.35,-.35,-1],[.1,-.3,-1]];
+function segClear(A,B,m){for(let t=.2;t<=1.001;t+=.1){if(inBody(A.x+(B.x-A.x)*t,A.z+(B.z-A.z)*t,m))return false}return true}
+function armTo(arm,def,T){
+  const S=def.shoulder;
+  for(const pp of POLES){
+    _pole.set(pp[0]*def.side,pp[1],pp[2]);ikArm(arm,S,T,_pole,_E);
+    if(segClear(S,_E,LIMB_R)&&segClear(_E,T,LIMB_R))return;
   }
-  return out;
 }
-const _sR=V3(),_sL=V3();
-function poseArmsTo(ud,TR,TL){aimArm(ud.arms[0],shoulderFor(armR,TR,_sR),TR);aimArm(ud.arms[1],shoulderFor(armL,TL,_sL),TL)}
+function poseArmsTo(ud,TR,TL){armTo(ud.arms[0],armR,TR);armTo(ud.arms[1],armL,TL)}
 // kolba nie może wchodzić w brzuch: odsuń karabin do przodu, jeśli trzeba
 const _st=V3();
 function keepRifleOut(ud,rg){
   for(let i=0;i<8;i++){rg.updateWorldMatrix(true,false);_st.set(0,-.01,.33);rg.localToWorld(_st);ud.torso.worldToLocal(_st);
     if(!inBody(_st.x,_st.z,.03))break;rg.position.z-=.025}
-}
-const _q=new THREE.Quaternion(),_d=V3();
-function aimArm(pivot,S0,T){            // bark w S0, dłoń ma trafić w T (ręka się lekko rozciąga)
-  _d.copy(T).sub(S0);const dist=_d.length();_d.multiplyScalar(1/dist);
-  pivot.position.copy(S0);pivot.quaternion.setFromUnitVectors(Z,_d);
-  pivot.userData.stretch.scale.set(1,1,clamp(dist/pivot.userData.L,.6,1.7));
 }
 function makeBean(color,opts={}){
   const mats=beanMats(color);const root=new THREE.Group();
@@ -323,9 +338,10 @@ meHolder.position.set(0,1.0,-.08);
 // widok z pierwszej osoby: viewmodel przypięty do kamery + własne ręce fasolki
 const viewModel=new THREE.Group();camera.add(viewModel);
 const fpsSkin=new THREE.MeshStandardMaterial({color:ME_COLOR,roughness:.55});
-const fpsArmR=makeArm(armR,fpsSkin),fpsArmL=makeArm(armL,fpsSkin);
+const fpsArmR=makeArm(armR,fpsSkin,true),fpsArmL=makeArm(armL,fpsSkin,true);
 viewModel.add(fpsArmR,fpsArmL);
 const VM_HIP=V3(.19,-.2,-.36);
+const FPS_SH_R=V3(.26,-.44,.02),FPS_SH_L=V3(-.17,-.48,-.22),FPS_POLE_R=V3(.8,-1,.2),FPS_POLE_L=V3(-1,-.9,0);   // barki poza kadrem
 const _gr=V3(),_gl=V3(),_s=V3();
 const VM_SCALE=.72;
 const VM_ADS=V3(0,-rifle.sightY*VM_SCALE,-.25);          // oko dokładnie na osi kolimatora
@@ -580,10 +596,8 @@ function poseViewmodel(dt){
   rifle.group.updateWorldMatrix(true,false);viewModel.updateWorldMatrix(true,false);
   _gr.copy(rifle.gripR);rifle.group.localToWorld(_gr);viewModel.worldToLocal(_gr);
   _gl.copy(rifle.gripL);rifle.group.localToWorld(_gl);viewModel.worldToLocal(_gl);
-  const L=armR.L;
-  const dR=V3(-.26,.55,-.8).normalize(),dL=V3(.42,.3,-.86).normalize();
-  aimArm(fpsArmR,_s.copy(_gr).addScaledVector(dR,-L),_gr);
-  aimArm(fpsArmL,_s.copy(_gl).addScaledVector(dL,-L),_gl);
+  ikArm(fpsArmR,FPS_SH_R,_gr,FPS_POLE_R);
+  ikArm(fpsArmL,FPS_SH_L,_gl,FPS_POLE_L);
 }
 function poseThirdPerson(dt){
   const p=player,ud=me.userData;
