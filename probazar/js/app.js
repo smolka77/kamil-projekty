@@ -33,7 +33,8 @@ function shipBar(){
 function stars(r){return `<span class="stars" aria-hidden="true">${I('star',14)}</span>`}
 function pcard(p){
   const wish=store.get('pb_wish',[]).includes(p.id);
-  const badges=[p.badge?`<span class="pill">${p.badge}</span>`:'',p.tags.includes('bio')?'<span class="pill">Bio</span>':''].join('');
+  const bc={'Bestseller':'pill--peach','Nowość':'pill--mint','Promocja':'pill--blush'}[p.badge]||'';
+  const badges=[p.badge?`<span class="pill ${bc}">${p.badge}</span>`:'',p.tags.includes('bio')?'<span class="pill pill--sky">Bio</span>':''].join('');
   return `<article class="pcard"><div class="pcard-img"><a href="produkt.html?id=${p.id}" tabindex="-1" aria-hidden="true">${A.productArt(p)}</a><div class="pcard-badges">${badges}</div>
   <button class="wish" data-wish="${p.id}" aria-pressed="${wish}" aria-label="Dodaj do ulubionych: ${esc(p.name)}">${I('heart',20)}</button></div>
   <div class="pcard-body"><h3 class="pcard-title"><a href="produkt.html?id=${p.id}">${p.name}</a></h3>
@@ -162,19 +163,19 @@ R.home=()=>{
   <section class="section"><div class="container"><div class="sec-head"><div><span class="eyebrow">Kategorie</span><h2>Czego dziś szukasz?</h2></div><a class="link-arrow" href="sklep.html">Cały sklep ${I('chevron',16)}</a></div>
    <div class="catgrid">${PB.categories.map(c=>`<a class="cat" href="sklep.html?kat=${c.id}"><div class="im">${A.categoryArt(c)}</div><b>${c.name}</b><small>${PB.products.filter(p=>p.cat===c.id).length} produktów</small></a>`).join('')}</div></div></section>
 
-  <section class="section section--tint"><div class="container"><div class="sec-head"><div><span class="eyebrow">Polecamy</span><h2>Ulubione w naszej spiżarni</h2><p>Produkty, do których wracacie najczęściej – sprawdzone w kuchni Moniki.</p></div><a class="link-arrow" href="sklep.html">Zobacz wszystkie ${I('chevron',16)}</a></div>
+  <section class="section section--peach"><div class="container"><div class="sec-head"><div><span class="eyebrow">Polecamy</span><h2>Ulubione w naszej spiżarni</h2><p>Produkty, do których wracacie najczęściej – sprawdzone w kuchni Moniki.</p></div><a class="link-arrow" href="sklep.html">Zobacz wszystkie ${I('chevron',16)}</a></div>
    <div class="pgrid p4">${feat.map(pcard).join('')}</div></div></section>
 
   <section class="section"><div class="container"><div class="sec-head"><div><span class="eyebrow">Blog kulinarny</span><h2>Najnowsze od Moniki</h2><p>Przepisy z produktami z naszego sklepu – składniki dodasz do koszyka jednym kliknięciem.</p></div><a class="link-arrow" href="blog.html">Wszystkie przepisy ${I('chevron',16)}</a></div>
    <div class="rgrid r3">${PB.recipes.slice(0,3).map(r=>rcard(r)).join('')}</div></div></section>
 
-  <section class="section section--sand"><div class="container about-teaser"><div class="ph">${A.avatar()}</div>
+  <section class="section section--blush"><div class="container about-teaser"><div class="ph">${A.avatar()}</div>
    <div><span class="eyebrow">Poznaj Monikę</span><p class="quote">„Zdrowe jedzenie nie musi być nudne ani drogie. Wystarczą dobre składniki i pięć minut dobrego pomysłu.”</p><p class="muted" style="max-width:54ch">Monika od lat gotuje dla rodziny i znajomych. W ProBazarze dzieli się przepisami i wybiera produkty, które sama kładzie do swojego koszyka.</p><a class="link-arrow" href="o-nas.html">Poznaj naszą historię ${I('chevron',16)}</a></div></div></section>
 
-  <section class="section"><div class="container"><div class="sec-head"><div><span class="eyebrow">Wideo</span><h2>Kanał ProBazar już wkrótce</h2><p>Gotujemy, testujemy i pokazujemy, skąd bierzemy nasze produkty. Poniżej zapowiedź tego, co przygotowujemy.</p></div><a class="link-arrow" href="wideo.html">Zobacz zapowiedzi ${I('chevron',16)}</a></div>
+  <section class="section section--sky"><div class="container"><div class="sec-head"><div><span class="eyebrow">Wideo</span><h2>Kanał ProBazar już wkrótce</h2><p>Gotujemy, testujemy i pokazujemy, skąd bierzemy nasze produkty. Poniżej zapowiedź tego, co przygotowujemy.</p></div><a class="link-arrow" href="wideo.html">Zobacz zapowiedzi ${I('chevron',16)}</a></div>
    <div class="grid grid-3">${PB.videos.slice(0,3).map(v=>vcard(v)).join('')}</div></div></section>
 
-  <section class="section section--tint"><div class="container"><div class="values">${V.map(v=>`<div class="value"><div class="vi">${I(v[0],26)}</div><div><h3>${v[1]}</h3><p>${v[2]}</p></div></div>`).join('')}</div></div></section>
+  <section class="section section--mint"><div class="container"><div class="values">${V.map(v=>`<div class="value"><div class="vi">${I(v[0],26)}</div><div><h3>${v[1]}</h3><p>${v[2]}</p></div></div>`).join('')}</div></div></section>
 
   <section class="news-band">${A.img('news','',1400,700)}<div class="container"><div class="news"><span class="eyebrow">Newsletter</span><h2>Jeden przepis w każdy czwartek</h2><p>Zapisz się i odbierz 10% rabatu na pierwsze zakupy (kod ${PB.coupon.code}).</p>
    <form data-newsletter><label class="sr" for="nl">Adres e-mail</label><input class="input" id="nl" type="email" required placeholder="Twój adres e-mail"><button class="btn btn--navy" type="submit">Zapisz mnie</button></form></div></div></section>`;
