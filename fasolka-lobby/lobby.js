@@ -274,7 +274,7 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
   // ---------- scena ----------
   const scene = new THREE.Scene();
   const HORIZON = new THREE.Color(0xcfe9ff);
-  scene.fog = new THREE.FogExp2(HORIZON, 0.0068);   // lekka mgła: przy postaci niewidoczna, gęstnieje z odległością
+  scene.fog = new THREE.FogExp2(HORIZON, 0.0105);   // lekka mgła: przy postaci niewidoczna, gęstnieje z odległością
   const camera = new THREE.PerspectiveCamera(32, innerWidth / innerHeight, 0.1, 1200);
 
   // niebo: gradient na kuli
@@ -469,7 +469,7 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
       transformed.z += cos(uTime * 1.05 + wp.z * .13 + wp.x * .07) * .016 * hh;`);
   };
   // granica lasu: z tyłu dalej (żeby było widać niebo i góry), po bokach bliżej (rama kadru), nieregularna
-  const edgeR = th => 17 + 16 * Math.pow(Math.max(0, Math.cos(th)), 1.5) + 2.6 * Math.sin(th * 5 + 1.3) + 1.6 * Math.sin(th * 11 + .4);
+  const edgeR = th => 24 + 26 * Math.pow(Math.max(0, Math.cos(th)), 1.5) + 4 * Math.sin(th * 5 + 1.3) + 2.5 * Math.sin(th * 11 + .4);
   const lists = TREES.map(() => ({ near: [], far: [] }));
   const put = (type, x, z, sc, near) => lists[type][near ? 'near' : 'far'].push({ x, z, y: heightAt(x, z) - .1, s: sc, ry: rnd() * 6.28, sx: R(.88, 1.12), sy: R(.9, 1.12) });
   const plant = (x, z, d, e) => {
@@ -477,20 +477,23 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
     const type = pine ? (rnd() < .6 ? 0 : 1) : (rnd() < .55 ? 2 : 3);
     put(type, x, z, pine ? R(.88, 1.22) : R(.85, 1.2), d < 24);
   };
-  for (const [step, dmin, dmax, prob] of [[2.6, 0, 70, .86], [4.1, 70, 150, .55]]) {
+  for (const [step, dmin, dmax, prob] of [[3.4, 0, 70, .62], [4.2, 70, 160, .78]]) {
     for (let gx = -150; gx <= 150; gx += step) for (let gz = -160; gz <= 6; gz += step) {
       const x = gx + R(-.45, .45) * step, z = gz + R(-.45, .45) * step, d = Math.hypot(x, z), th = Math.atan2(x, -z), e = edgeR(th);
       if (d < Math.max(e, dmin) || d >= dmax) continue;
-      const clump = .72 + .5 * (Math.sin(x * .09 + 1.7) * Math.cos(z * .08 - .6) * .5 + .5);       // gęstsze kępy i luźniejsze miejsca
-      if (rnd() > (d < e + 3 ? .98 : prob * clump)) continue;
+      const clump = Math.sin(x * .085 + 1.7) * Math.cos(z * .075 - .6) * .5 + .5 + (Math.sin(x * .23 - z * .19) * .25);   // kępy i prześwity
+      if (rnd() > prob * THREE.MathUtils.clamp(clump * 1.5 - .15, .08, 1.3)) continue;
       plant(x, z, d, e);
     }
   }
-  for (let i = 0; i < 260; i++) {                                          // podszyt wzdłuż skraju lasu
-    const th = R(-2.3, 2.3), r = edgeR(th) + R(-1.6, 4), x = Math.sin(th) * r, z = -Math.cos(th) * r;
-    if (z > 6) continue; put(4, x, z, R(.8, 1.7), r < 22);
+  for (let i = 0; i < 90; i++) {                                           // trochę podszytu przy skraju lasu
+    const th = R(-2.3, 2.3), r = edgeR(th) + R(-1, 3), x = Math.sin(th) * r, z = -Math.cos(th) * r;
+    if (z > 6) continue; put(4, x, z, R(.8, 1.5), r < 22);
   }
-  [[-9.5, -6, 2], [10.5, -7.5, 0], [-14, -1, 1], [15, -2.5, 3], [-6.5, -13, 0], [7.5, -15, 2]].forEach(([x, z, t]) => put(t, x, z, R(1.0, 1.2), true));
+  // pojedyncze drzewa i małe kępy na łące w różnych odległościach – dają głębię
+  [[-10.5, -5.5, 2], [11.5, -7, 0], [-16, -1.5, 1], [17, -3, 3],
+   [-14, -17, 0], [-12.4, -18.5, 3], [15, -21, 2], [16.6, -22.5, 0], [-21, -28, 1], [-6.5, -27, 2], [8, -33, 0], [22, -34, 3], [-26, -15, 0], [27, -14, 2]]
+    .forEach(([x, z, t]) => put(t, x, z, R(.95, 1.2), Math.hypot(x, z) < 24));
   const dummy = new THREE.Object3D(), tint = new THREE.Color();
   lists.forEach((L, type) => { for (const [arr, cast] of [[L.near, true], [L.far, false]]) {
     if (!arr.length) continue;
