@@ -1,3 +1,4 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>Bean FPS</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
@@ -711,6 +712,13 @@ function stepPlayer(dt){
   player.jumpBuf=jumpPress?.13:Math.max(0,player.jumpBuf-dt);player.jumpT=Math.max(0,player.jumpT-dt);
   if(player.jumpBuf>0&&player.coyote>0&&player.vel.y<=.01){player.vel.y=6.6;player.onGround=false;player.coyote=0;player.jumpBuf=0;player.jumpT=.2;if(player.slide)endSlide()}
   player.vel.y-=20*dt;
+  player.onLadder=false;
+  for(const l of oaza.ladders){
+    if(player.pos.x>l.x0-.3&&player.pos.x<l.x1+.3&&player.pos.z>l.z0-.3&&player.pos.z<l.z1+.3&&player.pos.y>=l.y0-.1&&player.pos.y<l.y1-.05){
+      const up=keyDown('KeyW')||keyDown('ArrowUp')||keyDown('Space'),dn=keyDown('KeyS')||keyDown('ArrowDown');
+      player.vel.y=up?3.4:dn?-3.4:0;player.onLadder=true;player.coyote=.1;break;
+    }
+  }
   const prevY=player.pos.y,wasGround=player.onGround;
   player.pos.x+=player.vel.x*dt;player.pos.z+=player.vel.z*dt;player.pos.y+=player.vel.y*dt;
   player.onGround=false;
@@ -722,7 +730,7 @@ function stepPlayer(dt){
     const dx=player.pos.x-cx,dz=player.pos.z-cz,d2=dx*dx+dz*dz;
     const inside=player.pos.x>b.minX&&player.pos.x<b.maxX&&player.pos.z>b.minZ&&player.pos.z<b.maxZ;
     if(!(inside||d2<R*R))continue;
-    if(b.bottom>.05&&prevY+1.75<=b.bottom+.02){player.pos.y=b.bottom-1.75;if(player.vel.y>0)player.vel.y=0;continue}   // sufit
+    if(b.bottom>.05&&prevY+1.75<=b.bottom+.02){if(player.onLadder)continue;player.pos.y=b.bottom-1.75;if(player.vel.y>0)player.vel.y=0;continue}   // sufit
     if((prevY>=b.top-.1||(wasGround&&b.top>prevY&&b.top-prevY<=.5))&&player.vel.y<=0){player.pos.y=b.top;player.vel.y=0;player.onGround=true;continue}
     if(player.pos.y<b.top-.05){
       if(inside){const l=player.pos.x-b.minX,r=b.maxX-player.pos.x,t=player.pos.z-b.minZ,bt=b.maxZ-player.pos.z,m=Math.min(l,r,t,bt);
@@ -1000,7 +1008,9 @@ function setMode(m){
   kills=0;duel.botScore=0;duel.bot=enemies[0];
   $('score').innerHTML=MODE==='1v1'?'Ty <b id="kills">0</b> : <b id="botScore">0</b> Bot <small>do 5</small>':'Trafione fasolki <b id="kills">0</b>';
   for(const e of enemies){const on=MODE==='range'||e===duel.bot;e.off=!on;e.root.visible=on;e.hp=100;e.dead=0;e.fall=0;e.root.rotation.z=0;e.root.position.y=0;if(on&&MODE==='range')e.root.position.copy(spawnPos())}
+  if(MODE==='1v1')nextMap();
   useOaza(MODE==='1v1');
+  if(oaza.active)setTimeout(()=>banner('MAPA: '+oaza.map.name.toUpperCase(),'#ffe14a'),600);
   if(MODE==='1v1'){duelSpawn(duel.bot);resetPlayer()}
   setPauseText();
 }
@@ -1010,7 +1020,7 @@ function sndFar(){
 }
 function endMatch(won){
   playing=false;gun.firing=false;if(document.pointerLockElement)document.exitPointerLock();
-  $('ovTitle').textContent=won?'WYGRANA!':'PRZEGRANA';$('ovText').textContent='Wynik '+kills+' : '+duel.botScore+'. Kliknij, aby zagrać jeszcze raz.';$('ovGo').textContent='ZAGRAJ PONOWNIE';
+  $('ovTitle').textContent=won?'WYGRANA!':'PRZEGRANA';nextMap();useOaza(true);duel.mapBanner=true;$('ovText').textContent='Wynik '+kills+' : '+duel.botScore+'. Następna mapa: '+(oaza.map?oaza.map.name:'—')+'. Kliknij, aby zagrać.';$('ovGo').textContent='ZAGRAJ PONOWNIE';
   $('overlay').style.display='flex';
   kills=0;duel.botScore=0;$('kills').textContent=0;$('botScore').textContent=0;duelSpawn(duel.bot);resetPlayer();   // nowy mecz od razu gotowy
 }
@@ -1040,7 +1050,7 @@ function stepDuelBot(e,dt){
     const radial=clamp((dist-(see?13:6))*.25,-1,1);                      // bez widoczności podchodzi bliżej
     let mx=-dz/dist*e.strafe*.9+dx/dist*radial,mz=dx/dist*e.strafe*.9+dz/dist*radial;const ml=Math.hypot(mx,mz)||1;
     const nx=r.position.x+mx/ml*2.6*dt,nz=r.position.z+mz/ml*2.6*dt;
-    if((oaza.active?(Math.abs(nx)>17.4||Math.abs(nz)>30.4):Math.hypot(nx,nz)>ARENA-2)||boxes.some(b=>nx>b.minX-.45&&nx<b.maxX+.45&&nz>b.minZ-.45&&nz<b.maxZ+.45&&b.top>.5&&!(b.bottom>1.6))){e.strafe*=-1;e.turn=1}
+    if((oaza.active?(Math.abs(nx)>oaza.bx||Math.abs(nz)>oaza.bz):Math.hypot(nx,nz)>ARENA-2)||boxes.some(b=>nx>b.minX-.45&&nx<b.maxX+.45&&nz>b.minZ-.45&&nz<b.maxZ+.45&&b.top>.5&&!(b.bottom>1.6))){e.strafe*=-1;e.turn=1}
     else{r.position.x=nx;r.position.z=nz;moving=1}
     e.react=see?e.react-dt:.55;e.cd-=dt;
     if(see&&e.react<=0&&e.cd<=0&&dist<45){
@@ -1059,9 +1069,11 @@ function stepDuelBot(e,dt){
   _gl.copy(e.rifle.gripLTP);e.rifle.group.localToWorld(_gl);ud.torso.worldToLocal(_gl);
   poseArmsTo(ud,_gr,_gl);
 }
-// ================= mapa Oaza (tryb 1v1) =================
+// ================= mapy 1v1 w rotacji (Oaza, Magazyn) =================
 const arenaBoxes=boxes.slice(),arenaMeshes=boxMeshes.slice(),arenaGround=window.__ground;
-const oaza={ready:false,active:false,group:null,boxes:[],meshes:[],spawns:null};
+const MAPS=[{name:'Oaza',src:'./oaza-data.js'},{name:'Magazyn',src:'./magazyn-data.js'}];
+let mapIdx=-1;
+const oaza={active:false,map:null,boxes:[],meshes:[],spawns:null,ladders:[],bx:17.4,bz:30.4};   // stan aktywnej mapy 1v1
 function segHitsBoxes(a,b,list){                  // odcinek a->b przecina którąś bryłę AABB (test płyt)
   const dx=b.x-a.x,dy=b.y-a.y,dz=b.z-a.z;
   for(const q of list){
@@ -1074,26 +1086,44 @@ function segHitsBoxes(a,b,list){                  // odcinek a->b przecina któr
   }
   return false;
 }
-function useOaza(on){
-  on=!!(on&&oaza.ready);oaza.active=on;
-  boxes.length=0;boxes.push(...(on?oaza.boxes:arenaBoxes));
-  boxMeshes.length=0;boxMeshes.push(...(on?oaza.meshes:arenaMeshes));
-  for(const m of arenaMeshes)m.visible=!on;arenaGround.visible=!on;
-  window.__ground=on?oaza.meshes[0]:arenaGround;
-  if(oaza.group)oaza.group.visible=on;
+function nextMap(){                                 // kolejna mapa z rotacji (pomija te, które jeszcze się ładują)
+  for(let k=1;k<=MAPS.length;k++){const i=(mapIdx+k)%MAPS.length;if(MAPS[i].ready){mapIdx=i;return MAPS[i]}}
+  return null;
 }
-(async()=>{                                        // mapa ładuje się w tle, żeby nie opóźniać startu gry
-  const [{OAZA,OAZA_GLB},{MeshoptDecoder}]=await Promise.all([import('./oaza-data.js'),import('three/addons/libs/meshopt_decoder.module.js')]);
+function useOaza(on){
+  let m=on&&mapIdx>=0&&MAPS[mapIdx].ready?MAPS[mapIdx]:null;
+  if(on&&!m)m=nextMap();
+  on=!!m;oaza.active=on;oaza.map=m;
+  for(const M of MAPS)if(M.group)M.group.visible=M===m;
+  boxes.length=0;boxes.push(...(on?m.boxes:arenaBoxes));
+  boxMeshes.length=0;boxMeshes.push(...(on?m.meshes:arenaMeshes));
+  for(const a of arenaMeshes)a.visible=!on;arenaGround.visible=!on;
+  window.__ground=on?m.ground:arenaGround;
+  if(on)Object.assign(oaza,{boxes:m.boxes,meshes:m.meshes,spawns:m.spawns,ladders:m.ladders,bx:m.bx,bz:m.bz});else oaza.ladders=[];
+}
+const loadMaps=(async()=>{                         // mapy ładują się w tle, żeby nie opóźniać startu gry
+  const {MeshoptDecoder}=await import('three/addons/libs/meshopt_decoder.module.js');
   const ld=new GLTFLoader();ld.setMeshoptDecoder(MeshoptDecoder);
-  const g=await new Promise((res,rej)=>ld.parse(Uint8Array.from(atob(OAZA_GLB),c=>c.charCodeAt(0)).buffer,'',res,rej));
-  g.scene.traverse(o=>{if(!o.isMesh)return;const c=o.material&&o.material.color;
-    if(c&&c.r>.99&&c.g<.01&&c.b>.99){o.visible=false;return}       // siatka kolizji z eksportu – niewidoczna
-    o.castShadow=o.receiveShadow=true;oaza.meshes.push(o)});
-  g.scene.visible=false;scene.add(g.scene);oaza.group=g.scene;oaza.spawns=OAZA.spawns;
-  oaza.boxes=OAZA.colliders.map(([x0,y0,z0,x1,y1,z1])=>({minX:x0,maxX:x1,minZ:z0,maxZ:z1,top:y1,bottom:y0}));
-  oaza.ready=true;
-  if(MODE==='1v1'){useOaza(true);duelSpawn(duel.bot);resetPlayer()}
-})().catch(e=>console.warn('Oaza:',e));
+  await Promise.all(MAPS.map(async M=>{
+    try{
+      const mod=await import(M.src),D=mod.MAP||mod.OAZA,B=mod.GLB||mod.OAZA_GLB;
+      const g=await new Promise((res,rej)=>ld.parse(Uint8Array.from(atob(B),c=>c.charCodeAt(0)).buffer,'',res,rej));
+      M.meshes=[];let roof=null;g.scene.traverse(o=>{if(o.name==='Dach')roof=o});
+      g.scene.traverse(o=>{if(!o.isMesh)return;const c=o.material&&o.material.color;
+        if(c&&c.r>.99&&c.g<.01&&c.b>.99){o.visible=false;return}     // siatka kolizji z eksportu – niewidoczna
+        let inRoof=false;for(let p=o;p;p=p.parent)if(p===roof)inRoof=true;
+        o.castShadow=!inRoof;o.receiveShadow=true;M.meshes.push(o)});   // dach nie rzuca cienia – w hali jest jasno
+      M.ground=M.meshes.find(o=>/floor|ground|teren/i.test(o.name))||M.meshes[0];
+      g.scene.visible=false;scene.add(g.scene);M.group=g.scene;M.spawns=D.spawns;
+      M.boxes=D.colliders.map(([x0,y0,z0,x1,y1,z1])=>({minX:x0,maxX:x1,minZ:z0,maxZ:z1,top:y1,bottom:y0}));
+      M.ladders=(D.ladders||[]).map(([x0,y0,z0,x1,y1,z1,nx,nz])=>({x0,y0,z0,x1,y1,z1,nx,nz}));
+      M.bx=Math.max(...D.colliders.map(c=>Math.max(-c[0],c[3])))-.6;M.bz=Math.max(...D.colliders.map(c=>Math.max(-c[2],c[5])))-.6;
+      M.ready=true;
+      if(MODE==='1v1'&&!oaza.active){if(mapIdx<0)nextMap();useOaza(true);duelSpawn(duel.bot);resetPlayer();banner('MAPA: '+oaza.map.name.toUpperCase(),'#ffe14a')}
+    }catch(e){console.warn('Mapa '+M.name+':',e)}
+  }));
+})();
+
 // ================= lobby =================
 const lobbyBean=makeBean(ME_COLOR,{eyes:false});
 const _lt=V3();
@@ -1114,7 +1144,7 @@ function lobbyAnimate(b,t,dt,st){
 }
 const lobby=createLobby({renderer,bean:lobbyBean,animate:lobbyAnimate,
   onPlay:m=>{setMode(m);lobby.hide();document.body.classList.remove('in-lobby');startPlay()}});
-$('overlay').addEventListener('click',()=>setTimeout(setPauseText,0));
+$('overlay').addEventListener('click',()=>setTimeout(()=>{setPauseText();if(duel.mapBanner&&oaza.active){duel.mapBanner=false;banner('MAPA: '+oaza.map.name.toUpperCase(),'#ffe14a')}},0));
 $('toLobby').addEventListener('click',e=>{
   e.stopPropagation();playing=false;gun.firing=false;
   if(document.pointerLockElement)document.exitPointerLock();
@@ -1127,3 +1157,6 @@ function bodyHit(ud,w,m=0){const q=ud.torso.worldToLocal(w.clone());return inBod
 window.__game={armJoints,bodyHit,inv,selectWeapon,get curW(){return curW},get rifle(){return rifle},solveArm,armR,armL,TP_HOLD,VM,me,poseArmsTo,makeBean,scene,keepRifleOut,placeTP,createWeapon,lobby,duel,setMode,player,gun,enemies,camera,setView:attachRifle,startPlay,start:()=>{playing=true;$('overlay').style.display='none'},fire:()=>{if(gun.mag>0&&gun.cd<=0&&gun.reloading<=0)fireShot()},reload:startReload,inspect:startInspect,setAds:v=>adsHeld=v,keys};
 $('loading').remove();window.__ready=true;frame();
 </script>
+
+
+</body></html>
