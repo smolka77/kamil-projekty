@@ -177,16 +177,19 @@ const ART = {
       ${finish(u)}</svg>`;
   },
   duel() {
-    const u = ++artN, T = tear(u, 186, 134);
+    // jak na szkicu: niebieski | gładki biały pas lekko wygięty | czerwony, napis 1VS1 na środku
+    const u = ++artN;
+    const band = 'M147 -2 C145 60 141 130 136 202 L156 202 C160 130 164 60 168 -2 Z';
     return `<svg class="art" viewBox="0 0 320 200" preserveAspectRatio="xMidYMid slice"><defs>${DEFS(u)}
-      <linearGradient id="rd${u}" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff5a3a"/><stop offset=".6" stop-color="#c3122f"/><stop offset="1" stop-color="#5e0620"/></linearGradient>
-      <linearGradient id="bu${u}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5ab4ff"/><stop offset=".6" stop-color="#1846c8"/><stop offset="1" stop-color="#0a1c66"/></linearGradient></defs>
-      <polygon points="${T.red}" fill="url(#bu${u})"/><polygon points="${T.blue}" fill="url(#rd${u})"/>
-      ${stripes(18, .07)}${halftone(u)}<rect width="320" height="200" fill="url(#hl${u})"/>
-      <polygon points="${T.paper}" fill="#fff" opacity=".55" filter="url(#bl${u})"/>
-      <polygon points="${T.paper}" fill="#f7f4ec" filter="url(#ds${u})"/>
-      ${glyph(u, 74, 142, 92, '1', `url(#slv${u})`, '#0a1c5a')}${glyph(u, 250, 152, 92, '1', `url(#slv${u})`, '#4a0718')}
-      ${glyph(u, 196, 162, 112, 'S', `url(#gold${u})`, '#3a1a04')}${glyph(u, 140, 150, 134, 'V', `url(#gold${u})`, '#3a1a04')}
+      <linearGradient id="bu${u}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#21b0f2"/><stop offset="1" stop-color="#0577c4"/></linearGradient>
+      <linearGradient id="rd${u}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff3a3a"/><stop offset="1" stop-color="#c8101c"/></linearGradient>
+      <linearGradient id="wb${u}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#e9eef5"/><stop offset=".45" stop-color="#ffffff"/><stop offset="1" stop-color="#dfe6ef"/></linearGradient></defs>
+      <rect width="320" height="200" fill="url(#rd${u})"/>
+      <path d="M-2 -2 L148 -2 C146 60 142 130 137 202 L-2 202 Z" fill="url(#bu${u})"/>
+      ${stripes(18, .06)}<rect width="320" height="200" fill="url(#hl${u})"/>
+      <path d="${band}" fill="#000" opacity=".35" transform="translate(3 0)" filter="url(#bl${u})"/>
+      <path d="${band}" fill="url(#wb${u})"/>
+      ${bigText(u, 100, 104, '1VS1', '<tspan fill="url(#slv' + u + ')">1</tspan><tspan fill="url(#gold' + u + ')">VS</tspan><tspan fill="url(#slv' + u + ')">1</tspan>')}
       ${finish(u)}</svg>`;
   },
   soon() {
