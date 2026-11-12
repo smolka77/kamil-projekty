@@ -37,22 +37,34 @@ const CSS = `
 #lb-ui .lb-thumb{width:54px;height:54px;flex:none;border-radius:6px;display:grid;place-items:center;
   font-size:22px;letter-spacing:.02em;color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.25)}
 #lb-ui .lb-thumb svg{width:30px;height:30px}
-#lb-ui .ic-range{background:radial-gradient(circle at 50% 40%,#ff9d5c,#d6452f 70%)}
-#lb-ui .ic-duel{background:radial-gradient(circle at 50% 45%,#ff5a3c 0%,#b3127a 45%,#2b0d5c 100%);position:relative;overflow:hidden}
-#lb-ui .ic-duel::before{content:"";position:absolute;inset:-40%;background:repeating-conic-gradient(rgba(255,255,255,.13) 0 9deg,transparent 9deg 22deg);animation:lb-rays 14s linear infinite}
-@keyframes lb-rays{to{transform:rotate(360deg)}}
-#lb-ui .vs{position:relative;display:inline-block;font-family:'Bungee','Anton',Impact,sans-serif;font-weight:400;font-style:normal;line-height:1;
-  font-size:30px;letter-spacing:-.02em;transform:skewX(-12deg) rotate(-6deg);color:transparent;
-  background:linear-gradient(180deg,#fffbe0 0%,#ffe14a 42%,#ff9a1f 62%,#ff5a1f 100%);-webkit-background-clip:text;background-clip:text;
-  -webkit-text-stroke:2px #2a0a3e;filter:drop-shadow(0 3px 0 #2a0a3e) drop-shadow(0 0 10px rgba(255,170,40,.55))}
-#lb-ui .lb-tile .art b.vs{font-size:76px;-webkit-text-stroke:3px #2a0a3e;filter:drop-shadow(0 5px 0 #2a0a3e) drop-shadow(0 0 18px rgba(255,170,40,.6))}
+/* emblematy trybów: ciemne tło z akcentem, ukośne prążki, metaliczne złoto z ciemnym obrysem */
+#lb-ui .ic-range,#lb-ui .ic-duel{position:relative;overflow:hidden;isolation:isolate}
+#lb-ui .ic-range{background:
+  radial-gradient(circle at 50% 50%,rgba(0,0,0,0) 35%,rgba(0,0,0,.6) 100%),
+  repeating-linear-gradient(115deg,rgba(255,255,255,.06) 0 2px,transparent 2px 9px),
+  linear-gradient(135deg,#ff8a2a 0%,#c4231b 55%,#4a0b0b 100%)}
+#lb-ui .ic-duel{background:
+  radial-gradient(circle at 50% 50%,rgba(0,0,0,0) 35%,rgba(0,0,0,.6) 100%),
+  repeating-linear-gradient(115deg,rgba(255,255,255,.06) 0 2px,transparent 2px 9px),
+  linear-gradient(115deg,#c8162f 0 49.2%,#f4f4f4 49.2% 50.8%,#1a45c4 50.8% 100%)}
+#lb-ui .ic-range::after,#lb-ui .ic-duel::after{content:"";position:absolute;top:-30%;bottom:-30%;width:35%;left:-60%;z-index:-1;transform:skewX(-20deg);
+  background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.22),rgba(255,255,255,0));animation:lb-sheen 5s ease-in-out infinite}
+@keyframes lb-sheen{0%,70%{left:-60%}100%{left:130%}}
+#lb-ui .vs{display:inline-block;font-family:'Anton',Impact,sans-serif;font-weight:400;font-style:normal;line-height:1;font-size:32px;letter-spacing:.01em;
+  transform:skewX(-10deg);color:transparent;padding:0 .06em;
+  background:linear-gradient(180deg,#ffffff 0%,#fff1c4 30%,#f3b632 51%,#a8660f 52%,#e9a52a 75%,#ffe08a 100%);-webkit-background-clip:text;background-clip:text;
+  -webkit-text-stroke:1.5px #140b1f;filter:drop-shadow(0 2px 0 #140b1f) drop-shadow(0 5px 8px rgba(0,0,0,.55))}
+#lb-ui .lb-tile .art b.vs{font-size:84px;-webkit-text-stroke:2.5px #140b1f;filter:drop-shadow(0 4px 0 #140b1f) drop-shadow(0 10px 14px rgba(0,0,0,.55))}
+#lb-ui .emb{filter:drop-shadow(0 2px 0 #140b1f) drop-shadow(0 5px 8px rgba(0,0,0,.55))}
+#lb-ui .lb-thumb .emb{width:40px;height:40px}
+#lb-ui .lb-tile .art .emb{width:88px;height:88px}
 #lb-ui .ic-soon{background:radial-gradient(circle at 50% 40%,#5d6676,#343a46 70%)}
 #lb-ui .lb-picker{position:absolute;inset:0;pointer-events:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;
   padding:24px 16px;background:rgba(6,14,32,.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);animation:lb-in .18s ease}
 #lb-ui .lb-picker[hidden]{display:none}
 @keyframes lb-in{from{opacity:0}to{opacity:1}}
 #lb-ui .lb-picker h2{margin:0;font-weight:400;font-size:clamp(30px,4vw,46px);letter-spacing:.04em;transform:skewX(-8deg);text-shadow:0 3px 0 #1b4fa8}
-#lb-ui .lb-tiles{display:grid;grid-template-columns:repeat(5,minmax(0,170px));gap:14px;width:100%;justify-content:center}
+#lb-ui .lb-tiles{display:grid;grid-template-columns:repeat(3,minmax(0,190px));gap:14px;width:100%;justify-content:center}
 #lb-ui .lb-tile{position:relative;font:inherit;color:#fff;text-align:left;border:3px solid rgba(255,255,255,.14);border-radius:8px;cursor:pointer;
   padding:0;overflow:hidden;background:#1a2440;display:flex;flex-direction:column;min-height:230px;transition:transform .12s ease,border-color .12s ease}
 #lb-ui .lb-tile:hover{transform:translateY(-4px);border-color:rgba(255,255,255,.5)}
@@ -96,7 +108,7 @@ const CSS = `
   #lb-ui .lb-tile{min-height:170px}
   #lb-ui .lb-tile .art{min-height:86px}
 }
-@media (min-width:641px) and (max-width:980px){#lb-ui .lb-tiles{grid-template-columns:repeat(3,minmax(0,170px))}}`;
+`;
 
 const HTML = `
 <div class="lb-shade"></div>
@@ -119,14 +131,19 @@ const HTML = `
 </div>`;
 
 const ICONS = {
-  range: '<svg viewBox="0 0 30 30" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><circle cx="15" cy="15" r="9"/><path d="M15 2v6M15 22v6M2 15h6M22 15h6"/></svg>',
+  range: '<svg class="emb" viewBox="0 0 64 64"><defs><linearGradient id="lbGold" gradientUnits="userSpaceOnUse" x1="0" y1="6" x2="0" y2="58">' +
+    '<stop offset="0" stop-color="#fff"/><stop offset=".3" stop-color="#fff1c4"/><stop offset=".51" stop-color="#f3b632"/><stop offset=".52" stop-color="#a8660f"/>' +
+    '<stop offset=".75" stop-color="#e9a52a"/><stop offset="1" stop-color="#ffe08a"/></linearGradient></defs>' +
+    '<g fill="none" stroke="#140b1f" stroke-width="9" stroke-linecap="round"><circle cx="32" cy="32" r="17"/><path d="M32 5v13M32 46v13M5 32h13M46 32h13"/></g>' +
+    '<g fill="none" stroke="url(#lbGold)" stroke-width="5" stroke-linecap="round"><circle cx="32" cy="32" r="17"/><path d="M32 5v13M32 46v13M5 32h13M46 32h13"/></g>' +
+    '<circle cx="32" cy="32" r="5" fill="url(#lbGold)" stroke="#140b1f" stroke-width="2.2"/></svg>',
   duel: '<b class="vs" data-t="VS">VS</b>',
   soon: '<svg viewBox="0 0 30 30" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="13" width="16" height="12" rx="2"/><path d="M10.5 13V9.5a4.5 4.5 0 0 1 9 0V13"/></svg>',
 };
 const DEFAULT_MODES = [
   { id: 'range', name: 'Strzelnica', desc: 'Solo · zestrzel czerwone fasolki', icon: 'range' },
   { id: '1v1', name: '1v1', desc: 'Pojedynek z botem · do 5', icon: 'duel' },
-  { soon: true }, { soon: true }, { soon: true },
+  { soon: true },
 ];
 
 // deterministyczny generator losowy, żeby las wyglądał zawsze tak samo
@@ -140,7 +157,7 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
   if (!document.getElementById('lb-font')) {
     const l = document.createElement('link');
     l.id = 'lb-font'; l.rel = 'stylesheet';
-    l.href = 'https://fonts.googleapis.com/css2?family=Anton&family=Bungee&display=swap';
+    l.href = 'https://fonts.googleapis.com/css2?family=Anton&display=swap';
     document.head.appendChild(l);
   }
   const style = document.createElement('style'); style.textContent = CSS; document.head.appendChild(style);
