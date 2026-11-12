@@ -131,8 +131,9 @@ const bodyGeo=bodyC.g;
 const legDefs=legsC.map(l=>{
   const parts=[l.g,...feetC.filter(f=>nearest(f,legsC)===l).map(f=>f.g)];
   const g=mergeGeometries(parts);
+  const pure=l.g.clone();
   const hip=V3(l.c.x,l.bb.max.y-0.02,l.c.z);
-  g.translate(-hip.x,-hip.y,-hip.z);
+  g.translate(-hip.x,-hip.y,-hip.z);pure.translate(-hip.x,-hip.y,-hip.z);
   // kolano w połowie nogi: wagi skóry płynnie przechodzą z uda na łydkę
   g.computeBoundingBox();const len=-g.boundingBox.min.y,ky=-len*.5,band=len*.1,gp=g.attributes.position;
   let kx=0,kz=0,kn=0;const si=new Uint16Array(gp.count*4),sw=new Float32Array(gp.count*4);
@@ -141,8 +142,11 @@ const legDefs=legsC.map(l=>{
     const t=clamp((ky-y)/band*.5+.5,0,1);si[i*4+1]=1;sw[i*4]=1-t;sw[i*4+1]=t;
   }
   g.setAttribute('skinIndex',new THREE.Uint16BufferAttribute(si,4));g.setAttribute('skinWeight',new THREE.Float32BufferAttribute(sw,4));
+  {const pp=pure.attributes.position,s2=new Uint16Array(pp.count*4),w2=new Float32Array(pp.count*4);
+   for(let i=0;i<pp.count;i++){const t=clamp((ky-pp.getY(i))/band*.5+.5,0,1);s2[i*4+1]=1;w2[i*4]=1-t;w2[i*4+1]=t}
+   pure.setAttribute('skinIndex',new THREE.Uint16BufferAttribute(s2,4));pure.setAttribute('skinWeight',new THREE.Float32BufferAttribute(w2,4));}
   let rr=0,rn=0;const sy=-len*.28;for(let i=0;i<gp.count;i++)if(Math.abs(gp.getY(i)-sy)<len*.03){rr+=Math.hypot(gp.getX(i)-kx/kn,gp.getZ(i)-kz/kn);rn++}
-  return{geo:g,hip,len,knee:V3(kx/kn,ky,kz/kn),r:rn?rr/rn:.02,side:Math.sign(l.c.x)};
+  return{geo:g,pure,hip,len,knee:V3(kx/kn,ky,kz/kn),r:rn?rr/rn:.02,side:Math.sign(l.c.x)};
 });
 function makeLeg(def,mat){
   const hip=new THREE.Bone(),knee=new THREE.Bone();knee.position.copy(def.knee);hip.add(knee);
@@ -170,22 +174,20 @@ function poseLegs(ud,phi,run,air,crouch){
 }
 // ręce: ręka + palce; oś = od barku do środka dłoni, ułożona wzdłuż +Z
 const LIMB_R=Math.min(...legDefs.map(d=>d.r))*1.05;
+const X=V3(1,0,0);
 const armDefs=armsC.map(a=>{
   const fs=fingC.filter(f=>nearest(f,armsC)===a);
-  // bark: wierzchołki ręki najbliższe osi ciała; dłoń: środek palców
   const ap=a.g.attributes.position;let minAbs=1e9;for(let i=0;i<ap.count;i++)minAbs=Math.min(minAbs,Math.abs(ap.getX(i)));
-  const sh=V3(),T=V3();let k=0;for(let i=0;i<ap.count;i++)if(Math.abs(ap.getX(i))<minAbs+0.12*S*1.0+0.03){sh.add(V3(ap.getX(i),ap.getY(i),ap.getZ(i)));k++}sh.multiplyScalar(1/k);
-  fs.forEach(f=>T.add(f.c));T.multiplyScalar(1/fs.length);
-  const L=sh.distanceTo(T)*.92,q=new THREE.Quaternion().setFromUnitVectors(T.clone().sub(sh).normalize(),Z);
-  const fingers=mergeGeometries(fs.map(f=>f.g.clone()));fingers.translate(-T.x,-T.y,-T.z);fingers.applyQuaternion(q);fingers.translate(0,0,L);
-  // rurka wzdłuż +Z: 0 = bark, L/2 = łokieć, L = nadgarstek; zaokrąglone końce
-  const tube=new THREE.CapsuleGeometry(LIMB_R,L,6,12,28);tube.deleteAttribute('uv');tube.rotateX(Math.PI/2);tube.translate(0,0,L/2);
-  const g=mergeGeometries([tube,fingers]),gp=g.attributes.position,si=new Uint16Array(gp.count*4),sw=new Float32Array(gp.count*4),band=L*.08;
-  for(let i=0;i<gp.count;i++){const t=clamp((gp.getZ(i)-L/2)/band*.5+.5,0,1);si[i*4+1]=1;sw[i*4]=1-t;sw[i*4+1]=t}
-  g.setAttribute('skinIndex',new THREE.Uint16BufferAttribute(si,4));g.setAttribute('skinWeight',new THREE.Float32BufferAttribute(sw,4));
-  // cieńsza wersja do widoku z pierwszej osoby (blisko kamery ręka wydaje się grubsza)
-  const thin=g.clone(),tp=thin.attributes.position;for(let i=0;i<tp.count;i++){tp.setX(i,tp.getX(i)*.68);tp.setY(i,tp.getY(i)*.68)}thin.computeVertexNormals();
-  return{geo:g,thin,shoulder:sh,L,side:Math.sign(a.c.x)};
+  const sh=V3();let k=0;for(let i=0;i<ap.count;i++)if(Math.abs(ap.getX(i))<minAbs+0.12*S*1.0+0.03){sh.add(V3(ap.getX(i),ap.getY(i),ap.getZ(i)));k++}sh.multiplyScalar(1/k);
+  const side=Math.sign(a.c.x),leg=legDefs.find(d=>d.side===side)||legDefs[0];
+  const g=leg.pure.clone();g.rotateX(-Math.PI/2);                       // noga w dół (-Y) -> ręka wzdłuż +Z
+  const knee=leg.knee.clone().applyAxisAngle(X,-Math.PI/2);
+  const gp=g.attributes.position;let maxZ=-1e9;for(let i=0;i<gp.count;i++)maxZ=Math.max(maxZ,gp.getZ(i));
+  const end=V3();let n=0;for(let i=0;i<gp.count;i++)if(gp.getZ(i)>maxZ-.035){end.add(V3(gp.getX(i),gp.getY(i),gp.getZ(i)));n++}end.multiplyScalar(1/n);end.z=maxZ-LIMB_R;
+  const q=new THREE.Quaternion().setFromUnitVectors(knee.clone().normalize(),Z);   // ramię dokładnie wzdłuż +Z
+  g.applyQuaternion(q);knee.applyQuaternion(q);end.applyQuaternion(q);
+  const thin=g.clone(),tp=thin.attributes.position;for(let i=0;i<tp.count;i++){tp.setX(i,tp.getX(i)*.75);tp.setY(i,tp.getY(i)*.75)}thin.computeVertexNormals();
+  return{geo:g,thin,shoulder:sh,a:knee.length(),b:end.distanceTo(knee),restLower:end.clone().sub(knee).normalize(),side};
 });
 const armR=armDefs.find(d=>d.side>0),armL=armDefs.find(d=>d.side<0);
 
@@ -195,15 +197,15 @@ function beanMats(color){
 }
 // jedna ręka: pivot (bark) -> SkinnedMesh z kośćmi ramię/przedramię
 function makeArm(def,mat,thin){
-  const up=new THREE.Bone(),lo=new THREE.Bone();lo.position.set(0,0,def.L/2);up.add(lo);
+  const up=new THREE.Bone(),lo=new THREE.Bone();lo.position.set(0,0,def.a);up.add(lo);
   const m=new THREE.SkinnedMesh(thin?def.thin:def.geo,mat);m.add(up);m.updateMatrixWorld(true);m.bind(new THREE.Skeleton([up,lo]));
   m.castShadow=true;m.frustumCulled=false;
-  const pivot=new THREE.Group();pivot.add(m);pivot.userData={up,lo,a:def.L/2,b:def.L/2};return pivot;
+  const pivot=new THREE.Group();pivot.add(m);pivot.userData={up,lo,a:def.a,b:def.b,restLower:def.restLower};return pivot;
 }
 // IK dwóch kości: bark S, dłoń T, łokieć wypychany w stronę wektora pole
 const _ik={d:V3(),p:V3(),e:V3(),q:new THREE.Quaternion(),l:V3()};
 function ikArm(arm,S,T,pole,outE){
-  const {a,b,up,lo}=arm.userData,d=_ik.d.copy(T).sub(S);let dist=d.length();d.multiplyScalar(1/dist);
+  const {a,b,up,lo,restLower}=arm.userData,d=_ik.d.copy(T).sub(S);let dist=d.length();d.multiplyScalar(1/dist);
   const reach=a+b,k=dist>reach*.999?Math.min(dist/(reach*.999),1.25):1;     // dalej niż sięga: lekkie rozciągnięcie
   const dd=clamp(dist/k,Math.abs(a-b)+.01,reach*.999);
   const x=(a*a-b*b+dd*dd)/(2*dd),h=Math.sqrt(Math.max(0,a*a-x*x));
@@ -212,7 +214,7 @@ function ikArm(arm,S,T,pole,outE){
   arm.position.copy(S);arm.scale.set(1,1,1);
   arm.quaternion.setFromUnitVectors(Z,_ik.l.copy(E).sub(S).normalize());
   const lf=_ik.l.copy(T).sub(E).normalize().applyQuaternion(_ik.q.copy(arm.quaternion).invert());
-  lo.quaternion.setFromUnitVectors(Z,lf);up.quaternion.identity();
+  lo.quaternion.setFromUnitVectors(restLower,lf);up.quaternion.identity();
   lo.position.set(0,0,a*k);
 }
 const BODY=(()=>{const b=bodyGeo.boundingBox;return{cx:(b.min.x+b.max.x)/2,cz:(b.min.z+b.max.z)/2,rx:(b.max.x-b.min.x)/2,rz:(b.max.z-b.min.z)/2}})();
