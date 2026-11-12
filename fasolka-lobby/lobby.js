@@ -179,22 +179,22 @@ const ART = {
   duel() {
     // niebieski | biała błyskawica | czerwony; duże jedynki, mniejsze złote VS, wszystko na środku
     const u = ++artN;
-    const Rg = [[200, -4], [166, 128], [208, 128], [164, 204]];   // jeden zygzak na środku: / _ /   // prawa krawędź błyskawicy
-    const Lf = [[182, -4], [146, 143], [188, 143], [146, 204]];   // lewa krawędź
+    // błyskawica / _ / : stroma, z krótkim zygzakiem tuż pod VS
+    const boltPts = [[166, -4], [184, -4], [165, 152], [192, 152], [182, 204], [164, 204], [173, 166], [146, 166]];
     const P = a => a.map(q => q.join(',')).join(' ');
-    const bolt = `${P(Rg)} ${P(Lf.slice().reverse())}`;
+    const bolt = P(boltPts);
     return `<svg class="art" viewBox="0 0 320 200" preserveAspectRatio="xMidYMid slice"><defs>${DEFS(u)}
       <linearGradient id="bu${u}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#21b0f2"/><stop offset="1" stop-color="#0577c4"/></linearGradient>
       <linearGradient id="rd${u}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff3a3a"/><stop offset="1" stop-color="#c8101c"/></linearGradient>
       <linearGradient id="wb${u}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#eef2f8"/><stop offset=".5" stop-color="#ffffff"/><stop offset="1" stop-color="#dfe6ef"/></linearGradient></defs>
       <rect width="320" height="200" fill="url(#rd${u})"/>
-      <polygon points="-4,-4 ${P(Lf)} -4,204" fill="url(#bu${u})"/>
+      <polygon points="-4,-4 166,-4 146,166 173,166 164,204 -4,204" fill="url(#bu${u})"/>
       ${stripes(18, .06)}<rect width="320" height="200" fill="url(#hl${u})"/>
       <polygon points="${bolt}" fill="#fff" opacity=".55" filter="url(#bl${u})"/>
       <polygon points="${bolt}" fill="#000" opacity=".3" transform="translate(3 2)"/>
       <polygon points="${bolt}" fill="url(#wb${u})" stroke="#fff" stroke-width="1" stroke-linejoin="miter"/>
-      ${glyph(u, 96, 136, 100, '1', `url(#slv${u})`, '#0a2a66')}${glyph(u, 228, 136, 100, '1', `url(#slv${u})`, '#5a0712')}
-      ${glyph(u, 162, 117, 56, 'VS', `url(#gold${u})`, '#3a1a04')}
+      ${glyph(u, 94, 136, 100, '1', `url(#slv${u})`, '#0a2a66')}${glyph(u, 232, 136, 100, '1', `url(#slv${u})`, '#5a0712')}
+      ${glyph(u, 162, 131, 86, 'VS', `url(#gold${u})`, '#3a1a04')}
       ${finish(u)}</svg>`;
   },
   soon() {
@@ -208,7 +208,7 @@ const ART = {
 };
 const DEFAULT_MODES = [
   { id: 'range', name: 'Strzelnica', desc: 'Solo · zestrzel czerwone fasolki', icon: 'range', tag: 'SOLO' },
-  { id: '1v1', name: '1v1', desc: 'Pojedynek z botem · do 5', icon: 'duel', tag: '1 NA 1' },
+  { id: '1v1', name: '1v1', desc: 'Mapa Oaza · bot · do 5 trafień', icon: 'duel', tag: '1 NA 1' },
   { soon: true },
 ];
 
