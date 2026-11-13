@@ -1,9 +1,10 @@
 // Mecz 1v1 w Bean FPS.
-// Po GRAJ w lobby: szukanie przeciwnika → losowanie mapy → wczytywanie obu graczy (wszystko nad sceną lobby),
+// Po GRAJ w lobby (stawka i losowanie mapy są w lobby): szukanie przeciwnika → wczytywanie obu graczy (nad sceną lobby);
+// bez mapy z lobby mecz sam ją losuje (karty map z miniaturami z silnika).
 // potem w grze: plansza meczu (mapa, stawka, rundy, przeciwnik) → odliczanie → runda → ZWYCIĘSTWO / PORAŻKA z wynikiem.
 // Każde zabójstwo kończy rundę, mecz trwa do 3 wygranych rund. Podczas plansz i odliczania gracze stoją w miejscu.
 //
-// Użycie: const match = createMatch(hooks); match.start() po GRAJ; match.kill('me' | 'op') przy zabójstwie;
+// Użycie: const match = createMatch(hooks); match.start({map, stake}) po GRAJ; match.kill('me' | 'op') przy zabójstwie;
 // match.update(dt, paused) w każdej klatce. Haki gry opisane są przy createMatch.
 
 export const ROUNDS_TO_WIN = 3;
@@ -176,16 +177,16 @@ body canvas{transition:filter .4s ease}
 }
 `;
 
-const COIN = '<svg class="mt-coin" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8.6" fill="#ffc400" stroke="#8a5a00" stroke-width="1.4"/>'
-  + '<path d="M3.5 8.2A7 7 0 0 1 16.5 8.2" fill="none" stroke="#fff2a0" stroke-width="1.6" stroke-linecap="round" opacity=".8"/>'
-  + '<circle cx="10" cy="10" r="5" fill="none" stroke="#d98c00" stroke-width="1.4"/></svg>';
+// moneta USDT jak w portfelu lobby
+const COIN = '<svg class="mt-coin" viewBox="0 0 20 20" aria-hidden="true"><defs><linearGradient id="mtusdt" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3ad8a6"/><stop offset="1" stop-color="#1b9e78"/></linearGradient></defs>'
+  + '<circle cx="10" cy="10" r="9.2" fill="url(#mtusdt)"/><text x="10" y="14.3" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="800" font-size="11.5" fill="#fff">₮</text></svg>';
 const BEAN = visor => `<svg viewBox="0 0 48 48" aria-hidden="true"><rect x="13" y="4" width="22" height="40" rx="11" fill="#fff6dc"/>`
   + `<rect x="17" y="13" width="14" height="7.5" rx="3.75" fill="${visor}"/><ellipse cx="19" cy="10.5" rx="2.4" ry="3.6" fill="#fff" opacity=".7"/></svg>`;
 
 const HTML = `
 <div id="mt-mm" hidden><div class="mt-box">
   <div class="mt-head"><span class="mt-tag">TRYB 1 NA 1</span><h2 class="mt-title" id="mt-title"></h2>
-    <div class="mt-chips"><span class="mt-chip"><small>STAWKA</small>${COIN}<b id="mt-stake"></b></span><span class="mt-chip"><small>RUNDY</small><b>DO ${ROUNDS_TO_WIN} WYGRANYCH</b></span></div></div>
+    <div class="mt-chips"><span class="mt-chip" id="mt-stakechip"><small>STAWKA</small>${COIN}<b id="mt-stake"></b></span><span class="mt-chip"><small>RUNDY</small><b>DO ${ROUNDS_TO_WIN} WYGRANYCH</b></span></div></div>
   <div class="mt-vs" id="mt-vs">
     <div class="mt-pl me"><div class="av">${BEAN('#5a3500')}</div><span class="nm" id="mt-me"></span><small>TY</small></div>
     <div class="mt-vsx">VS</div>
@@ -223,7 +224,10 @@ function mapFallback(name) {
 
 /**
  * Haki gry (g):
- *  stake            – stawka meczu (liczba)
+ *  money(v)         – zapis kwoty, np. "10,00 USDT" (stawka przychodzi z lobby w start({map, stake}))
+ *  prize(stake)     – wypłata za wygrany mecz (pula minus prowizja lobby)
+ *  matchEnd(won)    – koniec meczu: lobby rozlicza stawkę (zdarzenie fasolka:match)
+ *  again()          – „GRAJ DALEJ”: powrót do lobby i GRAJ (nowa stawka, losowanie mapy w lobby)
  *  maps()           – [{name, ready, thumb}] wszystkie mapy z rotacji 1v1
  *  mapsSettled()    – true, gdy ładowanie map się zakończyło (także z błędem)
  *  nick()           – nick gracza z lobby
@@ -242,9 +246,11 @@ export function createMatch(g) {
   const $ = id => root.querySelector('#' + id);
   const mm = $('mt-mm'), vs = $('mt-vs'), opCard = $('mt-opcard'), mapsEl = $('mt-maps'), title = $('mt-title');
   const strip = $('mt-strip'), hud = $('mt-hud'), dim = $('mt-dim'), count = $('mt-count'), curtain = $('mt-curtain');
-  $('mt-stake').textContent = g.stake;
 
-  const S = { me: 0, op: 0, round: 1, nick: 'Gracz', opp: '', mapIdx: -1, mapName: '' };
+  const S = { me: 0, op: 0, round: 1, nick: 'Gracz', opp: '', mapIdx: -1, mapName: '', stake: 0, preset: null };
+  let opts = {};                             // z lobby: { map: nazwa wylosowanej mapy, stake: stawka pobrana z portfela }
+  const money = v => g.money ? g.money(v) : String(v);
+  const stakeChip = () => S.stake ? `<span class="mt-chip"><small>STAWKA</small>${COIN}<b>${esc(money(S.stake))}</b></span>` : '';
   let phase = 'idle', t = 0, frozen = false, lastWinner = null;
   let searchDur = 3, nameT = 0, oppReadyT = 1, countN = 0, curtainT = -1, roul = null, drawDone = -1, switched = false;
 
@@ -275,11 +281,13 @@ export function createMatch(g) {
   function go(p) { phase = p; t = 0; (ENTER[p] || (() => {}))(); }
   const ENTER = {
     search() {
-      Object.assign(S, { me: 0, op: 0, round: 1, nick: g.nick(), opp: '', mapIdx: -1, mapName: '' });
+      Object.assign(S, { me: 0, op: 0, round: 1, nick: g.nick(), opp: '', mapIdx: -1, mapName: '', stake: +opts.stake > 0 ? +opts.stake : 0, preset: opts.map || null });
       frozen = false; lastWinner = null; switched = false; roul = null; drawDone = -1;
       root.classList.remove('needclick');
       mm.hidden = false; mm.classList.remove('out'); vs.classList.remove('compact'); mapsEl.hidden = true; mapsEl.classList.remove('done');
-      $('mt-load').hidden = true; $('mt-timer').hidden = false; $('mt-cancel').hidden = false;
+      $('mt-stakechip').hidden = !S.stake; $('mt-stake').textContent = S.stake ? money(S.stake) : '';
+      $('mt-load').hidden = true; $('mt-timer').hidden = false;
+      $('mt-cancel').hidden = !!S.stake;     // stawka jest już pobrana z portfela – szukania nie da się przerwać
       setTitle('SZUKANIE PRZECIWNIKA<span class="mt-dots"><i>.</i><i>.</i><i>.</i></span>');
       $('mt-me').textContent = S.nick;
       opCard.className = 'mt-pl op searching'; $('mt-op').textContent = '???'; $('mt-opst').textContent = 'SZUKANIE';
@@ -301,6 +309,16 @@ export function createMatch(g) {
       mapsEl.hidden = maps.length === 0;
     },
     load() {
+      if (S.preset) {                        // mapa wylosowana już w lobby: pokazujemy tylko jej kartę
+        const maps = g.maps(), i = maps.findIndex(m => m.name.toLowerCase() === String(S.preset).toLowerCase());
+        S.mapIdx = i; S.mapName = i >= 0 ? maps[i].name : String(S.preset);
+        vs.classList.add('compact'); $('mt-timer').hidden = true;
+        mapsEl.innerHTML = ''; mapsEl.style.setProperty('--n', 1);
+        const d = document.createElement('div'); d.className = 'mt-map sel'; const m = maps[i];
+        d.style.backgroundImage = m && m.thumb ? `url("${m.thumb}")` : mapFallback(S.mapName);
+        const s = document.createElement('span'); s.textContent = S.mapName; d.appendChild(s); mapsEl.appendChild(d);
+        mapsEl.classList.add('done'); mapsEl.hidden = false; sfx('select');
+      }
       $('mt-cancel').hidden = true; $('mt-load').hidden = false; $('mt-bar').style.width = '0%';
       $('mt-lbl').textContent = 'WCZYTYWANIE GRACZY'; $('mt-lbl').className = 'mt-lbl';
       const rme = $('mt-rme'), rop = $('mt-rop'); rme.textContent = S.nick.toUpperCase(); rop.textContent = S.opp.toUpperCase(); rme.className = rop.className = '';
@@ -312,7 +330,7 @@ export function createMatch(g) {
       renderHud(); hud.classList.add('on'); dim.classList.add('on'); document.body.classList.add('mt-on');
       showStrip('intro', `<span class="mt-tag">MECZ 1 NA 1</span>
         <div class="mt-vsrow"><div class="me"><span class="nm">${esc(S.nick)}</span><small>TY</small></div><div class="mt-vsx">VS</div><div class="op"><span class="nm">${esc(S.opp)}</span><small>PRZECIWNIK</small></div></div>
-        <div class="mt-chips"><span class="mt-chip"><small>MAPA</small><b>${esc(S.mapName.toUpperCase())}</b></span><span class="mt-chip"><small>STAWKA</small>${COIN}<b>${esc(g.stake)}</b></span><span class="mt-chip"><small>RUNDY</small><b>DO ${ROUNDS_TO_WIN} WYGRANYCH</b></span></div>
+        <div class="mt-chips"><span class="mt-chip"><small>MAPA</small><b>${esc(S.mapName.toUpperCase())}</b></span>${stakeChip()}<span class="mt-chip"><small>RUNDY</small><b>DO ${ROUNDS_TO_WIN} WYGRANYCH</b></span></div>
         <div class="mt-clickhint">KLIKNIJ, ABY ZACZĄĆ</div>`);
     },
     count() {
@@ -332,8 +350,12 @@ export function createMatch(g) {
     },
     final() {
       const won = S.me > S.op; frozen = true; g.release(); dim.classList.add('on');
+      if (g.matchEnd) g.matchEnd(won);       // lobby rozlicza stawkę w portfelu
+      const prize = !S.stake ? '' : won
+        ? `<div class="mt-prize plus"><small>WYGRANA</small>${COIN}<b>+${esc(money(g.prize ? g.prize(S.stake) : S.stake * 2))}</b></div>`
+        : `<div class="mt-prize minus"><small>STAWKA</small>${COIN}<b>−${esc(money(S.stake))}</b></div>`;
       showStrip((won ? 'win' : 'loss') + ' final', `<span class="mt-sub">KONIEC MECZU · ${esc(S.mapName.toUpperCase())}</span><div class="mt-big">${won ? 'ZWYCIĘSTWO' : 'PORAŻKA'}</div>${scoreRow()}
-        <div class="mt-prize ${won ? 'plus' : 'minus'}"><small>STAWKA</small>${COIN}<b>${won ? '+' : '−'}${esc(g.stake)}</b></div>
+        ${prize}
         <div class="mt-actions"><button class="mt-btn pri" type="button" data-a="again">GRAJ DALEJ</button><button class="mt-btn ghost" type="button" data-a="lobby">LOBBY</button></div>`);
       sfx(won ? 'win' : 'lose');
     },
@@ -374,16 +396,18 @@ export function createMatch(g) {
       nameT -= DT; if (nameT <= 0) { nameT = .09; $('mt-op').textContent = OPP_NAMES[Math.floor(Math.random() * OPP_NAMES.length)]; }
       if (t >= searchDur) go('found');
     },
-    found() { if (t >= 1.3) go('draw'); },
+    found() { if (t >= 1.3) go(S.preset ? 'load' : 'draw'); },
     draw() {
       if (drawDone >= 0) { drawDone += DT; if (drawDone >= 1.2) go('load'); return; }
       if (!roul) { if (t >= .45 && (g.maps().some(m => m.ready) || g.mapsSettled())) startRoulette(); return; }
       stepRoulette(DT);
     },
     load() {
-      const p = Math.min(1, t / 1.6); $('mt-bar').style.width = (p * 100).toFixed(1) + '%';
-      if (t >= .45) $('mt-rme').className = 'ok';
+      const M = S.mapIdx >= 0 ? g.maps()[S.mapIdx] : null, mready = !M || M.ready || g.mapsSettled();   // mapa z lobby mogła się jeszcze nie wczytać
+      const p = Math.min(mready ? 1 : .9, t / 1.6); $('mt-bar').style.width = (p * 100).toFixed(1) + '%';
+      if (t >= .45 && mready) $('mt-rme').className = 'ok';
       if (t >= oppReadyT) $('mt-rop').className = 'ok';
+      if (!mready) { t = Math.min(t, 1.5); return; }
       if (t >= Math.max(.45, oppReadyT) && t >= 1.6 && !$('mt-lbl').classList.contains('ok')) { $('mt-lbl').textContent = 'OBAJ GRACZE GOTOWI'; $('mt-lbl').classList.add('ok'); }
       if (t >= 1.9 && curtainT < 0) { curtainT = 0; curtain.classList.add('on'); }
       if (curtainT >= 0) { curtainT += DT; if (curtainT >= .4) { g.enterGame(S.mapIdx); go('intro'); curtain.classList.remove('on'); } }
@@ -421,19 +445,22 @@ export function createMatch(g) {
     curtain.classList.remove('on'); root.classList.remove('needclick'); document.body.classList.remove('mt-on');
   }
   function abort() { phase = 'idle'; frozen = false; roul = null; hideAll(); }
-  function cancel() { if (!CANCELABLE.has(phase)) return; abort(); g.exitToLobby(); }
+  const cancelable = () => CANCELABLE.has(phase) && !S.stake;   // mecz o stawkę: stawka już pobrana, bez anulowania
+  function cancel() { if (!cancelable()) return; abort(); g.exitToLobby(); }
 
   $('mt-cancel').addEventListener('click', cancel);
   $('mt-catch').addEventListener('click', () => { if (phase === 'intro') g.resume(); });
   strip.addEventListener('click', e => {
     const a = e.target.closest('[data-a]'); if (!a || phase !== 'final') return;
-    if (a.dataset.a === 'again') { g.lock(); hideAll(); g.toLobbyScene(); go('search'); }
-    else { abort(); g.exitToLobby(); }
+    if (a.dataset.a !== 'again') { abort(); g.exitToLobby(); }
+    else if (g.again) { abort(); g.again(); }            // nowa stawka i losowanie mapy przez lobby
+    else { g.lock(); hideAll(); g.toLobbyScene(); opts = {}; go('search'); }
   });
-  addEventListener('keydown', e => { if (e.key === 'Escape' && CANCELABLE.has(phase)) { e.stopPropagation(); cancel(); } }, true);
+  addEventListener('keydown', e => { if (e.key === 'Escape' && cancelable()) { e.stopPropagation(); cancel(); } }, true);
 
   return {
-    start() { hideAll(); go('search'); },
+    // o = { map, stake } z lobby; bez mapy mecz sam ją losuje
+    start(o) { opts = o || {}; hideAll(); go('search'); },
     abort, cancel, update,
     // zabójstwo kończy rundę: 'me' = gracz wygrał rundę, 'op' = przeciwnik
     kill(w) {
@@ -444,7 +471,7 @@ export function createMatch(g) {
     get frozen() { return frozen; },
     get phase() { return phase; },
     get lobbyPhase() { return LOBBY_PHASES.has(phase); },
-    get cancelable() { return CANCELABLE.has(phase); },
+    get cancelable() { return cancelable(); },
     get on() { return phase !== 'idle' && !LOBBY_PHASES.has(phase); },
     get state() { return { ...S, phase, t }; },
     // tylko do testów: zatrzymanie bieżącej fazy

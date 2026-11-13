@@ -76,8 +76,9 @@ import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import glbB64 from './bean-data.js';
-import {createLobby} from './lobby.js';
-import {createMatch,ROUNDS_TO_WIN} from './match.js';
+import {createLobby,applySkin} from './lobby.js';
+import {payout} from './lobby-ui.js';
+import {createMatch} from './match.js';
 import {createRange} from './range.js';
 import {WEAPON_IDS,WEAPON_STATS,loadWeaponModels,createWeapon,applyParts,reloadPose,drawPose,magGrabPoint,pouchPoint,createShells,weaponSound} from './weaponry.js';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
@@ -521,10 +522,12 @@ function selectWeapon(n){
 
 // ================= dźwięk =================
 let AC=null,master=null;
+let VOL=.8,FOV_BASE=78;   // z ustawień lobby (zdarzenie fasolka:settings)
 let muted=false;try{muted=localStorage.getItem('beanfps-muted')==='1'}catch(e){}
-const initAudio=()=>{if(AC)return;try{AC=new(window.AudioContext||window.webkitAudioContext)();master=AC.createGain();master.gain.value=muted?0:1;master.connect(AC.destination)}catch(e){}};
+addEventListener('fasolka:settings',e=>{const d=e.detail||{};if(d.volume!=null){VOL=Math.max(0,Math.min(1,+d.volume));if(master&&!muted)master.gain.setTargetAtTime(VOL,AC.currentTime,.02)}if(d.fov)FOV_BASE=Math.max(60,Math.min(110,+d.fov))});
+const initAudio=()=>{if(AC)return;try{AC=new(window.AudioContext||window.webkitAudioContext)();master=AC.createGain();master.gain.value=muted?0:VOL;master.connect(AC.destination)}catch(e){}};
 function setMuted(v){
-  muted=v;if(master)master.gain.setTargetAtTime(v?0:1,AC.currentTime,.02);
+  muted=v;if(master)master.gain.setTargetAtTime(v?0:VOL,AC.currentTime,.02);
   try{localStorage.setItem('beanfps-muted',v?'1':'0')}catch(e){}
   for(const b of document.querySelectorAll('.mute')){b.textContent=v?'Dźwięk: wył. (M)':'Dźwięk: wł. (M)';b.setAttribute('aria-pressed',String(v))}
 }
@@ -593,7 +596,7 @@ function startPlay(){
   try{const r=renderer.domElement.requestPointerLock();if(r&&r.catch)r.catch(()=>{})}catch(e){}
   renderer.domElement.focus({preventScroll:true});
 }
-$('overlay').addEventListener('click',startPlay);
+$('overlay').addEventListener('click',()=>{if(duel.mapBanner){const d={ok:true};dispatchEvent(new CustomEvent('fasolka:rematch',{detail:d}));if(!d.ok){duel.mapBanner=false;$('toLobby').click();return}}startPlay()});
 for(const b of document.querySelectorAll('.mute'))b.addEventListener('click',e=>{e.stopPropagation();initAudio();setMuted(!muted)});
 addEventListener('keydown',e=>{if(e.code==='KeyM'&&!playing)setMuted(!muted)});
 setMuted(muted);
@@ -1087,7 +1090,7 @@ function updateCamera(dt){
   const bob=player.run*.018*(1-player.ads*.8);eye.y+=Math.abs(Math.cos(player.walkPhase))*bob;
   if(player.view==='fps'){
     camera.position.copy(eye);camera.rotation.set(player.pitch+deathK*.3,player.yaw,-.07*player.slideK+deathK*.42,'YXZ');camInit=false;
-    const fov=lerp(78+player.run*3+player.slideK*9,WEAPON_STATS[inv[curW].id].fov,player.ads);if(Math.abs(camera.fov-fov)>.01){camera.fov=fov;camera.updateProjectionMatrix()}
+    const fov=lerp(FOV_BASE+player.run*3+player.slideK*9,WEAPON_STATS[inv[curW].id].fov,player.ads);if(Math.abs(camera.fov-fov)>.01){camera.fov=fov;camera.updateProjectionMatrix()}
   }else{
     _back.set(Math.sin(player.yaw)*Math.cos(player.pitch),-Math.sin(player.pitch),Math.cos(player.yaw)*Math.cos(player.pitch));
     _right.set(Math.cos(player.yaw),0,-Math.sin(player.yaw));
@@ -1143,6 +1146,7 @@ function setMode(m,mi,quiet){
   const rm=MODE==='range'&&RANGE_MAP.ready?RANGE_MAP:null;      // Strzelnica gra na własnej mapie, gdy się już wczytała (w tle); inaczej stara arena
   $('score').innerHTML=MODE==='1v1'?'Ty <b id="kills">0</b> : <b id="botScore">0</b> Bot <small>do 5</small>':'Trafione fasolki <b id="kills">0</b>'+(rm?' <small id="rgAcc"></small>':'');
   for(const e of enemies){const on=MODE==='range'||e===duel.bot;e.off=!on;e.root.visible=on;e.hp=100;e.dead=0;e.fall=0;e.root.rotation.z=0;e.root.position.y=0;if(on&&MODE==='range')e.root.position.copy(spawnPos())}
+  duel.mapBanner=false;
   if(MODE==='1v1'){if(mi!=null&&mi>=0&&MAPS[mi]&&MAPS[mi].ready)mapIdx=mi;else nextMap()}
   useOaza(MODE==='1v1'||!!rm,rm);
   if(oaza.active&&!quiet)setTimeout(()=>banner('MAPA: '+oaza.map.name.toUpperCase(),'#ffe14a'),600);
@@ -1155,6 +1159,7 @@ function sndFar(){
   const g=AC.createGain();g.gain.setValueAtTime(.22,t);g.gain.exponentialRampToValueAtTime(.001,t+.22);s.connect(f).connect(g).connect(master);s.start(t);s.stop(t+.25);
 }
 function endMatch(won){
+  dispatchEvent(new CustomEvent('fasolka:match',{detail:{won:!!won}}));
   playing=false;gun.firing=false;if(document.pointerLockElement)document.exitPointerLock();
   $('ovTitle').textContent=won?'WYGRANA!':'PRZEGRANA';nextMap();useOaza(true);duel.mapBanner=true;$('ovText').textContent='Wynik '+kills+' : '+duel.botScore+'. Następna mapa: '+(oaza.map?oaza.map.name:'—')+'. Kliknij, aby zagrać.';$('ovGo').textContent='ZAGRAJ PONOWNIE';
   $('overlay').style.display='flex';
@@ -1280,22 +1285,16 @@ function lobbyAnimate(b,t,dt,st){
   ud.upper.position.y=br*.006;
   leanTorso(ud,.02+br*.012,Math.sin(t*.7)*.07,Math.sin(t*1.1)*.025);
   ud.body.scale.set(1+br*.012,1-br*.012,1+br*.012);
-  for(let i=0;i<2;i++){
+  for(let i=0;i<2;i++){                                   // ręce nieruchomo wzdłuż ciała (lekko zgięte, bez machania)
     const def=i?armL:armR,S0=def.shoulder,side=i?-1:1,L=def.a+def.b;
-    _lt.set(S0.x+side*(.12+.015*br),S0.y-L*.9,S0.z-.02+.03*Math.sin(t*1.3+i));       // ręce luźno wzdłuż ciała
-    if(i===0&&st.wave>0.01){                                                     // macha, gdy kursor jest nad GRAJ
-      const up=V3(S0.x+.28+Math.sin(t*13)*.14,S0.y+L*.8,S0.z-.08);_lt.lerp(up,st.wave);
-    }
-    armTo(ud.arms[i],def,_lt);
+    _lt.set(S0.x+side*.13,S0.y-L*.8,S0.z-.02);
+    solveArm(ud.arms[i],def,_lt,{avoid:false});
   }
 }
-const LOBBY_MODES=[
-  {id:'range',name:'Strzelnica',desc:'Solo · zestrzel czerwone fasolki',icon:'range',tag:'SOLO'},
-  {id:'1v1',name:'1v1',desc:'Losowa mapa · do '+ROUNDS_TO_WIN+' wygranych rund',icon:'duel',tag:'1 NA 1'},
-  {soon:true}];
-const lobby=createLobby({renderer,bean:lobbyBean,animate:lobbyAnimate,modes:LOBBY_MODES,
-  onPlay:m=>{if(m==='1v1'){matchLock();lobby.hide();match.start();return}
-    setMode(m);lobby.hide();document.body.classList.remove('in-lobby');startPlay()}});
+const lobby=createLobby({renderer,bean:lobbyBean,animate:lobbyAnimate,
+  onPlay:(m,o)=>{o=o||{};if(m==='1v1'){matchLock();lobby.hide();match.start({map:o.map,stake:o.stake});return}   // mecz: mapa i stawka z losowania w lobby
+    setMode(m,null);lobby.hide();document.body.classList.remove('in-lobby');startPlay()},
+  onSkin:s=>{applySkin(me.userData.mats.skin,s);applySkin(fpsSkin,s)}});   // skin z lobby także na postaci w grze
 $('overlay').addEventListener('click',()=>setTimeout(()=>{setPauseText();if(duel.mapBanner&&oaza.active){duel.mapBanner=false;banner('MAPA: '+oaza.map.name.toUpperCase(),'#ffe14a')}},0));
 $('toLobby').addEventListener('click',e=>{
   e.stopPropagation();playing=false;gun.firing=false;match.abort();player.dead=false;document.body.classList.remove('mt-dead');
@@ -1303,7 +1302,6 @@ $('toLobby').addEventListener('click',e=>{
   document.body.classList.add('in-lobby');lobby.show();
 });
 // ================= mecz 1v1: szukanie przeciwnika, losowanie mapy, rundy do 3 wygranych (match.js) =================
-const MATCH_STAKE=100;                                  // stawka meczu (na razie stała – portfela gracza jeszcze nie ma)
 function tone(seq,type='triangle',vol=.16){            // seq: [[częstotliwość Hz, start s, czas s], ...]
   if(!AC)return;const t0=AC.currentTime;
   for(const [f,s,d] of seq){const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.setValueAtTime(f,t0+s);
@@ -1319,10 +1317,13 @@ function matchLock(){                                   // wołane w obsłudze k
 }
 function toLobbyBg(){playing=false;gun.firing=false;player.dead=false;document.body.classList.remove('mt-dead');document.body.classList.add('in-lobby')}
 const match=createMatch({
-  stake:MATCH_STAKE,
+  money:v=>(Math.round(v*100)/100).toLocaleString('pl-PL',{minimumFractionDigits:2,maximumFractionDigits:2})+' USDT',
+  prize:s=>payout(s),                                   // wypłata za wygraną (pula 2 × stawka minus prowizja lobby)
+  matchEnd:won=>dispatchEvent(new CustomEvent('fasolka:match',{detail:{won:!!won}})),   // lobby rozlicza stawkę w portfelu
+  again:()=>{toLobbyBg();lobby.show();const b=lobby.ui.querySelector('#lb-play');if(b)b.click()},   // nowa stawka i losowanie mapy w lobby
   maps:()=>MAPS.map(M=>({name:M.name,ready:!!M.ready,thumb:M.thumb||null})),
   mapsSettled:()=>mapsSettled,
-  nick:()=>{const i=lobby.ui.querySelector('#lb-nick');return(i&&i.value.trim())||'Gracz'},
+  nick:()=>{const p=lobby.ui.querySelector('#lb-plate-name');return(p&&p.textContent.trim())||'Gracz'},
   enterGame:mi=>{setMode('1v1',mi,true);lobby.hide();document.body.classList.remove('in-lobby');$('overlay').style.display='none';
     playing=!!document.pointerLockElement;renderer.domElement.focus({preventScroll:true})},
   resetRound:()=>{                                      // początek rundy: obaj na spawnach, pełne HP i amunicja, czysta mapa
@@ -1341,11 +1342,11 @@ const match=createMatch({
 window.__match=match;
 // miniatury map do losowania: jedna klatka z silnika na mapę (z góry pod kątem, dach hali ukryty), robiona przed zwykłą klatką
 const thumbCam=new THREE.PerspectiveCamera(46,16/10,.5,700);
-function snapMap(M){
+function snapMap(M,ow=480,oh=300){
   const cv=renderer.domElement,W=cv.width,H=cv.height;if(!M.group||!W||!H)return;
   const sc=sun.shadow.camera,keep={near:scene.fog.near,far:scene.fog.far,sun:sun.position.clone(),tgt:sun.target.position.clone(),me:me.visible,ground:arenaGround.visible,
-    sh:[sc.left,sc.right,sc.top,sc.bottom,sc.far],maps:MAPS.map(X=>X.group?X.group.visible:false),arena:arenaMeshes.map(a=>a.visible),en:enemies.map(e=>e.root.visible),roof:M.roof?M.roof.visible:true};
-  for(const X of MAPS)if(X.group)X.group.visible=X===M;
+    sh:[sc.left,sc.right,sc.top,sc.bottom,sc.far],maps:ALLMAPS.map(X=>X.group?X.group.visible:false),arena:arenaMeshes.map(a=>a.visible),en:enemies.map(e=>e.root.visible),roof:M.roof?M.roof.visible:true};
+  for(const X of ALLMAPS)if(X.group)X.group.visible=X===M;
   for(const a of arenaMeshes)a.visible=false;arenaGround.visible=false;for(const e of enemies)e.root.visible=false;me.visible=false;if(M.roof)M.roof.visible=false;
   const v=M.view||{pos:[M.bx*1.15,Math.max(M.bx,M.bz)*1.05,M.bz*1.05],look:[0,0,0]};
   scene.fog.near=200;scene.fog.far=700;
@@ -1356,12 +1357,12 @@ function snapMap(M){
   renderer.setViewport(0,0,vw,vh);renderer.setScissor(0,0,vw,vh);renderer.setScissorTest(true);
   renderer.render(scene,thumbCam);
   renderer.setScissorTest(false);renderer.setViewport(0,0,cw,ch);
-  const c=document.createElement('canvas');c.width=480;c.height=300;
-  c.getContext('2d').drawImage(cv,0,H-vh*pr,vw*pr,vh*pr,0,0,480,300);
+  const c=document.createElement('canvas');c.width=ow;c.height=oh;
+  c.getContext('2d').drawImage(cv,0,H-vh*pr,vw*pr,vh*pr,0,0,ow,oh);
   try{M.thumb=c.toDataURL('image/jpeg',.84)}catch(e){}
   scene.fog.near=keep.near;scene.fog.far=keep.far;sun.position.copy(keep.sun);sun.target.position.copy(keep.tgt);
   [sc.left,sc.right,sc.top,sc.bottom,sc.far]=keep.sh;sc.updateProjectionMatrix();
-  MAPS.forEach((X,i)=>{if(X.group)X.group.visible=keep.maps[i]});arenaMeshes.forEach((a,i)=>a.visible=keep.arena[i]);arenaGround.visible=keep.ground;
+  ALLMAPS.forEach((X,i)=>{if(X.group)X.group.visible=keep.maps[i]});arenaMeshes.forEach((a,i)=>a.visible=keep.arena[i]);arenaGround.visible=keep.ground;
   enemies.forEach((e,i)=>e.root.visible=keep.en[i]);me.visible=keep.me;if(M.roof)M.roof.visible=keep.roof;
 }
 
