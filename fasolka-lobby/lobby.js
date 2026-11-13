@@ -109,6 +109,9 @@ const CSS = `
 #lb-ui .lb-custom span{padding:0 12px;font:700 11px/1 Inter,sans-serif;letter-spacing:.1em;color:var(--mut)}
 #lb-ui .lb-win{display:flex;justify-content:space-between;align-items:center;margin:10px 2px 0;font:500 12.5px/1 Inter,sans-serif;color:var(--mut)}
 #lb-ui .lb-win b{font:700 17px/1 Rajdhani,Oswald,sans-serif;letter-spacing:.02em;color:var(--ok)}
+#lb-ui .lb-fee{margin-top:10px}
+#lb-ui .lb-fee+.lb-win{margin-top:7px}
+#lb-ui .lb-fee b{font-size:14px;color:var(--mut)}
 #lb-ui .lb-free{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;background:rgba(255,255,255,.04);border:1px dashed var(--line2);
   font:500 13px/1.3 Inter,sans-serif;color:var(--mut)}
 #lb-ui .lb-free svg{width:18px;height:18px;flex:none;color:var(--acc)}
@@ -170,16 +173,65 @@ const CSS = `
 #lb-ui .lb-seg span{font:600 14px Inter,sans-serif}
 #lb-ui .lb-seg.on{border-color:var(--acc);background:rgba(255,198,41,.1)}
 #lb-ui .lb-seg.on b{background:var(--acc);color:#1d1300}
-#lb-ui .lb-binds{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-#lb-ui .lb-bind{display:flex;align-items:center;justify-content:space-between;gap:8px;height:42px;padding:0 6px 0 12px;border-radius:10px;border:1px solid var(--line);
-  background:rgba(255,255,255,.03);cursor:pointer;text-align:left;font:500 13px/1.1 Inter,sans-serif}
-#lb-ui .lb-bind:hover{border-color:var(--line2);background:rgba(255,255,255,.07)}
-#lb-ui .lb-bind kbd{min-width:58px;height:30px;padding:0 8px;border-radius:7px;display:grid;place-items:center;background:rgba(255,255,255,.08);
+#lb-ui .c-move{--c:#ffc629}
+#lb-ui .c-fight{--c:#ff6b57}
+#lb-ui .c-sys{--c:#9d8cff}
+#lb-ui .lb-dlg.lb-wide{width:min(740px,100%)}
+#lb-ui .lb-binds{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+#lb-ui .lb-bind{display:flex;align-items:center;gap:9px;height:42px;padding:0 6px 0 11px;border-radius:10px;border:1px solid var(--line);
+  background:rgba(255,255,255,.03);cursor:pointer;text-align:left;font:500 13px/1.1 Inter,sans-serif;transition:border-color .12s,background .12s}
+#lb-ui .lb-bind i{width:7px;height:7px;flex:none;border-radius:2px;background:var(--c);box-shadow:0 0 7px var(--c)}
+#lb-ui .lb-bind span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#lb-ui .lb-bind:hover,#lb-ui .lb-bind.hl{border-color:color-mix(in srgb,var(--c) 55%,transparent);background:color-mix(in srgb,var(--c) 8%,transparent)}
+#lb-ui .lb-bind kbd{min-width:56px;max-width:60%;overflow:hidden;text-overflow:ellipsis;height:30px;padding:0 8px;border-radius:7px;display:grid;place-items:center;background:rgba(255,255,255,.08);
   border:1px solid var(--line2);border-bottom-width:2px;font:700 14px/1 Rajdhani,Oswald,sans-serif;letter-spacing:.04em;white-space:nowrap}
-#lb-ui .lb-bind.wait{border-color:var(--acc)}
+#lb-ui .lb-bind.wait{border-color:var(--acc);background:rgba(255,198,41,.08)}
 #lb-ui .lb-bind.wait kbd{color:var(--acc);font:600 11px Inter,sans-serif;animation:lb-blink 1s ease-in-out infinite}
+/* klawiatura */
+#lb-ui .lb-deck{position:relative;display:flex;gap:16px;align-items:center;margin-top:14px;padding:14px 16px 16px;border-radius:18px;
+  background:radial-gradient(120% 90% at 50% 0%,rgba(255,255,255,.05),rgba(255,255,255,0) 60%),linear-gradient(180deg,#131927,#0a0e17);
+  border:1px solid var(--line2);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),inset 0 -12px 24px rgba(0,0,0,.35),0 14px 34px rgba(0,0,0,.4)}
+#lb-ui .lb-deck::after{content:"";position:absolute;left:8%;right:8%;bottom:-1px;height:2px;border-radius:2px;
+  background:linear-gradient(90deg,transparent,#ffc629 25%,#ff6b57 50%,#9d8cff 75%,transparent);box-shadow:0 0 14px rgba(255,160,80,.45);opacity:.85}
+#lb-ui .lb-kb{flex:1;min-width:0;container-type:inline-size;padding:5px;border-radius:12px;background:#080b12;box-shadow:inset 0 2px 6px rgba(0,0,0,.7),0 1px 0 rgba(255,255,255,.05)}
+#lb-ui .lb-kbrow{display:grid;grid-template-columns:repeat(60,1fr)}
+#lb-ui .lb-key{position:relative;margin:2px;height:calc(6.667cqw - 4px);min-width:0;padding:0;border:0;border-radius:min(7px,1.3cqw);cursor:default;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.5cqw;overflow:hidden;
+  background:linear-gradient(180deg,#252c3b 0%,#1b202c 100%);color:#5f6a80;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07),inset 0 -2px 0 rgba(0,0,0,.35),0 2px 0 #05070c,0 3px 5px rgba(0,0,0,.4);
+  transition:transform .07s ease,box-shadow .07s ease,filter .15s,background .15s}
+#lb-ui .lb-key b{font:700 max(9px,2.15cqw)/1 Rajdhani,Oswald,sans-serif;letter-spacing:.03em}
+#lb-ui .lb-key small{font:700 max(7px,1.25cqw)/1 Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase;opacity:.9;white-space:nowrap}
+#lb-ui .lb-key small:empty{display:none}
+@container (max-width:520px){#lb-ui .lb-key small{display:none}#lb-ui .lb-key.use:has(small:not(:empty))::after{display:block}}
+#lb-ui .lb-key.use{color:#fff;background:linear-gradient(180deg,color-mix(in srgb,var(--c) 38%,#252c3b) 0%,color-mix(in srgb,var(--c) 16%,#1b202c) 100%);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 75%,transparent),inset 0 1px 0 rgba(255,255,255,.22),inset 0 -2px 0 rgba(0,0,0,.3),0 2px 0 #05070c,0 0 16px color-mix(in srgb,var(--c) 38%,transparent)}
+#lb-ui .lb-key.use b{text-shadow:0 0 10px color-mix(in srgb,var(--c) 80%,transparent)}
+#lb-ui .lb-key.use::after{content:"";position:absolute;left:50%;bottom:9%;width:20%;height:2px;margin-left:-10%;border-radius:2px;background:var(--c);box-shadow:0 0 6px var(--c)}
+#lb-ui .lb-key.use:has(small:not(:empty))::after{display:none}
+#lb-ui .lb-key.alt{filter:saturate(.55) brightness(.85)}
+#lb-ui .lb-key.hl{filter:brightness(1.3);transform:translateY(-2px);z-index:1;box-shadow:inset 0 0 0 2px #fff,0 4px 0 #05070c,0 0 22px color-mix(in srgb,var(--c,#fff) 60%,transparent)}
+#lb-ui .lb-key.down{transform:translateY(2px);filter:brightness(1.45);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c,#8e9ab0) 85%,transparent),0 0 0 #05070c,0 0 18px color-mix(in srgb,var(--c,#8e9ab0) 55%,transparent)}
+#lb-ui .lb-kb.pick .lb-key{cursor:pointer}
+#lb-ui .lb-kb.pick .lb-key:hover{box-shadow:inset 0 0 0 2px var(--acc),0 2px 0 #05070c,0 0 14px rgba(255,198,41,.45)}
+#lb-ui .lb-kb:not(.pick) .lb-key.use:not(.alt){cursor:pointer}
+#lb-ui .lb-kbtip{position:absolute;z-index:5;transform:translate(-50%,-100%);display:flex;align-items:center;gap:8px;padding:6px 10px 6px 6px;border-radius:9px;
+  background:#06080e;border:1px solid color-mix(in srgb,var(--c,#8e9ab0) 55%,transparent);box-shadow:0 10px 24px rgba(0,0,0,.55);
+  font:600 12px/1 Inter,sans-serif;white-space:nowrap;pointer-events:none}
+#lb-ui .lb-kbtip kbd{min-width:26px;height:22px;padding:0 6px;border-radius:5px;display:grid;place-items:center;background:color-mix(in srgb,var(--c,#8e9ab0) 25%,#1b202c);
+  color:#fff;font:700 13px/1 Rajdhani,Oswald,sans-serif}
+#lb-ui .lb-mouse{width:104px;flex:none;display:flex;flex-direction:column;align-items:center;gap:10px}
+#lb-ui .lb-msvg{width:54px;height:84px;filter:drop-shadow(0 6px 10px rgba(0,0,0,.5))}
+#lb-ui .lb-msvg .mb{fill:rgba(255,107,87,.26);stroke:#ff6b57;stroke-width:1;filter:drop-shadow(0 0 4px rgba(255,107,87,.6))}
+#lb-ui .lb-msvg .mw{fill:#ff6b57;filter:drop-shadow(0 0 4px rgba(255,107,87,.8))}
+#lb-ui .lb-mleg{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px;width:100%}
+#lb-ui .lb-mleg li{display:flex;align-items:center;gap:6px;font:500 11px/1.15 Inter,sans-serif;color:#c8cfdd}
+#lb-ui .lb-mleg b{flex:none;min-width:34px;padding:3px 4px;border-radius:5px;text-align:center;background:rgba(255,107,87,.16);color:#ff9a88;font:700 10px/1 Inter,sans-serif;letter-spacing:.04em}
+#lb-ui .lb-kbfoot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px}
+#lb-ui .lb-legend{display:flex;flex-wrap:wrap;gap:14px;font:600 11.5px/1 Inter,sans-serif;color:var(--mut)}
+#lb-ui .lb-legend span{display:inline-flex;align-items:center;gap:7px}
+#lb-ui .lb-legend span::before{content:"";width:9px;height:9px;border-radius:3px;background:var(--c);box-shadow:0 0 8px var(--c)}
 @keyframes lb-blink{50%{opacity:.4}}
-#lb-ui .lb-pane-foot{display:flex;justify-content:flex-end;margin-top:12px}
 #lb-ui .lb-me{display:flex;align-items:center;gap:14px;padding:14px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid var(--line);margin-bottom:14px}
 #lb-ui .lb-me small{display:block;font:600 11px/1 Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
 #lb-ui .lb-me b{display:block;font:700 24px/1.1 Rajdhani,Oswald,sans-serif;letter-spacing:.03em;margin:3px 0}
@@ -307,11 +359,18 @@ const CSS = `
   #lb-ui .lb-tile.sel,#lb-ui .lb-tile:hover{transform:none}
   #lb-ui .lb-skins{top:auto;bottom:16px;height:52vh;left:12px;right:12px;width:auto}
   #lb-ui .lb-skins .grid{grid-template-columns:repeat(4,1fr)}
-  #lb-ui .lb-binds,#lb-ui .lb-langs{grid-template-columns:1fr}
+  #lb-ui .lb-langs{grid-template-columns:1fr}
+  #lb-ui .lb-binds{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #lb-ui .lb-deck{flex-direction:column;padding:10px}
+  #lb-ui .lb-kb{width:100%}
+  #lb-ui .lb-mouse{width:auto;flex-direction:row;gap:14px}
+  #lb-ui .lb-msvg{width:40px;height:62px}
+  #lb-ui .lb-kbfoot{flex-direction:column;align-items:stretch}
   #lb-ui .lb-dlg{padding:16px}
   #lb-ui .lb-reelwin{height:122px}
   #lb-ui .lb-phantom{position:static;margin-top:12px}
 }
+@media (max-width:520px){#lb-ui .lb-binds{grid-template-columns:minmax(0,1fr)}}
 `;
 
 const IC = {
@@ -357,6 +416,7 @@ const HTML = `
       </div>
       <div class="lb-custom" id="lb-stake-custom" hidden><input id="lb-stake-in" type="number" min="1" max="1000" step="1" inputmode="numeric" data-i18n-ph="stake.range" aria-label="USDT"><span>USDT</span></div>
       <div class="lb-free" id="lb-stake-free" hidden>${IC.info}<span data-i18n="stake.free"></span></div>
+      <div class="lb-win lb-fee" id="lb-stake-feerow"><span data-i18n="stake.fee"></span><b id="lb-stake-fee"></b></div>
       <div class="lb-win" id="lb-stake-winrow"><span data-i18n="stake.win"></span><b id="lb-stake-win"></b></div>
     </div>
   </div>
@@ -372,7 +432,7 @@ const HTML = `
   <div class="lb-tiles" id="lb-tiles"></div>
   <button class="lb-btn pri" id="lb-close" type="button" data-i18n="done"></button>
 </div>
-<div class="lb-modal" id="lb-set" hidden><div class="lb-dlg" role="dialog" aria-modal="true">
+<div class="lb-modal" id="lb-set" hidden><div class="lb-dlg lb-wide" role="dialog" aria-modal="true">
   <div class="lb-dh"><h3 data-i18n="set.title"></h3>${X_BTN}</div>
   <div class="lb-tabs"><button type="button" data-tab="general" class="on" data-i18n="set.audio"></button><button type="button" data-tab="controls" data-i18n="set.controls"></button><button type="button" data-tab="lang" data-i18n="set.lang"></button></div>
   <div data-pane="general">
@@ -382,8 +442,19 @@ const HTML = `
   <div data-pane="controls" hidden>
     <p class="lb-note" data-i18n="set.bindHint"></p>
     <div class="lb-binds" id="lb-binds"></div>
-    <p class="lb-note" data-i18n="set.mouse"></p>
-    <div class="lb-pane-foot"><button class="lb-btn sm" type="button" id="lb-bind-reset" data-i18n="set.reset"></button></div>
+    <div class="lb-deck">
+      <div class="lb-kb" id="lb-kb"></div>
+      <div class="lb-mouse">
+        <svg class="lb-msvg" viewBox="0 0 64 100" aria-hidden="true"><defs><linearGradient id="lbmb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2b3244"/><stop offset="1" stop-color="#141925"/></linearGradient></defs>
+          <path d="M32 4C14 4 6 18 6 36v28c0 20 12 32 26 32s26-12 26-32V36C58 18 50 4 32 4z" fill="url(#lbmb)" stroke="rgba(255,255,255,.16)"/>
+          <path class="mb" d="M30.5 5.6C16 6.6 8 18.6 8 36v6h22.5z"/><path class="mb" d="M33.5 5.6C48 6.6 56 18.6 56 36v6H33.5z"/>
+          <rect class="mw" x="29" y="13" width="6" height="15" rx="3"/><path d="M14 70h36" stroke="rgba(255,255,255,.06)"/><path d="M26 84h12" stroke="rgba(255,255,255,.08)" stroke-linecap="round"/></svg>
+        <ul class="lb-mleg"><li><b data-i18n="kb.lmb"></b><span data-i18n="kb.fire"></span></li><li><b data-i18n="kb.rmb"></b><span data-i18n="kb.aim"></span></li><li><b data-i18n="kb.mmb"></b><span data-i18n="kb.wheel"></span></li></ul>
+      </div>
+      <div class="lb-kbtip" id="lb-kbtip" hidden></div>
+    </div>
+    <div class="lb-kbfoot"><div class="lb-legend"><span class="c-move" data-i18n="kb.move"></span><span class="c-fight" data-i18n="kb.fight"></span><span class="c-sys" data-i18n="kb.sys"></span></div>
+      <button class="lb-btn sm" type="button" id="lb-bind-reset" data-i18n="set.reset"></button></div>
   </div>
   <div data-pane="lang" hidden><div class="lb-langs" id="lb-langs"></div></div>
 </div></div>

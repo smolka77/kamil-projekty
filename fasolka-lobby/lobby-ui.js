@@ -14,7 +14,7 @@ const DICT = {
     'stake.label': 'Stawka', 'stake.custom': 'Własna', 'stake.win': 'Możliwa wygrana', 'stake.free': 'Trening – bez stawki', 'stake.range': 'Kwota 1–1000 USDT', 'stake.invalid': 'Podaj stawkę od 1 do 1000 USDT',
     'play': 'GRAJ', 'picker.title': 'Wybierz tryb', 'done': 'Gotowe', 'skins.title': 'Skiny', 'close': 'Zamknij',
     'set.title': 'Ustawienia', 'set.general': 'Ogólne', 'set.audio': 'Dźwięk i obraz', 'set.controls': 'Sterowanie', 'set.lang': 'Język', 'set.volume': 'Głośność', 'set.fov': 'Pole widzenia (FOV)',
-    'set.bindHint': 'Kliknij akcję i naciśnij nowy klawisz. Esc anuluje.', 'set.press': 'Naciśnij klawisz…', 'set.reset': 'Przywróć domyślne', 'set.mouse': 'Strzał: lewy przycisk myszy · Celowanie: prawy',
+    'set.bindHint': 'Kliknij akcję (albo klawisz na klawiaturze) i naciśnij nowy klawisz. Esc anuluje.', 'set.press': 'Naciśnij klawisz…', 'set.reset': 'Przywróć domyślne', 'set.mouse': 'Strzał: lewy przycisk myszy · Celowanie: prawy',
     'act.fwd': 'Do przodu', 'act.back': 'Do tyłu', 'act.left': 'W lewo', 'act.right': 'W prawo', 'act.sprint': 'Bieg', 'act.jump': 'Skok', 'act.crouch': 'Kucanie / slide',
     'act.reload': 'Przeładowanie', 'act.inspect': 'Oglądanie broni', 'act.prev': 'Poprzednia broń', 'act.view': 'Zmiana widoku', 'act.mute': 'Wycisz dźwięk',
     'auth.title': 'Konto', 'auth.login': 'Logowanie', 'auth.register': 'Rejestracja', 'auth.user': 'Nazwa użytkownika', 'auth.pass': 'Hasło', 'auth.pass2': 'Powtórz hasło',
@@ -30,6 +30,7 @@ const DICT = {
     'tx.deposit': 'Wpłata (test)', 'tx.withdraw': 'Wypłata (test)', 'tx.stake': 'Stawka 1v1', 'tx.win': 'Wygrana 1v1', 'tx.loss': 'Przegrana 1v1',
     'err.loginToPlay': 'Zaloguj się, aby grać o stawkę', 'err.funds': 'Za mało środków na stawkę – doładuj portfel', 'err.rematchFunds': 'Za mało środków na kolejny mecz',
     'draw.title': 'Losowanie mapy', 'draw.map': 'Mapa',
+    'stake.fee': 'Prowizja (10%)', 'tx.fee': 'prowizja {a}', 'set.reserved': 'Ten klawisz jest zarezerwowany (bronie 1–4 i Esc)', 'kb.move': 'Ruch', 'kb.fight': 'Walka', 'kb.sys': 'Inne', 'kb.lmb': 'LPM', 'kb.rmb': 'PPM', 'kb.mmb': 'Kółko', 'kb.fire': 'Strzał', 'kb.aim': 'Celowanie', 'kb.wheel': 'Zmiana broni', 'kb.weapons': 'Broń 1–4', 'kb.pause': 'Pauza', 'kb.alt': 'zapasowy',
   },
   en: {
     'menu.settings': 'Settings', 'menu.wallet': 'Wallet', 'menu.login': 'Log in', 'menu.account': 'Account', 'menu.logout': 'Log out', 'menu.admin': 'Admin panel',
@@ -41,7 +42,7 @@ const DICT = {
     'stake.label': 'Stake', 'stake.custom': 'Custom', 'stake.win': 'Potential win', 'stake.free': 'Practice – no stake', 'stake.range': 'Amount 1–1000 USDT', 'stake.invalid': 'Enter a stake between 1 and 1000 USDT',
     'play': 'PLAY', 'picker.title': 'Choose mode', 'done': 'Done', 'skins.title': 'Skins', 'close': 'Close',
     'set.title': 'Settings', 'set.general': 'General', 'set.audio': 'Audio & video', 'set.controls': 'Controls', 'set.lang': 'Language', 'set.volume': 'Volume', 'set.fov': 'Field of view (FOV)',
-    'set.bindHint': 'Click an action and press a new key. Esc cancels.', 'set.press': 'Press a key…', 'set.reset': 'Restore defaults', 'set.mouse': 'Fire: left mouse button · Aim: right',
+    'set.bindHint': 'Click an action (or a key on the keyboard) and press a new key. Esc cancels.', 'set.press': 'Press a key…', 'set.reset': 'Restore defaults', 'set.mouse': 'Fire: left mouse button · Aim: right',
     'act.fwd': 'Forward', 'act.back': 'Back', 'act.left': 'Left', 'act.right': 'Right', 'act.sprint': 'Sprint', 'act.jump': 'Jump', 'act.crouch': 'Crouch / slide',
     'act.reload': 'Reload', 'act.inspect': 'Inspect weapon', 'act.prev': 'Previous weapon', 'act.view': 'Change view', 'act.mute': 'Mute sound',
     'auth.title': 'Account', 'auth.login': 'Log in', 'auth.register': 'Sign up', 'auth.user': 'Username', 'auth.pass': 'Password', 'auth.pass2': 'Repeat password',
@@ -57,6 +58,7 @@ const DICT = {
     'tx.deposit': 'Deposit (test)', 'tx.withdraw': 'Withdrawal (test)', 'tx.stake': '1v1 stake', 'tx.win': '1v1 win', 'tx.loss': '1v1 loss',
     'err.loginToPlay': 'Log in to play for a stake', 'err.funds': 'Not enough funds for this stake – top up your wallet', 'err.rematchFunds': 'Not enough funds for another match',
     'draw.title': 'Map draw', 'draw.map': 'Map',
+    'stake.fee': 'House fee (10%)', 'tx.fee': 'fee {a}', 'set.reserved': 'This key is reserved (weapons 1–4 and Esc)', 'kb.move': 'Movement', 'kb.fight': 'Combat', 'kb.sys': 'Other', 'kb.lmb': 'LMB', 'kb.rmb': 'RMB', 'kb.mmb': 'Wheel', 'kb.fire': 'Fire', 'kb.aim': 'Aim', 'kb.wheel': 'Switch weapon', 'kb.weapons': 'Weapon 1–4', 'kb.pause': 'Pause', 'kb.alt': 'alternate',
   },
   ru: {
     'menu.settings': 'Настройки', 'menu.wallet': 'Кошелёк', 'menu.login': 'Войти', 'menu.account': 'Аккаунт', 'menu.logout': 'Выйти', 'menu.admin': 'Админ-панель',
@@ -68,7 +70,7 @@ const DICT = {
     'stake.label': 'Ставка', 'stake.custom': 'Своя', 'stake.win': 'Возможный выигрыш', 'stake.free': 'Тренировка – без ставки', 'stake.range': 'Сумма 1–1000 USDT', 'stake.invalid': 'Введите ставку от 1 до 1000 USDT',
     'play': 'ИГРАТЬ', 'picker.title': 'Выбери режим', 'done': 'Готово', 'skins.title': 'Скины', 'close': 'Закрыть',
     'set.title': 'Настройки', 'set.general': 'Общие', 'set.audio': 'Звук и графика', 'set.controls': 'Управление', 'set.lang': 'Язык', 'set.volume': 'Громкость', 'set.fov': 'Поле зрения (FOV)',
-    'set.bindHint': 'Нажми на действие и выбери новую клавишу. Esc – отмена.', 'set.press': 'Нажми клавишу…', 'set.reset': 'Сбросить', 'set.mouse': 'Выстрел: левая кнопка мыши · Прицел: правая',
+    'set.bindHint': 'Нажми на действие (или клавишу на схеме) и выбери новую клавишу. Esc – отмена.', 'set.press': 'Нажми клавишу…', 'set.reset': 'Сбросить', 'set.mouse': 'Выстрел: левая кнопка мыши · Прицел: правая',
     'act.fwd': 'Вперёд', 'act.back': 'Назад', 'act.left': 'Влево', 'act.right': 'Вправо', 'act.sprint': 'Бег', 'act.jump': 'Прыжок', 'act.crouch': 'Присед / подкат',
     'act.reload': 'Перезарядка', 'act.inspect': 'Осмотр оружия', 'act.prev': 'Предыдущее оружие', 'act.view': 'Смена вида', 'act.mute': 'Выключить звук',
     'auth.title': 'Аккаунт', 'auth.login': 'Вход', 'auth.register': 'Регистрация', 'auth.user': 'Имя пользователя', 'auth.pass': 'Пароль', 'auth.pass2': 'Повтори пароль',
@@ -84,6 +86,7 @@ const DICT = {
     'tx.deposit': 'Пополнение (тест)', 'tx.withdraw': 'Вывод (тест)', 'tx.stake': 'Ставка 1v1', 'tx.win': 'Победа 1v1', 'tx.loss': 'Поражение 1v1',
     'err.loginToPlay': 'Войди, чтобы играть на ставку', 'err.funds': 'Недостаточно средств для ставки – пополни кошелёк', 'err.rematchFunds': 'Недостаточно средств для следующего матча',
     'draw.title': 'Выбор карты', 'draw.map': 'Карта',
+    'stake.fee': 'Комиссия (10%)', 'tx.fee': 'комиссия {a}', 'set.reserved': 'Эта клавиша зарезервирована (оружие 1–4 и Esc)', 'kb.move': 'Движение', 'kb.fight': 'Бой', 'kb.sys': 'Прочее', 'kb.lmb': 'ЛКМ', 'kb.rmb': 'ПКМ', 'kb.mmb': 'Колесо', 'kb.fire': 'Выстрел', 'kb.aim': 'Прицел', 'kb.wheel': 'Смена оружия', 'kb.weapons': 'Оружие 1–4', 'kb.pause': 'Пауза', 'kb.alt': 'запасная',
   },
   es: {
     'menu.settings': 'Ajustes', 'menu.wallet': 'Cartera', 'menu.login': 'Iniciar sesión', 'menu.account': 'Cuenta', 'menu.logout': 'Cerrar sesión', 'menu.admin': 'Panel de admin',
@@ -95,7 +98,7 @@ const DICT = {
     'stake.label': 'Apuesta', 'stake.custom': 'Otra', 'stake.win': 'Ganancia posible', 'stake.free': 'Práctica – sin apuesta', 'stake.range': 'Importe 1–1000 USDT', 'stake.invalid': 'Introduce una apuesta entre 1 y 1000 USDT',
     'play': 'JUGAR', 'picker.title': 'Elige modo', 'done': 'Listo', 'skins.title': 'Skins', 'close': 'Cerrar',
     'set.title': 'Ajustes', 'set.general': 'General', 'set.audio': 'Sonido e imagen', 'set.controls': 'Controles', 'set.lang': 'Idioma', 'set.volume': 'Volumen', 'set.fov': 'Campo de visión (FOV)',
-    'set.bindHint': 'Haz clic en una acción y pulsa una tecla nueva. Esc cancela.', 'set.press': 'Pulsa una tecla…', 'set.reset': 'Restablecer', 'set.mouse': 'Disparo: botón izquierdo · Apuntar: derecho',
+    'set.bindHint': 'Haz clic en una acción (o en una tecla del teclado) y pulsa una tecla nueva. Esc cancela.', 'set.press': 'Pulsa una tecla…', 'set.reset': 'Restablecer', 'set.mouse': 'Disparo: botón izquierdo · Apuntar: derecho',
     'act.fwd': 'Adelante', 'act.back': 'Atrás', 'act.left': 'Izquierda', 'act.right': 'Derecha', 'act.sprint': 'Correr', 'act.jump': 'Saltar', 'act.crouch': 'Agacharse / deslizar',
     'act.reload': 'Recargar', 'act.inspect': 'Inspeccionar arma', 'act.prev': 'Arma anterior', 'act.view': 'Cambiar vista', 'act.mute': 'Silenciar',
     'auth.title': 'Cuenta', 'auth.login': 'Iniciar sesión', 'auth.register': 'Registro', 'auth.user': 'Nombre de usuario', 'auth.pass': 'Contraseña', 'auth.pass2': 'Repite la contraseña',
@@ -111,6 +114,7 @@ const DICT = {
     'tx.deposit': 'Depósito (prueba)', 'tx.withdraw': 'Retiro (prueba)', 'tx.stake': 'Apuesta 1v1', 'tx.win': 'Victoria 1v1', 'tx.loss': 'Derrota 1v1',
     'err.loginToPlay': 'Inicia sesión para jugar con apuesta', 'err.funds': 'Fondos insuficientes para la apuesta – recarga la cartera', 'err.rematchFunds': 'Fondos insuficientes para otra partida',
     'draw.title': 'Sorteo del mapa', 'draw.map': 'Mapa',
+    'stake.fee': 'Comisión (10%)', 'tx.fee': 'comisión {a}', 'set.reserved': 'Esta tecla está reservada (armas 1–4 y Esc)', 'kb.move': 'Movimiento', 'kb.fight': 'Combate', 'kb.sys': 'Otros', 'kb.lmb': 'Clic izq.', 'kb.rmb': 'Clic der.', 'kb.mmb': 'Rueda', 'kb.fire': 'Disparo', 'kb.aim': 'Apuntar', 'kb.wheel': 'Cambiar arma', 'kb.weapons': 'Arma 1–4', 'kb.pause': 'Pausa', 'kb.alt': 'alternativa',
   },
 };
 const SKIN_NAMES = {
@@ -178,6 +182,9 @@ const MAP_ART = {
     <text x="12" y="116" font-family="Rajdhani,Oswald,Arial" font-weight="700" font-size="20" fill="#e8ecf2" letter-spacing="2">MAGAZYN</text></svg>`,
 };
 const DUEL_MAPS = ['Oaza', 'Magazyn'];
+export const HOUSE_FEE = 0.10;                          // prowizja od puli (2 × stawka)
+const r2 = v => Math.round(v * 100) / 100;
+export const payout = s => r2(s * 2 * (1 - HOUSE_FEE)), feeOf = s => r2(s * 2 * HOUSE_FEE);
 
 // ---------------- główna funkcja ----------------
 export function initLobbyUI(ctx) {
@@ -205,6 +212,7 @@ export function initLobbyUI(ctx) {
   const isField = el => el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT');
   const onKey = e => {
     if (e.__fasolka) return;
+    if (!$('lb-set').hidden && keyEls[e.code]) keyEls[e.code].classList.toggle('down', e.type === 'keydown');
     if (rebinding) { if (e.type !== 'keydown') { e.stopImmediatePropagation(); return; } e.preventDefault(); e.stopImmediatePropagation(); finishRebind(e.code); return; }
     if (isField(e.target)) { e.stopImmediatePropagation(); if (e.key === 'Escape') closeAll(); return; }   // pisanie w polach nie steruje grą
     if (e.type === 'keydown' && e.key === 'Escape' && anyOpen()) { e.stopImmediatePropagation(); closeAll(); return; }
@@ -233,7 +241,7 @@ export function initLobbyUI(ctx) {
   // ---- okna dialogowe ----
   const modals = ['lb-set', 'lb-auth', 'lb-wallet'].map($);
   const openModal = id => { modals.forEach(m => m.hidden = m.id !== id); };
-  const closeAll = () => { modals.forEach(m => m.hidden = true); openMenu(false); if (rebinding) { rebinding = null; renderSettings(); } };
+  const closeAll = () => { modals.forEach(m => m.hidden = true); openMenu(false); Object.values(keyEls).forEach(k => k.classList.remove('down')); if (rebinding) { rebinding = null; renderSettings(); } };
   const anyOpen = () => modals.some(m => !m.hidden) || !menu.hidden;
   modals.forEach(m => { m.addEventListener('pointerdown', e => { if (e.target === m) closeAll(); }); m.querySelectorAll('.lb-x').forEach(b => b.addEventListener('click', closeAll)); });
   ui.querySelectorAll('.lb-tabs').forEach(tb => tb.addEventListener('click', e => { const b = e.target.closest('button[data-tab]'); if (!b) return;
@@ -250,16 +258,72 @@ export function initLobbyUI(ctx) {
   fovR.addEventListener('input', () => { S.fov = +fovR.value; $('lb-fov-v').textContent = S.fov + '°'; pushSettings(); });
   $('lb-bind-reset').addEventListener('click', () => { S.binds = { ...defBinds }; buildRemap(); pushSettings(); renderSettings(); });
   const finishRebind = code => { const id = rebinding; rebinding = null;
-    if (code !== 'Escape') { const other = ACTIONS.find(([a]) => a !== id && (S.binds[a] || defBinds[a]) === code); if (other) S.binds[other[0]] = S.binds[id]; S.binds[id] = code; buildRemap(); pushSettings(); }
+    if (code !== 'Escape') {
+      if (RESERVED.has(code)) toast(t('set.reserved'), 'err');
+      else { const other = ACTIONS.find(([a]) => a !== id && (S.binds[a] || defBinds[a]) === code); if (other) S.binds[other[0]] = S.binds[id]; S.binds[id] = code; buildRemap(); pushSettings(); }
+    }
     renderSettings(); };
+
+  // ---- ilustracja klawiatury 60% z podświetleniem klawiszy w użyciu ----
+  const CAT = { fwd: 'move', back: 'move', left: 'move', right: 'move', sprint: 'move', jump: 'move', crouch: 'move', reload: 'fight', inspect: 'fight', prev: 'fight', view: 'sys', mute: 'sys' };
+  const FIXED = { Digit1: ['kb.weapons', 'fight'], Digit2: ['kb.weapons', 'fight'], Digit3: ['kb.weapons', 'fight'], Digit4: ['kb.weapons', 'fight'], Escape: ['kb.pause', 'sys'] };
+  const ALT = { ControlLeft: 'crouch', ShiftRight: 'sprint' };      // zapasowe klawisze wbudowane w grę
+  const RESERVED = new Set(['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Escape']);
+  const row1 = (str, pre) => str.split('').map(c => [pre + c, c]);
+  const KB_ROWS = [
+    [['Escape', 'Esc'], ...row1('1234567890', 'Digit'), ['Minus', '-'], ['Equal', '='], ['Backspace', '⌫', 2]],
+    [['Tab', 'Tab', 1.5], ...row1('QWERTYUIOP', 'Key'), ['BracketLeft', '['], ['BracketRight', ']'], ['Backslash', '\\', 1.5]],
+    [['CapsLock', 'Caps', 1.75], ...row1('ASDFGHJKL', 'Key'), ['Semicolon', ';'], ['Quote', "'"], ['Enter', 'Enter', 2.25]],
+    [['ShiftLeft', 'Shift', 2.25], ...row1('ZXCVBNM', 'Key'), ['Comma', ','], ['Period', '.'], ['Slash', '/'], ['ShiftRight', 'Shift', 2.75]],
+    [['ControlLeft', 'Ctrl', 1.5], ['MetaLeft', 'Win', 1.25], ['AltLeft', 'Alt', 1.25], ['Space', 'Space', 7], ['AltRight', 'Alt', 1.25], ['MetaRight', 'Fn', 1.25], ['ControlRight', 'Ctrl', 1.5]],
+  ];
+  const kb = $('lb-kb'), kbTip = $('lb-kbtip'), deck = kb.parentElement, keyEls = {};
+  for (const row of KB_ROWS) { const r = document.createElement('div'); r.className = 'lb-kbrow';
+    for (const [code, label, u = 1] of row) { const k = document.createElement('button'); k.type = 'button'; k.tabIndex = -1; k.className = 'lb-key';
+      k.dataset.code = code; k.dataset.u = u; k.style.gridColumn = 'span ' + Math.round(u * 4); k.innerHTML = '<b></b><small></small>';
+      k.querySelector('b').textContent = label; keyEls[code] = k; r.appendChild(k); }
+    kb.appendChild(r); }
+  const keyActs = code => {
+    const out = [];
+    for (const [id, def] of ACTIONS) if ((S.binds[id] || def) === code) out.push({ id, name: t('act.' + id), cat: CAT[id] });
+    if (!out.length && FIXED[code]) out.push({ name: t(FIXED[code][0]), cat: FIXED[code][1], fixed: true });
+    if (!out.length && ALT[code]) out.push({ id: ALT[code], name: t('act.' + ALT[code]) + ' (' + t('kb.alt') + ')', cat: CAT[ALT[code]], alt: true });
+    return out;
+  };
+  const codeOf = id => S.binds[id] || defBinds[id];
+  const hlAction = (id, on) => { const k = keyEls[codeOf(id)]; if (k) k.classList.toggle('hl', on); };
+  function renderKb() {
+    kb.classList.toggle('pick', !!rebinding);
+    for (const code in keyEls) { const k = keyEls[code], a = keyActs(code)[0], down = k.classList.contains('down');
+      k.className = 'lb-key' + (a ? ' use c-' + a.cat + (a.alt ? ' alt' : '') : '') + (rebinding && a && a.id === rebinding && !a.alt ? ' hl' : '') + (down ? ' down' : '');
+      k.querySelector('small').textContent = a && +k.dataset.u >= 2 ? a.name.replace(/ \(.*\)$/, '') : '';
+      k.dataset.tip = a ? a.name : ''; }
+  }
+  kb.addEventListener('pointerover', e => { const k = e.target.closest('.lb-key'); if (!k) return;
+    const a = keyActs(k.dataset.code)[0];
+    bindBox.querySelectorAll('.lb-bind').forEach(r => r.classList.toggle('hl', !!a && r.dataset.id === a.id));
+    if (!a && !rebinding) { kbTip.hidden = true; return; }
+    kbTip.innerHTML = '<kbd></kbd><span></span>'; kbTip.querySelector('kbd').textContent = keyLabel(k.dataset.code);
+    kbTip.querySelector('span').textContent = a ? a.name : t('set.press'); kbTip.className = 'lb-kbtip' + (a ? ' c-' + a.cat : '');
+    const kr = k.getBoundingClientRect(), dr = deck.getBoundingClientRect();
+    kbTip.style.left = (kr.left - dr.left + kr.width / 2) + 'px'; kbTip.style.top = (kr.top - dr.top - 6) + 'px'; kbTip.hidden = false; });
+  kb.addEventListener('pointerleave', () => { kbTip.hidden = true; bindBox.querySelectorAll('.lb-bind.hl').forEach(r => r.classList.remove('hl')); });
+  kb.addEventListener('click', e => { const k = e.target.closest('.lb-key'); if (!k) return; const code = k.dataset.code;
+    if (rebinding) { finishRebind(code); return; }
+    const a = keyActs(code)[0]; if (a && a.id && !a.alt) { rebinding = a.id; renderSettings(); } });
+
   function renderSettings() {
     langBox.querySelectorAll('.lb-seg').forEach(b => b.classList.toggle('on', b.dataset.lang === S.lang));
     volR.value = S.volume; fovR.value = S.fov; $('lb-vol-v').textContent = S.volume + '%'; $('lb-fov-v').textContent = S.fov + '°';
     bindBox.innerHTML = '';
-    for (const [id, def] of ACTIONS) { const row = document.createElement('button'); row.type = 'button'; row.className = 'lb-bind' + (rebinding === id ? ' wait' : '');
-      row.innerHTML = '<span></span><kbd></kbd>'; row.querySelector('span').textContent = t('act.' + id);
+    for (const [id, def] of ACTIONS) { const row = document.createElement('button'); row.type = 'button'; row.dataset.id = id;
+      row.className = 'lb-bind c-' + CAT[id] + (rebinding === id ? ' wait' : '');
+      row.innerHTML = '<i></i><span></span><kbd></kbd>'; row.querySelector('span').textContent = t('act.' + id);
       row.querySelector('kbd').textContent = rebinding === id ? t('set.press') : keyLabel(S.binds[id] || def);
-      row.addEventListener('click', () => { rebinding = id; renderSettings(); }); bindBox.appendChild(row); }
+      row.addEventListener('click', () => { rebinding = rebinding === id ? null : id; renderSettings(); });
+      row.addEventListener('pointerenter', () => hlAction(id, true)); row.addEventListener('pointerleave', () => hlAction(id, false));
+      bindBox.appendChild(row); }
+    renderKb();
   }
 
   // ---- konto ----
@@ -292,8 +356,8 @@ export function initLobbyUI(ctx) {
   }
 
   // ---- portfel (test) ----
-  const addTx = async (amount, type, note = '') => { acct.balance = Math.round((acct.balance + amount) * 100) / 100;
-    acct.history = [{ t: Date.now(), type, amount, note }, ...(acct.history || [])].slice(0, 40); await saveAcct(); renderAll(); };
+  const addTx = async (amount, type, note = '', extra = {}) => { acct.balance = Math.round((acct.balance + amount) * 100) / 100;
+    acct.history = [{ t: Date.now(), type, amount, note, ...extra }, ...(acct.history || [])].slice(0, 40); await saveAcct(); renderAll(); };
   function openWallet(tab = 'deposit') { if (!acct) { toast(t('w.loginFirst')); openModal('lb-auth'); showTab('lb-auth', 'login'); return; } openModal('lb-wallet'); showTab('lb-wallet', tab); }
   $('lb-dep-form').addEventListener('submit', async e => { e.preventDefault(); const a = Math.round(+$('lb-dep-amt').value * 100) / 100;
     if (!(a >= 1 && a <= 10000)) return toast(t('w.errAmount'), 'err'); await addTx(a, 'deposit'); $('lb-dep-amt').value = ''; toast(t('w.depOk', { a: money(a) }), 'ok'); });
@@ -314,7 +378,7 @@ export function initLobbyUI(ctx) {
     const hist = (acct && acct.history) || [];
     if (!hist.length) { const li = document.createElement('li'); li.className = 'empty'; li.textContent = t('w.empty'); list.appendChild(li); }
     for (const h of hist) { const li = document.createElement('li'); li.innerHTML = '<div><b></b><small></small></div><span></span>';
-      li.querySelector('b').textContent = t('tx.' + h.type) + (h.note ? ' · ' + h.note : ''); li.querySelector('small').textContent = new Date(h.t).toLocaleString(LANG);
+      const note = h.fee ? t('tx.fee', { a: money(h.fee) }) : h.note; li.querySelector('b').textContent = t('tx.' + h.type) + (note ? ' · ' + note : ''); li.querySelector('small').textContent = new Date(h.t).toLocaleString(LANG);
       const sp = li.querySelector('span'); sp.textContent = h.amount ? (h.amount > 0 ? '+' : '−') + money(Math.abs(h.amount)) + ' USDT' : ''; sp.className = h.amount > 0 ? 'pos' : h.amount < 0 ? 'neg' : '';
       list.appendChild(li); }
   }
@@ -344,8 +408,9 @@ export function initLobbyUI(ctx) {
     stakeBox.querySelectorAll('[data-stake]').forEach(b => b.classList.toggle('on', b.dataset.stake === stakeSel));
     $('lb-stake-custom').hidden = stakeSel !== 'custom'; if (!keepInput) customIn.value = stakeCustom || '';
     const s = getStake(), ok = s >= 1 && s <= 1000;
-    $('lb-stake-win').textContent = duel ? (ok ? money(s * 2) + ' USDT' : '—') : '';
-    $('lb-stake-winrow').hidden = !duel;
+    $('lb-stake-win').textContent = duel ? (ok ? money(payout(s)) + ' USDT' : '—') : '';
+    $('lb-stake-fee').textContent = duel && ok ? '−' + money(feeOf(s)) + ' USDT' : '—';
+    $('lb-stake-winrow').hidden = !duel; $('lb-stake-feerow').hidden = !duel;
     $('lb-play-sub').textContent = duel ? (ok ? money(s) + ' USDT' : t('stake.range')) : t('stake.free');
   }
 
@@ -356,7 +421,7 @@ export function initLobbyUI(ctx) {
     const seq = Array.from({ length: N }, (_, i) => i === win ? pick : DUEL_MAPS[(i + Math.floor(Math.random() * 2)) % DUEL_MAPS.length]);
     reel.innerHTML = seq.map((m, i) => `<div class="lb-mcard" data-i="${i}">${MAP_ART[m](i)}<span>${m.toUpperCase()}</span></div>`).join('');
     $('lb-draw-res').textContent = ''; draw.classList.remove('done'); draw.hidden = false;
-    $('lb-draw-stake').innerHTML = `${t('stake.label')}: <b>${money(stake)} USDT</b> · ${t('stake.win')}: <b>${money(stake * 2)} USDT</b>`;
+    $('lb-draw-stake').innerHTML = `${t('stake.label')}: <b>${money(stake)} USDT</b> · ${t('stake.win')}: <b>${money(payout(stake))} USDT</b>`;
     reel.style.transition = 'none'; reel.style.transform = 'translateX(0)';
     const cardW = 214, view = reel.parentElement.clientWidth, target = win * cardW - (view / 2 - 100) + (Math.random() * 120 - 60);
     requestAnimationFrame(() => requestAnimationFrame(() => { reel.style.transition = 'transform 4.2s cubic-bezier(.08,.62,.1,1)'; reel.style.transform = `translateX(${-target}px)`; }));
@@ -381,7 +446,7 @@ export function initLobbyUI(ctx) {
   }
   addEventListener('fasolka:match', async e => {
     if (!activeStake || !acct) return; const s = activeStake; activeStake = 0;
-    if (e.detail && e.detail.won) await addTx(s * 2, 'win'); else await addTx(0, 'loss', money(s) + ' USDT');
+    if (e.detail && e.detail.won) await addTx(payout(s), 'win', '', { fee: feeOf(s) }); else await addTx(0, 'loss', money(s) + ' USDT');
   });
   addEventListener('fasolka:rematch', e => {
     if (!lastStake) return;
