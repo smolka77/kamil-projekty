@@ -427,7 +427,7 @@ const X_BTN = `<button class="lb-x" type="button" aria-label="Zamknij">${IC.x}</
 const HTML = `
 <div class="lb-shade"></div>
 <header class="lb-top">
-  <div class="lb-logo">FASOL<b>KA</b></div><i class="lb-beta">BETA</i>
+  <div class="lb-logo">BEAN<b>FPS</b></div><i class="lb-beta">BETA</i>
   <div class="lb-sp"></div>
   <button class="lb-chip lb-wchip" id="lb-walletchip" type="button" aria-label="Portfel"><span class="lb-coin">₮</span><span class="lb-wbal"><b id="lb-bal">—</b><small>USDT</small></span><span class="lb-plus">+</span></button>
   <button class="lb-chip lb-achip" id="lb-acct" type="button"><span class="lb-av" id="lb-acct-av">?</span><span class="lb-aname" id="lb-acct-name"></span></button>

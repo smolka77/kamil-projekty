@@ -149,7 +149,7 @@ export async function openAdmin({ onClose } = {}) {
   const close = () => { cleanup.forEach(f => { try { f(); } catch {} }); cleanup = []; root.remove(); root = null; if (onClose) onClose(); };
   const onKey = e => { if (e.key !== 'Escape' || !root) return; const d = root.querySelector('.fa-drw'); if (d && !d.hidden) d.hidden = true; else close(); };
   addEventListener('keydown', onKey); cleanup.push(() => removeEventListener('keydown', onKey));
-  root.innerHTML = `<div class="fa-wrap"><div class="fa-head"><div class="fa-brand"><b>FASOL<i>KA</i></b><span>Panel admina</span></div><div class="fa-sp"></div>
+  root.innerHTML = `<div class="fa-wrap"><div class="fa-head"><div class="fa-brand"><b>BEAN<i>FPS</i></b><span>Panel admina</span></div><div class="fa-sp"></div>
     <button class="fa-btn" type="button" data-close>← Wróć do gry</button></div><p class="fa-empty">Ładowanie danych…</p></div>`;
   root.querySelector('[data-close]').addEventListener('click', close);
 
@@ -168,7 +168,7 @@ export async function openAdmin({ onClose } = {}) {
 
 function buildDashboard(db, close) {
   root.innerHTML = `<div class="fa-wrap">
-    <div class="fa-head"><div class="fa-brand"><b>FASOL<i>KA</i></b><span>Panel admina</span></div><span class="fa-live" id="fa-live">Łączenie…</span><div class="fa-sp"></div>
+    <div class="fa-head"><div class="fa-brand"><b>BEAN<i>FPS</i></b><span>Panel admina</span></div><span class="fa-live" id="fa-live">Łączenie…</span><div class="fa-sp"></div>
       <button class="fa-btn" type="button" data-close>← Wróć do gry</button></div>
     <p class="fa-note" id="fa-note" hidden></p>
     <section class="fa-kpis" id="fa-kpis" aria-label="Liczby ogólne"></section>
