@@ -2,6 +2,8 @@
 // portfel USDT na Solanie (TRYB TESTOWY – bez prawdziwych transakcji), stawki meczu i losowanie mapy.
 // Konta i salda: baza danych artefaktu (claude.use("db")), a poza claude.ai – localStorage.
 
+import { createSfx } from './sfx.js';
+
 // ---------------- tłumaczenia ----------------
 const DICT = {
   pl: {
@@ -236,16 +238,11 @@ export function initLobbyUI(ctx) {
     v.gain.setValueAtTime(0, t0); v.gain.linearRampToValueAtTime(g, t0 + .004); v.gain.exponentialRampToValueAtTime(.0001, t0 + d);
     o.connect(v).connect(out || uiGain); o.start(t0); o.stop(t0 + d + .03);
   }
-  function noiseHit(vol) {                            // podgląd „dźwięku w grze”: krótki wystrzał
+  let gSfx = null, gGain = null;
+  function gamePreview(vol) {                          // podgląd „dźwięków w grze”: prawdziwy strzał z AK i trafienie w głowę
     const ac = audio(); if (!ac || vol <= 0) return;
-    const t0 = ac.currentTime, len = Math.floor(ac.sampleRate * .3), buf = ac.createBuffer(1, len, ac.sampleRate), d = buf.getChannelData(0);
-    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3);
-    const src = ac.createBufferSource(), lp = ac.createBiquadFilter(), g = ac.createGain();
-    src.buffer = buf; lp.type = 'lowpass'; lp.frequency.setValueAtTime(5000, t0); lp.frequency.exponentialRampToValueAtTime(400, t0 + .25);
-    g.gain.setValueAtTime(.9 * vol, t0); g.gain.exponentialRampToValueAtTime(.001, t0 + .28);
-    src.connect(lp).connect(g).connect(ac.destination); src.start(t0);
-    const o = ac.createOscillator(), og = ac.createGain(); o.frequency.setValueAtTime(140, t0); o.frequency.exponentialRampToValueAtTime(40, t0 + .15);
-    og.gain.setValueAtTime(.8 * vol, t0); og.gain.exponentialRampToValueAtTime(.001, t0 + .18); o.connect(og).connect(ac.destination); o.start(t0); o.stop(t0 + .2);
+    if (!gSfx) { gGain = ac.createGain(); gGain.connect(ac.destination); try { gSfx = createSfx(ac, gGain); } catch { return; } }
+    gGain.gain.value = vol; gSfx.shot('ak'); setTimeout(() => gSfx && gSfx.hit(false, true), 170);
   }
   const SFX = {
     hover: () => tone({ f: 1500, d: .025, g: .035, type: 'triangle' }),
@@ -315,7 +312,7 @@ export function initLobbyUI(ctx) {
   LANGS.forEach(l => { const b = document.createElement('button'); b.type = 'button'; b.className = 'lb-seg'; b.dataset.lang = l.id; b.innerHTML = `<i class="lb-flag">${FLAGS[l.id]}</i><span></span><b>${l.id.toUpperCase()}</b>`;
     b.querySelector('span').textContent = l.name; b.addEventListener('click', () => { S.lang = l.id; LANG = l.id; pushSettings(); applyI18n(); }); langBox.appendChild(b); });
   const fillRange = r => r.style.setProperty('--p', ((r.value - r.min) / (r.max - r.min) * 100) + '%');
-  const preview = k => k === 'vGame' ? noiseHit((S.volume / 100) * (S.vGame / 100)) : k === 'vMenu' ? SFX.reveal() : (tone({ f: 660, d: .12, g: .5, type: 'triangle', out: masterOut() }));
+  const preview = k => k === 'vGame' ? gamePreview((S.volume / 100) * (S.vGame / 100)) : k === 'vMenu' ? SFX.reveal() : (tone({ f: 660, d: .12, g: .5, type: 'triangle', out: masterOut() }));
   const masterOut = () => { const ac = audio(); if (!ac) return null; const g = ac.createGain(); g.gain.value = S.volume / 100 * .3; g.connect(ac.destination); return g; };
   ui.querySelectorAll('.lb-vrow').forEach(row => { const k = row.dataset.k, r = row.querySelector('input'), last = { v: S[k] || 80 };
     r.addEventListener('input', () => { S[k] = +r.value; if (S[k]) last.v = S[k]; renderVol(); pushSettings(); });
