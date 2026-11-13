@@ -9,7 +9,7 @@ const DICT = {
     'top.guest': 'Gość', 'top.signin': 'Zaloguj się',
     'plate.ready': 'GOTOWY', 'plate.skin': 'KLIKNIJ, BY ZMIENIĆ SKIN',
     'mode.label': 'Tryb gry', 'mode.change': 'Zmień', 'mode.range.name': 'Strzelnica', 'mode.range.desc': 'Trening solo – zestrzel czerwone fasolki',
-    'mode.1v1.name': '1v1', 'mode.1v1.desc': 'Pojedynek · do 5 trafień · Oaza / Magazyn',
+    'mode.1v1.name': '1v1', 'mode.1v1.desc': 'Pojedynek · do 3 wygranych rund · Oaza / Magazyn / Baza',
     'tag.range': 'SOLO', 'tag.1v1': '1 NA 1', 'soon': 'WKRÓTCE',
     'stake.label': 'Stawka', 'stake.custom': 'Własna', 'stake.win': 'Możliwa wygrana', 'stake.free': 'Trening – bez stawki', 'stake.range': 'Kwota 1–1000 USDT', 'stake.invalid': 'Podaj stawkę od 1 do 1000 USDT',
     'play': 'GRAJ', 'picker.title': 'Wybierz tryb', 'done': 'Gotowe', 'skins.title': 'Skiny', 'close': 'Zamknij',
@@ -37,7 +37,7 @@ const DICT = {
     'top.guest': 'Guest', 'top.signin': 'Log in',
     'plate.ready': 'READY', 'plate.skin': 'CLICK TO CHANGE SKIN',
     'mode.label': 'Game mode', 'mode.change': 'Change', 'mode.range.name': 'Shooting range', 'mode.range.desc': 'Solo practice – shoot the red beans',
-    'mode.1v1.name': '1v1', 'mode.1v1.desc': 'Duel · first to 5 · Oasis / Warehouse',
+    'mode.1v1.name': '1v1', 'mode.1v1.desc': 'Duel · first to 3 rounds · Oasis / Warehouse / Base',
     'tag.range': 'SOLO', 'tag.1v1': '1 VS 1', 'soon': 'SOON',
     'stake.label': 'Stake', 'stake.custom': 'Custom', 'stake.win': 'Potential win', 'stake.free': 'Practice – no stake', 'stake.range': 'Amount 1–1000 USDT', 'stake.invalid': 'Enter a stake between 1 and 1000 USDT',
     'play': 'PLAY', 'picker.title': 'Choose mode', 'done': 'Done', 'skins.title': 'Skins', 'close': 'Close',
@@ -65,7 +65,7 @@ const DICT = {
     'top.guest': 'Гость', 'top.signin': 'Войти',
     'plate.ready': 'ГОТОВ', 'plate.skin': 'НАЖМИ, ЧТОБЫ СМЕНИТЬ СКИН',
     'mode.label': 'Режим игры', 'mode.change': 'Сменить', 'mode.range.name': 'Стрельбище', 'mode.range.desc': 'Соло-тренировка – сбей красные фасолины',
-    'mode.1v1.name': '1v1', 'mode.1v1.desc': 'Дуэль · до 5 попаданий · Оазис / Склад',
+    'mode.1v1.name': '1v1', 'mode.1v1.desc': 'Дуэль · до 3 выигранных раундов · Оазис / Склад / База',
     'tag.range': 'СОЛО', 'tag.1v1': '1 НА 1', 'soon': 'СКОРО',
     'stake.label': 'Ставка', 'stake.custom': 'Своя', 'stake.win': 'Возможный выигрыш', 'stake.free': 'Тренировка – без ставки', 'stake.range': 'Сумма 1–1000 USDT', 'stake.invalid': 'Введите ставку от 1 до 1000 USDT',
     'play': 'ИГРАТЬ', 'picker.title': 'Выбери режим', 'done': 'Готово', 'skins.title': 'Скины', 'close': 'Закрыть',
@@ -93,7 +93,7 @@ const DICT = {
     'top.guest': 'Invitado', 'top.signin': 'Iniciar sesión',
     'plate.ready': 'LISTO', 'plate.skin': 'HAZ CLIC PARA CAMBIAR DE SKIN',
     'mode.label': 'Modo de juego', 'mode.change': 'Cambiar', 'mode.range.name': 'Campo de tiro', 'mode.range.desc': 'Práctica en solitario – dispara a las judías rojas',
-    'mode.1v1.name': '1v1', 'mode.1v1.desc': 'Duelo · a 5 impactos · Oasis / Almacén',
+    'mode.1v1.name': '1v1', 'mode.1v1.desc': 'Duelo · a 3 rondas ganadas · Oasis / Almacén / Base',
     'tag.range': 'SOLO', 'tag.1v1': '1 VS 1', 'soon': 'PRONTO',
     'stake.label': 'Apuesta', 'stake.custom': 'Otra', 'stake.win': 'Ganancia posible', 'stake.free': 'Práctica – sin apuesta', 'stake.range': 'Importe 1–1000 USDT', 'stake.invalid': 'Introduce una apuesta entre 1 y 1000 USDT',
     'play': 'JUGAR', 'picker.title': 'Elige modo', 'done': 'Listo', 'skins.title': 'Skins', 'close': 'Cerrar',
@@ -184,10 +184,16 @@ const MAP_ART = {
     <rect x="0" y="96" width="200" height="28" fill="#3a3f48"/>
     <g><rect x="12" y="58" width="70" height="38" fill="#b0362c"/><rect x="88" y="66" width="56" height="30" fill="#2f5aa8"/><rect x="100" y="38" width="56" height="28" fill="#d9a521"/><rect x="150" y="62" width="44" height="34" fill="#3d7a46"/></g>
     <g stroke="rgba(0,0,0,.28)" stroke-width="2">${[18, 28, 38, 48, 58, 68].map(x => `<line x1="${x}" y1="60" x2="${x}" y2="94"/>`).join('')}${[94, 104, 114, 124, 134].map(x => `<line x1="${x}" y1="68" x2="${x}" y2="94"/>`).join('')}</g></svg>`,
+  Baza: n => `<svg viewBox="0 0 200 124" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="bz${n}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cfd6de"/><stop offset="1" stop-color="#9aa3ad"/></linearGradient></defs>
+    <rect width="200" height="124" fill="url(#bz${n})"/><g fill="#e2b33a"><rect x="14" y="30" width="44" height="30"/><rect x="140" y="26" width="46" height="34"/></g><g fill="#b9bfc7"><path d="M10 30 L36 16 L62 30Z"/><path d="M136 26 L163 12 L190 26Z"/></g>
+    <rect x="0" y="62" width="200" height="62" fill="#3b3d42"/><g fill="#eef0f2" stroke="#c63a2e" stroke-width="1.5"><rect x="6" y="64" width="188" height="6"/></g>
+    <g><rect x="22" y="80" width="52" height="22" fill="#d2402f"/><rect x="26" y="74" width="44" height="8" fill="#3b6fc2"/><rect x="88" y="84" width="34" height="26" fill="#e2b33a"/><rect x="132" y="82" width="56" height="22" fill="#d2402f"/><rect x="140" y="104" width="30" height="10" fill="#d2402f"/></g>
+    <g stroke="rgba(0,0,0,.25)" stroke-width="2">${[30, 40, 50, 60].map(x => `<line x1="${x}" y1="82" x2="${x}" y2="100"/>`).join('')}${[142, 152, 162, 172].map(x => `<line x1="${x}" y1="84" x2="${x}" y2="102"/>`).join('')}</g>
+    <g fill="#e2b33a"><rect x="104" y="6" width="8" height="56"/></g></svg>`,
 };
-const DUEL_MAPS = ['Oaza', 'Magazyn'];
+const DUEL_MAPS = ['Oaza', 'Magazyn', 'Baza'];
 // zrzuty map z lotu ptaka (wyrenderowane z gry); SVG pod spodem zostaje jako zapas, gdyby obrazek się nie wczytał
-const MAP_IMG = { Oaza: new URL('./maps/oaza.jpg', import.meta.url).href, Magazyn: new URL('./maps/magazyn.jpg', import.meta.url).href };
+const MAP_IMG = { Oaza: new URL('./maps/oaza.jpg', import.meta.url).href, Magazyn: new URL('./maps/magazyn.jpg', import.meta.url).href, Baza: new URL('./maps/baza.jpg', import.meta.url).href };
 Object.values(MAP_IMG).forEach(src => { const im = new Image(); im.src = src; });
 export const HOUSE_FEE = 0.10;                          // prowizja od puli (2 × stawka)
 const r2 = v => Math.round(v * 100) / 100;
