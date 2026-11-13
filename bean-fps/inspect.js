@@ -72,78 +72,87 @@ export const ANCHORS = {
 // rz + = przechył przeciwnie do wskazówek zegara (góra broni w lewo).
 export const TIMELINES = {
   // AK-47: lewy bok położony płasko do kamery, lewa dłoń trzyma zakrzywiony magazynek; przewrót na prawy bok
-  // (okno wyrzutowe, rączka zamka), lewa dłoń wraca pod łoże; powrót.
+  // (okno wyrzutowe, rączka zamka), lewa dłoń wraca pod łoże; powrót z ciężkim osiadaniem.
   ak47: {
     dur: 5.3,
+    spring: { w: 15, z: 0.8 },
+    anchors: {
+      magHold: { p: [0, -0.115, -0.222], n: [0, -0.3, -1], w: [0.5, -0.77, 0.39] },
+      guardSup: { p: [-0.012, 0.03, -0.33], n: [-0.6, -0.8, 0], w: [-0.99, 0.05, 0.05] },
+    },
     keys: [
-      { t: 0,    p: [0, 0, 0],             r: [0, 0, 0],            piv: .15, L: 'grip' },
-      { t: .3,   p: [.004, -.014, .02],    r: [-.05, -.02, .08],    L: 'grip' },                  // wyprzedzenie: lekki dołek i kontra-przechył
-      { t: 1.0,  p: [-.085, .045, .05],    r: [.17, .36, -1.12],    L: 'magF' },                  // lewy bok płasko, dłoń na magazynku
-      { t: 1.85, p: [-.09, .052, .056],    r: [.21, .43, -1.24],    L: 'magF' },                  // ruchome przytrzymanie
-      { t: 2.18, p: [-.088, .068, .06],    r: [.27, .38, -.05],     L: 'guard', lo: [0, -.004, .03] },   // szybkie przejście przez pion
-      { t: 2.7,  p: [-.08, .062, .055],    r: [.26, .3, 1.22],      L: 'guardS' },                // prawy bok do góry
-      { t: 3.6,  p: [-.083, .066, .058],   r: [.2, .38, 1.32],      L: 'guardS' },
-      { t: 4.4,  p: [-.01, .004, .01],     r: [.02, .04, .05],      L: 'grip' },                  // powrót
-      { t: 4.75, p: [.002, -.008, -.004],  r: [-.03, -.01, -.05],   L: 'grip' },                  // przeregulowanie
-      { t: 5.3,  p: [0, 0, 0],             r: [0, 0, 0],            L: 'grip' },
+      { t: 0, p: [0, 0, 0], r: [0, 0, 0], piv: 0.15, L: "grip" },
+      { t: 0.3, p: [0.004, -0.014, 0.02], r: [-0.05, -0.02, 0.08], L: "grip" },
+      { t: 1, p: [-0.015, 0.036, 0.04], r: [0.17, 0.25, -1.02], L: "magHold", sh: [-0.008, 0.006, -0.01], lp: [-0.9, -1, 0.5] },
+      { t: 1.85, p: [-0.02, 0.042, 0.045], r: [0.2, 0.3, -1.1], L: "magHold", sh: [-0.012, 0.008, -0.014], lp: [-0.9, -1, 0.5] },
+      { t: 2.2, p: [-0.05, 0.025, 0.055], r: [0.26, 0.29, 0.05], L: "magHold", lp: [-0.5, -1, 0.2], sh: [-0.008, 0.004, -0.008] },
+      { t: 2.6, p: [-0.08, 0.018, 0.052], r: [0.33, 0.27, 1.2], L: "guardSup", lp: [-0.6, -1, 0.1], sh: [0, 0, 0] },
+      { t: 3.5, p: [-0.085, 0.025, 0.057], r: [0.28, 0.32, 1.28], L: "guardSup" },
+      { t: 3.95, p: [-0.045, 0.012, 0.03], r: [0.24, 0.24, 0.25], L: "guardSup" },
+      { t: 4.4, p: [-0.008, 0.002, 0.008], r: [0.02, 0.03, 0.03], L: "grip", lp: [-1, -0.9, 0] },
+      { t: 4.75, p: [0.002, -0.008, -0.004], r: [-0.03, -0.01, -0.05], L: "grip" },
+      { t: 5.3, p: [0, 0, 0], r: [0, 0, 0], L: "grip" },
     ],
-    events: [{ t: .25, s: 'cloth' }, { t: .95, s: 'grab' }, { t: 1.95, s: 'cloth' }, { t: 2.65, s: 'grab' }, { t: 3.9, s: 'cloth' }, { t: 4.4, s: 'grab' }],
+    events: [{ t: 0.25, s: "cloth" }, { t: 0.95, s: "grab" }, { t: 1.95, s: "cloth" }, { t: 2.55, s: "grab" }, { t: 3.75, s: "cloth" }, { t: 4.35, s: "grab" }],
   },
   // M4A1-S: przechył w lewo (prawy bok z oknem wyrzutowym do góry, tłumik w lewy górny róg), szybkie przerzucenie
-  // w poprzek ekranu (lewy profil, tłumik w lewo), uniesienie, by spojrzeć wzdłuż góry i tłumika; powrót.
+  // w poprzek ekranu (lewy profil, tłumik w lewo), uniesienie wzdłuż góry i tłumika; powrót.
   m4a1s: {
     dur: 5.6,
+    spring: { w: 15, z: 0.8 },
     keys: [
-      { t: 0,    p: [0, 0, 0],             r: [0, 0, 0],            piv: .15, L: 'grip' },
-      { t: .3,   p: [.004, -.012, .01],    r: [-.05, .08, .16],     L: 'grip' },
-      { t: .95,  p: [-.065, .05, .05],     r: [.33, .5, 1.5],       L: 'guard' },                 // prawy bok do góry
-      { t: 1.38, p: [-.07, .055, .053],    r: [.36, .54, 1.62],     L: 'guardF' },
-      { t: 2.0,  p: [-.12, .012, .07],     r: [.12, 1.36, .12],     L: 'guardF', piv: .3 },       // szybkie przerzucenie: lewy profil
-      { t: 2.75, p: [-.122, .016, .074],   r: [.11, 1.4, .17],      L: 'guardF' },
-      { t: 3.45, p: [-.125, .02, .078],    r: [.13, 1.43, .21],     L: 'guardF' },
-      { t: 4.3,  p: [-.1, .035, .07],      r: [.48, 1.02, .5],      L: 'guardFF' },               // lufa w górę: wzdłuż góry i tłumika
-      { t: 4.55, p: [-.098, .036, .07],    r: [.5, 1.0, .52],       L: 'guardFF' },
-      { t: 5.12, p: [.003, -.008, -.003],  r: [-.04, -.01, -.03],   L: 'grip', piv: .15 },
-      { t: 5.6,  p: [0, 0, 0],             r: [0, 0, 0],            L: 'grip' },
+      { t: 0, p: [0, 0, 0], r: [0, 0, 0], piv: 0.15, L: "grip" },
+      { t: 0.3, p: [0.004, -0.012, 0.01], r: [-0.05, 0.08, 0.16], L: "grip" },
+      { t: 0.95, p: [-0.065, 0.05, 0.05], r: [0.33, 0.5, 1.5], L: "guard" },
+      { t: 1.38, p: [-0.07, 0.055, 0.053], r: [0.36, 0.54, 1.62], L: "guardF" },
+      { t: 2, p: [-0.07, 0, -0.17], r: [0.12, 1.1, 0.14], L: "guardF", piv: 0.3, lp: [-1, -1, 0.35], lwk: 0.2, wk: 0.3 },
+      { t: 2.75, p: [-0.072, 0.004, -0.175], r: [0.11, 1.14, 0.2], L: "guardF", lp: [-1, -1, 0.35], lwk: 0.2, wk: 0.3 },
+      { t: 3.45, p: [-0.075, 0.008, -0.18], r: [0.13, 1.12, 0.25], L: "guardF", lp: [-1, -1, 0.35], lwk: 0.2, wk: 0.3 },
+      { t: 4.3, p: [-0.08, 0.03, -0.08], r: [0.4, 0.85, 0.5], L: "guardFF", lp: [-1, -1, 0.35], lwk: 0.2, wk: 0.3 },
+      { t: 4.55, p: [-0.078, 0.032, -0.08], r: [0.42, 0.82, 0.52], L: "guardFF", lp: [-1, -1, 0.35], lwk: 0.2, wk: 0.3 },
+      { t: 5.12, p: [0.003, -0.008, -0.003], r: [-0.04, -0.01, -0.03], L: "grip", piv: 0.15 },
+      { t: 5.6, p: [0, 0, 0], r: [0, 0, 0], L: "grip" },
     ],
-    events: [{ t: .25, s: 'cloth' }, { t: .95, s: 'grab' }, { t: 1.5, s: 'cloth' }, { t: 2.0, s: 'grab' }, { t: 3.6, s: 'cloth' }, { t: 5.0, s: 'grab' }],
+    events: [{ t: 0.25, s: "cloth" }, { t: 0.95, s: "grab" }, { t: 1.5, s: "cloth" }, { t: 2, s: "grab" }, { t: 3.6, s: "cloth" }, { t: 5, s: "grab" }],
   },
   // Glock-18: lewa dłoń puszcza i wychodzi z kadru; zamach do środka przez celownik (lewy bok), przewrót
   // przedramieniem dłonią w dół (prawy bok z oknem wyrzutowym do góry), powrót i ponowne objęcie chwytu.
   glock: {
     dur: 4.5,
+    spring: { w: 20, z: 0.8 },
     keys: [
-      { t: 0,    p: [0, 0, 0],             r: [0, 0, 0],            piv: .1, L: 'grip' },
-      { t: .32,  p: [.004, -.02, .01],     r: [-.09, -.03, .03],    L: 'rest', lo: [.04, .1, .0] },
-      { t: .95,  p: [-.075, .035, .045],   r: [.17, 1.2, .3],       L: 'rest' },                  // lewy bok, przez celownik
-      { t: 1.75, p: [-.08, .04, .05],      r: [.24, 1.3, .34],      L: 'rest' },
-      { t: 2.35, p: [-.04, .05, .05],      r: [.48, .38, 1.95],     L: 'rest' },                  // przewrót: prawy bok do góry
-      { t: 3.15, p: [-.042, .054, .052],   r: [.52, .42, 2.12],     L: 'rest', lo: [.03, .08, 0] },
-      { t: 3.8,  p: [.002, -.006, .0],     r: [.01, .02, .03],      L: 'grip' },                  // powrót, lewa dłoń obejmuje
-      { t: 4.08, p: [.003, -.012, -.003],  r: [-.03, -.01, -.07],   L: 'grip' },
-      { t: 4.5,  p: [0, 0, 0],             r: [0, 0, 0],            L: 'grip' },
+      { t: 0, p: [0, 0, 0], r: [0, 0, 0], piv: 0.05, L: "grip", pvy: 0.3 },
+      { t: 0.32, p: [0.004, -0.022, 0], r: [-0.09, -0.03, 0.03], L: "rest", lo: [0.03, 0.08, 0], rp: [0.9, -1, 0.3] },
+      { t: 0.95, p: [-0.07, 0.03, -0.01], r: [0.17, 1.2, 0.3], L: "rest", rp: [0.9, -1, 0.3], wk: 0.5 },
+      { t: 1.75, p: [-0.075, 0.036, -0.005], r: [0.22, 1.27, 0.32], L: "rest" },
+      { t: 2.35, p: [-0.04, 0.05, -0.015], r: [0.48, 0.38, 1.95], L: "rest", rp: [1.2, -1, 0.5] },
+      { t: 3.15, p: [-0.043, 0.054, -0.012], r: [0.52, 0.42, 2.12], L: "rest", lo: [0.03, 0.08, 0], rp: [1.2, -1, 0.5] },
+      { t: 3.8, p: [0.002, -0.006, 0], r: [0.01, 0.02, 0.03], L: "grip", rp: [0.8, -1, 0.2] },
+      { t: 4.08, p: [0.003, -0.012, -0.003], r: [-0.03, -0.01, -0.07], L: "grip" },
+      { t: 4.5, p: [0, 0, 0], r: [0, 0, 0], L: "grip" },
     ],
-    events: [{ t: .2, s: 'cloth' }, { t: 1.8, s: 'cloth' }, { t: 3.7, s: 'grab' }],
+    events: [{ t: 0.2, s: "cloth" }, { t: 1.8, s: "cloth" }, { t: 3.7, s: "grab" }],
   },
   // USP-S: lewa dłoń wychodzi z kadru; lewy profil (pistolet i długi tłumik poziomo w poprzek ekranu), przewrót
   // dłonią w dół (prawy bok, tłumik w lewy górny róg), powrót i ponowne objęcie chwytu.
   usps: {
     dur: 5.3,
+    spring: { w: 20, z: 0.8 },
     keys: [
-      { t: 0,    p: [0, 0, 0],             r: [0, 0, 0],            piv: .1, L: 'grip' },
-      { t: .1,   p: [0, -.01, 0],          r: [-.035, 0, 0],        L: 'grip' },
-      { t: .45,  p: [-.03, .025, .03],     r: [.02, .26, -.05],     L: 'rest', lo: [.04, .1, 0] },
-      { t: 1.05, p: [-.05, .02, .04],      r: [-.09, 1.31, -.26],   L: 'rest' },                  // lewy profil z tłumikiem
-      { t: 1.75, p: [-.052, .022, .05],    r: [-.07, 1.4, -.24],    L: 'rest' },
-      { t: 1.83, p: [-.051, .02, .05],     r: [-.1, 1.39, -.33],    L: 'rest' },                  // mikro-wyprzedzenie przewrotu
-      { t: 2.5,  p: [-.04, .04, .055],     r: [.52, .61, 2.09],     L: 'rest' },                  // przewrót: prawy bok
-      { t: 2.62, p: [-.04, .041, .056],    r: [.53, .6, 1.99],      L: 'rest' },
-      { t: 3.5,  p: [-.042, .044, .058],   r: [.6, .64, 2.17],      L: 'rest', lo: [.03, .08, 0] },
-      { t: 4.3,  p: [.006, -.012, -.004],  r: [-.05, .01, .02],     L: 'grip' },
-      { t: 4.65, p: [-.002, .004, .002],   r: [.02, 0, -.01],       L: 'grip' },
-      { t: 5.3,  p: [0, 0, 0],             r: [0, 0, 0],            L: 'grip' },
+      { t: 0, p: [0, 0, 0], r: [0, 0, 0], piv: 0.1, L: "grip" },
+      { t: 0.1, p: [0, -0.01, 0], r: [-0.035, 0, 0], L: "grip" },
+      { t: 0.45, p: [-0.03, 0.025, 0.03], r: [0.02, 0.26, -0.05], L: "rest", lo: [0.04, 0.1, 0] },
+      { t: 1.05, p: [-0.05, 0.02, 0.04], r: [-0.09, 1.31, -0.26], L: "rest" },
+      { t: 1.75, p: [-0.052, 0.022, 0.05], r: [-0.07, 1.4, -0.24], L: "rest" },
+      { t: 1.83, p: [-0.051, 0.02, 0.05], r: [-0.1, 1.39, -0.33], L: "rest" },
+      { t: 2.5, p: [-0.04, 0.04, 0.055], r: [0.52, 0.61, 2.09], L: "rest" },
+      { t: 2.62, p: [-0.04, 0.041, 0.056], r: [0.53, 0.6, 1.99], L: "rest" },
+      { t: 3.5, p: [-0.042, 0.044, 0.058], r: [0.6, 0.64, 2.17], L: "rest", lo: [0.03, 0.08, 0] },
+      { t: 4.3, p: [0.006, -0.012, -0.004], r: [-0.05, 0.01, 0.02], L: "grip" },
+      { t: 4.65, p: [-0.002, 0.004, 0.002], r: [0.02, 0, -0.01], L: "grip" },
+      { t: 5.3, p: [0, 0, 0], r: [0, 0, 0], L: "grip" },
     ],
-    events: [{ t: .25, s: 'cloth' }, { t: 1.9, s: 'cloth' }, { t: 4.25, s: 'grab' }],
+    events: [{ t: 0.25, s: "cloth" }, { t: 1.9, s: "cloth" }, { t: 4.25, s: "grab" }],
   },
 };
 
