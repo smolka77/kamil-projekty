@@ -85,7 +85,7 @@ export function buildHangar(scene, renderer) {
   add(new THREE.PlaneGeometry(9, 2.25), new THREE.MeshStandardMaterial({ map: logoTex, transparent: true, roughness: .6 }), -1, 7.8, BACK + .6, { cast: false });
 
   // ---------- ściana z bronią (prawa strona tylnej ściany) ----------
-  const ars = new THREE.Group(); ars.position.set(0, 0, -12); scene.add(ars);
+  const ars = new THREE.Group(); ars.position.set(2.7, 0, -10.5); ars.rotation.y = -.22; ars.scale.setScalar(.62); scene.add(ars);   // lekko po prawej, przodem do gracza
   for (const x of [-3.3, 3.3]) add(box(.25, .08, 1.4), std(0x15171b, .4, .7), x, .04, 0, { parent: ars });   // stopy wolnostojącej ściany
   add(box(7.2, 1.05, .12), std(0x1d2025, .6, .4), 0, .52, 0, { parent: ars });
   const tubeM = new THREE.MeshBasicMaterial({ color: 0xd8fff4, toneMapped: false });
@@ -128,37 +128,40 @@ export function buildHangar(scene, renderer) {
   });
   const crateM = std(0xffffff, .85, 0, { map: crateTex });
   const crate = (s, x, y, z, ry = 0) => add(box(s, s, s), crateM, x, y + s / 2, z, { ry });
-  // stos skrzyń ok. 5 m za graczem (po bokach, żeby nie zasłaniać fasolki)
-  for (const [x, z, s, y, ry] of [[-2.6, -5.2, 1.3, 0, .05], [-3.95, -5.4, 1.3, 0, -.06], [-3.3, -5.3, 1.2, 1.3, .12], [-5.1, -4.6, 1.0, 0, .3],
-    [2.7, -5.4, 1.3, 0, -.08], [4.05, -5.2, 1.2, 0, .1], [3.3, -5.3, 1.1, 1.3, -.15], [5.2, -4.4, .9, 0, -.25], [1.6, -4.6, .7, 0, .4]]) crate(s, x, y, z, ry);
-
-  // ---------- gotówka: paleta z pakietami banknotów i czarne torby sportowe ----------
   const cashTex = canvasTex(128, 64, (x, w, h) => { x.fillStyle = '#5c8a57'; x.fillRect(0, 0, w, h); x.fillStyle = '#7fa874'; x.fillRect(6, 6, w - 12, h - 12);
     x.fillStyle = '#ece4cc'; x.fillRect(w / 2 - 10, 0, 20, h); x.fillStyle = '#2f5a30'; x.font = 'bold 28px Georgia'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('$', w * .22, h / 2); x.fillText('$', w * .78, h / 2); });
   const edgeTex = canvasTex(64, 32, (x, w, h) => { x.fillStyle = '#b9c4a6'; x.fillRect(0, 0, w, h); x.strokeStyle = 'rgba(70,95,65,.55)'; for (let i = 0; i < h; i += 2) { x.beginPath(); x.moveTo(0, i); x.lineTo(w, i); x.stroke(); } });
   const cashM = std(0xffffff, .8, 0, { map: cashTex }), edgeM = std(0xffffff, .9, 0, { map: edgeTex });
   const brick = box(.32, .12, .15), brickMats = [edgeM, edgeM, cashM, edgeM, edgeM, edgeM];
   const cash = (x, y, z, ry = 0, parent = scene) => { const m = new THREE.Mesh(brick, brickMats); m.position.set(x, y, z); m.rotation.y = ry; m.castShadow = m.receiveShadow = true; parent.add(m); return m; };
-  const palletM = std(0xa98a5e, .9);
-  const pallet = (x, z, ry = 0) => { const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = ry; scene.add(g);
-    for (let i = 0; i < 5; i++) add(box(1.2, .03, .16), palletM, 0, .135, -.5 + i * .25, { parent: g });
-    for (const zz of [-.45, 0, .45]) add(box(1.2, .12, .1), palletM, 0, .06, zz, { parent: g }); return g; };
-  const pal = pallet(-9.6, -12.4, .35);
-  for (let k = 0; k < 4; k++) for (let i = 0; i < 3; i++) for (let j = 0; j < 6; j++) { if (k === 3 && (i + j) % 3 === 0) continue;
-    cash(-.37 + i * .37, .21 + k * .125, -.42 + j * .17, 0, pal); }
-  const nylon = std(0x17181b, .75, .1), zipM = std(0x0b0b0d, .5, .4);
-  function duffel(x, z, ry, open) {
-    const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = ry; scene.add(g);
-    const b = add(new THREE.CapsuleGeometry(.21, .5, 6, 16), nylon, 0, .21, 0, { parent: g, rz: Math.PI / 2 }); b.scale.set(1, 1, .82);
-    for (const e of [-.47, .47]) add(new THREE.CylinderGeometry(.215, .215, .02, 20), std(0x2a2c31, .6, .2), e, .21, 0, { parent: g, rz: Math.PI / 2 });
-    add(new THREE.TorusGeometry(.13, .018, 6, 18, Math.PI), nylon, 0, .4, 0, { parent: g });
-    if (open) { add(box(.7, .02, .14), zipM, 0, .405, 0, { parent: g, cast: false });
-      for (let i = 0; i < 4; i++) cash(-.24 + i * .16, .38 + (i % 2) * .04, (i % 2 ? .02 : -.02), .1 * i, g).rotation.z = (i - 1.5) * .12; }
-    else add(box(.72, .012, .02), zipM, 0, .425, 0, { parent: g, cast: false });
+  // banderola na paczce banknotów
+  const bandM = std(0xf1ead2, .7), band = box(.06, .125, .155);
+  const bundle = (parent, x, y, z, ry = 0, rz = 0) => { const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.set(0, ry, rz); parent.add(g);
+    const m = new THREE.Mesh(brick, brickMats); m.castShadow = true; g.add(m); const bb = new THREE.Mesh(band, bandM); g.add(bb); return g; };
+  // torba sportowa z pieniędzmi: miękki korpus, wzmocnione boki, uchwyty, pasek, otwarty zamek z paczkami
+  const nylon = std(0x16171a, .78, .05), trimB = std(0x2b2d33, .6, .1), zipM = std(0xb9bcc2, .3, .9), inside = std(0x050506, 1);
+  function moneyBag(x, y, z, ry, open = true) {
+    const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = ry; scene.add(g);
+    const bg = new THREE.CapsuleGeometry(.2, .44, 8, 18); bg.rotateZ(Math.PI / 2); bg.scale(1, .95, .8);
+    { const p = bg.attributes.position; for (let i = 0; i < p.count; i++) { const yy = p.getY(i); if (yy < -.08) p.setY(i, -.08 + (yy + .08) * .35);   // płaskie dno
+      p.setX(i, p.getX(i) * (1 + .04 * Math.sin(p.getY(i) * 20))); } bg.computeVertexNormals(); }
+    add(bg, nylon, 0, .17, 0, { parent: g });
+    for (const e of [-.42, .42]) { add(new THREE.CylinderGeometry(.165, .165, .03, 22), trimB, e, .2, 0, { parent: g, rz: Math.PI / 2 }); add(new THREE.CylinderGeometry(.07, .07, .035, 14), std(0x9a1f1f, .5), e * 1.02, .2, 0, { parent: g, rz: Math.PI / 2 }); }
+    for (const zz of [-.075, .075]) { const h = add(new THREE.TorusGeometry(.11, .016, 6, 16, Math.PI), trimB, 0, .33, zz, { parent: g, rx: zz > 0 ? -.35 : .35 }); h.scale.set(1.3, 1, 1); }
+    add(new THREE.CylinderGeometry(.05, .05, .07, 10), std(0x111214, .9), 0, .44, 0, { parent: g, rz: Math.PI / 2 });     // owijka uchwytów
+    const strap = new THREE.TorusGeometry(.42, .012, 4, 24, Math.PI * .8); add(strap, trimB, 0, .2, -.17, { parent: g, rz: Math.PI * .1, rx: -.2 });
+    if (open) {
+      add(box(.6, .02, .17), inside, 0, .355, 0, { parent: g });                                                     // otwór
+      for (const zz of [-.088, .088]) add(box(.62, .012, .012), zipM, 0, .36, zz, { parent: g });
+      add(box(.04, .03, .015), zipM, .33, .35, .09, { parent: g });                                                  // suwak
+      for (let i = 0; i < 5; i++) bundle(g, -.22 + i * .11, .38 + (i % 2) * .03, (i % 2 ? .025 : -.025), Math.PI / 2 + (i - 2) * .12, (i - 2) * .15);
+    } else { add(box(.64, .01, .012), zipM, 0, .375, 0, { parent: g }); add(box(.04, .03, .015), zipM, -.2, .37, .01, { parent: g }); }
     return g;
   }
-  duffel(-8.3, -11.6, .5, true); duffel(-8.9, -10.9, -.3, false); duffel(-10.8, -11.4, 1.2, true);
-  for (let i = 0; i < 3; i++) cash(-8.0 + i * .05, .06 + i * .12, -10.7, .4 + i * .2);
+  // 3 skrzynie po prawej od ściany z bronią, na nich 2 torby, trzecia na podłodze
+  crate(.85, 5.55, 0, -10.0, -.3); crate(.85, 6.5, 0, -10.3, -.22); crate(.75, 6.0, .85, -10.15, -.35);
+  moneyBag(5.5, .85, -9.95, -.45, true); moneyBag(6.0, 1.6, -10.15, -.2, true); moneyBag(4.9, 0, -8.9, .35, false);
+  bundle(scene, 5.35, .06, -8.55, .6); bundle(scene, 5.5, .06, -8.45, 1.1); bundle(scene, 5.42, .18, -8.5, .8);
 
   // ---------- auta ----------
   const paint = (c, r = .22) => new THREE.MeshPhysicalMaterial({ color: c, metalness: .55, roughness: r, clearcoat: 1, clearcoatRoughness: .04 });
@@ -291,7 +294,35 @@ export function buildHangar(scene, renderer) {
   }
 
   // ustawienie: zaparkowane za graczem, nieruchome
+  function gWagon(color) {
+    const g = new THREE.Group(), body = paint(color, .3), rimM = std(0x1a1b1e, .3, .8);
+    add(box(4.5, .82, 1.9), body, 0, .82, 0, { parent: g });                                               // dolna bryła
+    add(box(2.85, .78, 1.84), body, .55, 1.62, 0, { parent: g });                                         // kabina
+    add(box(2.95, .05, 1.88), body, .55, 2.03, 0, { parent: g });                                         // dach
+    for (const xx of [-.15, .55, 1.25]) add(box(.04, .04, 1.9), black, xx, 2.08, 0, { parent: g });     // relingi dachowe
+    add(box(.06, .72, 1.6), glass, -.86, 1.64, 0, { parent: g, rz: .04 });                                // szyba przednia (prawie pionowa)
+    for (const sz of [-1, 1]) {
+      for (const [x0, w] of [[-.3, .95], [.68, .95], [1.55, .55]]) add(box(w, .55, .03), glass, x0, 1.66, sz * .93, { parent: g });   // okna boczne
+      for (const wx of [-1.42, 1.38]) add(box(1.08, .2, .22), black, wx, 1.12, sz * .95, { parent: g });  // poszerzenia nadkoli
+      add(box(2.3, .05, .2), black, 0, .45, sz * 1.02, { parent: g });                                    // stopień
+      add(box(.18, .07, .1), black, -.8, 1.55, sz * 1.0, { parent: g });                                  // lusterko
+      add(new THREE.CylinderGeometry(.11, .11, .06, 18), headM, -2.26, 1.0, sz * .63, { parent: g, rz: Math.PI / 2, cast: false });   // okrągłe reflektory
+      add(new THREE.TorusGeometry(.12, .018, 6, 18), chrome, -2.27, 1.0, sz * .63, { parent: g, ry: Math.PI / 2, cast: false });
+      add(box(.14, .06, .12), std(0xffa21a, .4, 0, { emissive: 0x6a3a00 }), -2.0, 1.25, sz * .82, { parent: g, cast: false });   // kierunkowskazy na błotnikach
+      add(box(.05, .32, .14), tailM, 2.27, .95, sz * .82, { parent: g, cast: false });
+    }
+    add(box(.06, .34, .78), mesh, -2.26, .98, 0, { parent: g, cast: false });                              // grill
+    for (let i = 0; i < 3; i++) add(box(.03, .025, .78), chrome, -2.29, .88 + i * .1, 0, { parent: g, cast: false });
+    add(box(.22, .2, 2.0), black, -2.32, .52, 0, { parent: g });                                          // zderzaki
+    add(box(.2, .2, 2.0), black, 2.32, .52, 0, { parent: g });
+    const spare = new THREE.Group(); spare.position.set(2.4, 1.2, 0); spare.rotation.y = Math.PI / 2; g.add(spare);   // koło zapasowe na tylnych drzwiach
+    add(new THREE.TorusGeometry(.32, .13, 10, 22), rubber, 0, 0, 0, { parent: spare }); add(new THREE.CylinderGeometry(.33, .33, .2, 22), body, 0, 0, -.02, { parent: spare, rx: Math.PI / 2 });
+    addWheels(g, [-1.42, 1.38], .9, .44, rimM, 6, { sw: .07, r: .44 });
+    return g;
+  }
   const park = (g, x, z, ry) => { g.position.set(x, 0, z); g.rotation.y = ry; scene.add(g); bay(x, z, ry); };
+  park(wedgeCar(0xd6d7db), -3.5, -6.3, 2.1);       // sportowe z przodu, przodem do gracza
+  park(gWagon(0x1d1f22), -6.8, -10.6, 2.0);      // terenowe z tyłu
 
   // ---------- światło ----------
   scene.add(new THREE.HemisphereLight(0x8a94a8, 0x2a2c30, .45));
