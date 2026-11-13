@@ -78,6 +78,7 @@ import glbB64 from './bean-data.js';
 import {createLobby} from './lobby.js';
 import {WEAPON_IDS,WEAPON_STATS,loadWeaponModels,createWeapon,applyParts,reloadPose,drawPose,magGrabPoint,pouchPoint,createShells,weaponSound} from './weaponry.js';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
+import {TIMELINES,ANCHORS,SETTLE,prepareTimeline,newInspectState,evalInspect,evalLeft} from './inspect.js';
 const weaponsLoading=loadWeaponModels();
 
 const $=id=>document.getElementById(id);
@@ -471,8 +472,11 @@ const fpsSkin=new THREE.MeshStandardMaterial({color:ME_COLOR,roughness:.55});
 const fpsArmR=makeArm(armR,fpsSkin,true),fpsArmL=makeArm(armL,fpsSkin,true);
 viewModel.add(fpsArmR,fpsArmL);
 // układ broni w widoku z pierwszej osoby (przestrzeń kamery): biodro, skala, barki rąk poza kadrem, kierunki łokci
-const VM={rifle:{hip:V3(.135,-.165,-.29),yaw:.05,pitch:.015,scale:.72,shR:V3(.25,-.44,.06),shL:V3(-.2,-.47,-.16),poleR:V3(.8,-1,.25),poleL:V3(-1,-.9,0)},
-          pistol:{hip:V3(.11,-.15,-.36),yaw:.03,pitch:.02,scale:1,shR:V3(.22,-.42,.04),shL:V3(-.16,-.45,-.06),poleR:V3(.8,-1,.2),poleL:V3(-.9,-1,.1)}};
+// pR/pL = staw barkowy (szczyt odcinka barkowego) poza kadrem, cR/cL = kierunek odcinka barkowego (od ciała do stawu):
+// staw jest stały, więc ręka zgina się w łokciu jak prawdziwa, zamiast prostować się odcinkiem barkowym
+const VM={rifle:{hip:V3(.135,-.165,-.29),yaw:.05,pitch:.015,scale:.72,pR:V3(.2,-.28,-.06),pL:V3(-.03,-.29,-.36),cR:V3(.4,.8,-.45).normalize(),cL:V3(-.4,.8,-.45).normalize(),poleR:V3(.8,-1,.25),poleL:V3(-1,-.9,0)},
+          pistol:{hip:V3(.11,-.15,-.36),yaw:.03,pitch:.02,scale:1,pR:V3(.19,-.28,-.12),pL:V3(-.08,-.3,-.14),cR:V3(.4,.8,-.45).normalize(),cL:V3(-.4,.8,-.45).normalize(),poleR:V3(.8,-1,.2),poleL:V3(-.9,-1,.1)}};
+for(const k in VM){const L=VM[k];L.shR=L.pR.clone().addScaledVector(L.cR,-armR.l0*.85);L.shL=L.pL.clone().addScaledVector(L.cL,-armL.l0*.85)}   // zgodność: bark przy ciele
 const _gr=V3(),_gl=V3(),_s=V3();
 const VIEW_LABEL={fps:'',tps:'Widok zza ramienia (V - zmień widok)',front:'Widok z przodu (V - wróć do FPS)'};
 function setLayer(o,l){o.traverse(c=>{if(c.isLight){c.layers.enable(0);c.layers.enable(1)}else c.layers.set(l)})}
@@ -488,7 +492,7 @@ attachRifle('fps');
 
 // ================= broń: stan =================
 const gun={cd:0,firing:false,trigger:false,reloading:0,reloadDur:2,reloadEmpty:false,reloadClick:false,switching:0,switchDur:.5,switchTo:-1,swapped:false,
-  autoReload:0,spread:0,kick:V3(),kickRot:0,sway:V3(),flashT:0,slideT:0,inspect:0,inspectDur:4};
+  autoReload:0,spread:0,kick:V3(),kickRot:0,sway:V3(),flashT:0,slideT:0};
 // gun.mag/reserve/magSize/rpm = stan broni w rękach (zgodność z resztą kodu)
 Object.defineProperties(gun,{
   mag:{get:()=>inv[curW].mag,set:v=>{inv[curW].mag=v}},reserve:{get:()=>inv[curW].reserve,set:v=>{inv[curW].reserve=v}},
@@ -508,7 +512,7 @@ function selectWeapon(n){
   if(gun.reloading>0){gun.reloading=0;gun.reloadClick=false;rifle.slideLocked=inv[curW].mag===0&&rifle.pistol;applyParts(rifle,null,true)}   // przerwane przeładowanie
   if(rifle.flash){rifle.flash.visible=false;rifle.flashLight.intensity=0}
   let d=1;if(gun.switching>0){const half=gun.switchDur/2;d=gun.swapped?1-gun.switching/half:(gun.switching-half)/half}   // aktualna wysokość broni (1 = w rękach)
-  gun.inspect=0;gun.switchTo=n;gun.switchDur=.18+WEAPON_STATS[inv[n].id].draw*.75;gun.switching=gun.switchDur/2*(1+clamp(d,0,1));gun.swapped=false;gun.autoReload=0;
+  cancelInspect();gun.switchTo=n;gun.switchDur=.18+WEAPON_STATS[inv[n].id].draw*.75;gun.switching=gun.switchDur/2*(1+clamp(d,0,1));gun.swapped=false;gun.autoReload=0;
   sndClick(700,.05,.15);setHud();
 }
 
@@ -629,7 +633,7 @@ function startReload(){
 }
 function fireShot(){
   const w=inv[curW],st=WEAPON_STATS[w.id],inst=rifle,ads=player.ads>.5;
-  w.mag--;gun.cd=60/st.rpm;gun.trigger=false;gun.inspect=0;
+  w.mag--;gun.cd=60/st.rpm;gun.trigger=false;cancelInspect(true);
   const sp=(ads?st.spread.ads:st.spread.hip)+gun.spread*.018;
   const spreadRad=sp*(1+player.speed01*st.spread.move*1.2)*(player.onGround?1:2.2)*(1-player.crouch*.35);
   camera.getWorldPosition(_o);
@@ -766,7 +770,7 @@ function stepPlayer(dt){
 function stepGun(dt){
   let w=inv[curW],st=WEAPON_STATS[w.id];
   gun.cd=Math.max(0,gun.cd-dt);
-  if(gun.inspect>0){if(adsHeld||gun.reloading>0||gun.switching>0)gun.inspect=0;else gun.inspect=Math.max(0,gun.inspect-dt)}
+  stepInspect(dt);
   // zmiana broni: chowanie → podmiana w połowie → wyjmowanie
   if(gun.switching>0){
     gun.switching-=dt;const half=gun.switchDur/2;
@@ -793,7 +797,6 @@ function stepGun(dt){
   gun.slideT=Math.max(0,gun.slideT-dt);
   const back=gun.slideT>0?st.recoilTravel*Math.min(1,gun.slideT/.04):0;
   rifle.slideBack=rifle.slideLocked?st.recoilTravel:back;
-  {const ip=inspectPose();if(ip&&ip[7]>0&&!rifle.slideLocked)rifle.slideBack=Math.max(rifle.slideBack,ip[7]*(rifle.pistol?.02:st.recoilTravel))}
   if(gun.reloading>0&&rifle.pistol&&gun.reloadEmpty){const rp=reloadPose(rifle,1-gun.reloading/gun.reloadDur,true);if(rp.slideBack!==null)rifle.slideBack=st.recoilTravel*rp.slideBack}
   // sprężyny odrzutu
   const k=18*dt;gun.kick.multiplyScalar(Math.max(0,1-k));gun.kickRot*=Math.max(0,1-k);
@@ -803,50 +806,129 @@ function applyRecoil(){ // przenosi odrzut do pitch/yaw
   if(player.recoilY!==0){player.yaw+=player.recoilY;player.recoilY=0}
 }
 const bump=t=>Math.min(1,Math.sin(Math.PI*t)*1.7);
-// oglądanie broni (F), jak w CS: klatki kluczowe [czas 0..1, x,y,z (przesunięcie), rx,ry,rz (obrót wokół środka broni), zamek 0..1, lewa dłoń puszczona 0..1]
-const INSPECT={
-  rifle:{dur:4.6,keys:[
-    [0,   0,0,0,        0,0,0,         0,0],
-    [.13, -.06,.045,.03, .12,.62,.78,  0,0],      // lewy bok broni do kamery
-    [.33, -.065,.05,.025,.06,.7,.88,   0,0],
-    [.5,  -.12,.07,-.12,-.04,-.95,-.32,0,0],     // obrót na prawy bok: okno wyrzutowe
-    [.6,  -.122,.072,-.12,-.02,-1.0,-.35,0,0],
-    [.68, -.122,.072,-.12,-.02,-1.0,-.35,.85,0],   // przeciągnięcie rączki zamka
-    [.76, -.122,.072,-.12,-.02,-1.0,-.35,0,0],
-    [.88, -.02,.03,.02,  .32,-.12,-.25,0,0],      // lufa w górę
-    [1,   0,0,0,        0,0,0,         0,0]]},
-  pistol:{dur:3.8,keys:[
-    [0,   0,0,0,        0,0,0,         0,0],
-    [.14, -.07,.05,.06,  .1,.85,.55,   0,1],      // lewy bok, lewa ręka puszcza
-    [.36, -.075,.055,.055,.05,.92,.62, 0,1],
-    [.52, -.05,.045,.05, -.05,-.82,-.38,0,1],      // prawy bok
-    [.6,  -.05,.045,.05, -.04,-.85,-.4,0,1],
-    [.66, -.05,.045,.05, -.04,-.85,-.4,.45,1],   // sprawdzenie komory (zamek lekko do tyłu)
-    [.74, -.05,.045,.05, -.04,-.85,-.4,0,1],
-    [.86, -.02,.03,.03,  .35,-.1,-.15, 0,.4],     // lufa w górę
-    [1,   0,0,0,        0,0,0,         0,0]]}};
-const _ik9=new Array(9).fill(0);
-function inspectPose(){
-  if(gun.inspect<=0)return null;
-  const K=INSPECT[rifle.pistol?'pistol':'rifle'].keys,t=1-gun.inspect/gun.inspectDur;
-  let i=0;while(i<K.length-2&&t>K[i+1][0])i++;
-  const a=K[i],b=K[i+1],u=clamp((t-a[0])/(b[0]-a[0]),0,1),e=u*u*(3-2*u);
-  for(let k=1;k<9;k++)_ik9[k]=a[k]+(b[k]-a[k])*e;
-  return _ik9;
-}
+// ================= oglądanie broni (F) – choreografie w inspect.js =================
+const INSP={on:false,t:0,w:0,cancel:false,ev:0,tl:null,id:null,snapW:0};
+const insOut=newInspectState(),insMix=newInspectState(),insSnap=newInspectState(),insSnapL=V3(),_idef={rp:[0,0,0],lp:[0,0,0]};
+const WRIST={};                                   // naturalne kierunki przedramion (układ broni), mierzone w pozie z biodra
+const DBG={TR:V3(),TL:V3(),wR:V3(),wL:V3(),SR:V3(),SL:V3(),hasW:false};   // ostatnie cele rąk w FPS (testy jakości)
+const smooth01=x=>x*x*(3-2*x);
+function inspTimeline(id){const o=window.__inspectOverride;return prepareTimeline((o&&o[id])||TIMELINES[id])}
 function startInspect(){
-  if(gun.reloading>0||gun.switching>0||adsHeld)return;
-  gun.inspectDur=INSPECT[rifle.pistol?'pistol':'rifle'].dur;gun.inspect=gun.inspectDur;sndClick(420,.06,.08);
+  if(gun.reloading>0||gun.switching>0||adsHeld||!TIMELINES[rifle.id])return;
+  if(INSP.on&&!INSP.cancel&&INSP.t<INSP.tl.dur*.62)return;            // ponowne F dopiero pod koniec (jak w CS2)
+  if(INSP.on&&INSP.w>.02){                        // ponowne F w trakcie: płynne przejście od bieżącej pozy do początku
+    for(const c of ['p','r','sh'])for(let j=0;j<3;j++)insSnap[c][j]=insMix[c][j];
+    for(const c of ['rp','lp'])for(let j=0;j<3;j++)insSnap[c][j]=insMix[c][j];
+    insSnap.piv=insMix.piv;insSnap.pvy=insMix.pvy;insSnap.sl=insMix.sl;insSnap.mg=insMix.mg;insSnap.wk=insMix.wk;insSnap.lwk=insMix.lwk;insSnapL.copy(DBG.TL);INSP.snapW=1;
+  }else INSP.snapW=0;
+  INSP.on=true;INSP.t=0;INSP.w=1;INSP.cancel=false;INSP.ev=0;INSP.id=rifle.id;INSP.tl=inspTimeline(rifle.id);
 }
-const _ipq=new THREE.Quaternion(),_ipq0=new THREE.Quaternion(),_ipc=V3(),_ipc2=V3(),_ipE=new THREE.Euler();
-// obrót oglądania wokół środka broni (a nie wokół dłoni) – broń kręci się w miejscu, jak w CS
-function applyInspect(g,ip,w,s){
-  if(!ip)return;
-  const A=rifle.anchors;_ipc.set(0,rifle.boreY||A.muzzle.y,(A.stockEnd.z+A.muzzle.z)/2).multiplyScalar(s);
-  _ipq0.copy(g.quaternion);
-  _ipE.set(g.rotation.x+ip[4]*w,g.rotation.y+ip[5]*w,g.rotation.z+ip[6]*w,g.rotation.order);g.rotation.copy(_ipE);_ipq.copy(g.quaternion);
-  _ipc2.copy(_ipc).applyQuaternion(_ipq0).sub(_ipc.applyQuaternion(_ipq));
-  g.position.add(_ipc2);g.position.x+=ip[1]*w;g.position.y+=ip[2]*w;g.position.z+=ip[3]*w;
+// przerwanie: krótkie wygaszenie (strzał – natychmiast), bez przeskoku
+function cancelInspect(now){if(!INSP.on)return;INSP.cancel=true;if(now)INSP.w=Math.min(INSP.w,.35)}
+function stepInspect(dt){
+  if(!INSP.on)return;
+  if(INSP.id!==rifle.id){INSP.on=false;return}
+  if(adsHeld||gun.reloading>0||gun.switching>0)INSP.cancel=true;
+  if(INSP.snapW>0)INSP.snapW=Math.max(0,INSP.snapW-dt/.28);
+  if(INSP.cancel){INSP.w=Math.max(0,INSP.w-dt/.14);if(INSP.w<=0)INSP.on=false;return}
+  const fz=window.__inspectFreeze;
+  if(fz!=null){INSP.t=fz;return}
+  INSP.t+=dt;
+  const ev=INSP.tl.events;while(INSP.ev<ev.length&&ev[INSP.ev].t<=INSP.t){inspSound(ev[INSP.ev].s);INSP.ev++}
+  if(INSP.t>=INSP.tl.dur+SETTLE)INSP.on=false;
+}
+// kanały oglądania w tej klatce (z wagą przerwania i przejściem przy ponownym F) albo null
+function inspNow(){
+  if(!INSP.on)return null;
+  const Lv=VM[rifle.pistol?'pistol':'rifle'];_idef.rp[0]=Lv.poleR.x;_idef.rp[1]=Lv.poleR.y;_idef.rp[2]=Lv.poleR.z;_idef.lp[0]=Lv.poleL.x;_idef.lp[1]=Lv.poleL.y;_idef.lp[2]=Lv.poleL.z;
+  evalInspect(INSP.tl,INSP.t,insOut,_idef);
+  const w=INSP.w,sw=INSP.snapW>0?smooth01(INSP.snapW):0;
+  for(const c of ['p','r','sh'])for(let j=0;j<3;j++)insMix[c][j]=lerp(insOut[c][j],insSnap[c][j],sw)*w;
+  for(const c of ['rp','lp'])for(let j=0;j<3;j++)insMix[c][j]=lerp(_idef[c][j],lerp(insOut[c][j],insSnap[c][j],sw),w);
+  insMix.piv=lerp(insOut.piv,insSnap.piv,sw);insMix.pvy=lerp(insOut.pvy,insSnap.pvy,sw);insMix.sl=lerp(insOut.sl,insSnap.sl,sw)*w;insMix.mg=lerp(insOut.mg,insSnap.mg,sw)*w;
+  insMix.wk=lerp(insOut.wk,insSnap.wk,sw);insMix.lwk=lerp(insOut.lwk,insSnap.lwk,sw);insMix.w=w;insMix.sw=sw;
+  return insMix;
+}
+const _iq=new THREE.Quaternion(),_iq0=new THREE.Quaternion(),_ic=V3(),_ic2=V3(),_AX=V3(1,0,0),_AY=V3(0,1,0),_AZ=V3(0,0,1);
+// obrót q = Ry(ry)·Rx(rx)·q0·Rz(rz) wokół punktu między chwytem a środkiem broni, potem przesunięcie
+function applyInspect(g,ip,pk){
+  const A=rifle.anchors,s=g.scale.x;
+  _ic.set(0,rifle.boreY*ip.pvy,(A.stockEnd.z+A.muzzle.z)/2*ip.piv).multiplyScalar(s);
+  _iq0.copy(g.quaternion);
+  g.quaternion.multiply(_iq.setFromAxisAngle(_AZ,ip.r[2]));
+  g.quaternion.premultiply(_iq.setFromAxisAngle(_AX,ip.r[0]));
+  g.quaternion.premultiply(_iq.setFromAxisAngle(_AY,ip.r[1]));
+  _ic2.copy(_ic).applyQuaternion(_iq0);_ic.applyQuaternion(g.quaternion);
+  g.position.add(_ic2.sub(_ic));
+  g.position.x+=ip.p[0]*pk;g.position.y+=ip.p[1]*pk;g.position.z+=ip.p[2]*pk;
+}
+// promień końca rurki ręki (dłoń) – do ułożenia dłoni na powierzchni broni
+const ARM_TIP_R=(()=>{const g=armR.geo,p=g.attributes.position,L=armR.l0+armR.l1+armR.l2,c=V3(),n=[];let k=0;
+  for(let i=0;i<p.count;i++){const z=p.getZ(i);if(z>L*.82&&z<L*.92){c.x+=p.getX(i);c.y+=p.getY(i);k++;n.push(i)}}
+  c.multiplyScalar(1/Math.max(1,k));let r=0;for(const i of n)r+=Math.hypot(p.getX(i)-c.x,p.getY(i)-c.y);return k?r/k:LIMB_R})();
+// cel lewej dłoni z kotwic choreografii (układ inner broni); 'rest' = punkt w układzie rodzica rąk (kamera / tułów)
+const _lpool=[0,1,2,3].map(()=>({p:[0,0,0],n:[0,0,0],w:[0,0,0]})),_lv=V3(),_lv2=V3(),_lp=[0,0,0],_lw=[0,0,0];
+const REST={fps:{rifle:V3(-.16,-.36,-.3),pistol:V3(-.15,-.36,-.3)},tp:V3(-.36,.62,-.1)};
+function inspLeft(inst,parent,view,armScale,outPt,outDir){
+  const id=inst.id,AN=INSP.tl&&INSP.tl.anchors?Object.assign({},ANCHORS[id],INSP.tl.anchors):(ANCHORS[id]||{}),ws=inst.group.scale.x,hr=ARM_TIP_R*armScale/ws*.55;
+  inst.inner.updateWorldMatrix(true,false);
+  const res=(k,idx)=>{
+    const o=_lpool[idx&3],lo=k.lo||[0,0,0];
+    if(k.L==='rest'){
+      _lv.copy(view==='fps'?REST.fps[inst.pistol?'pistol':'rifle']:REST.tp);_lv.x+=lo[0];_lv.y+=lo[1];_lv.z+=lo[2];
+      parent.localToWorld(_lv);inst.inner.worldToLocal(_lv);o.p[0]=_lv.x;o.p[1]=_lv.y;o.p[2]=_lv.z;
+      for(const [dst,src] of [[o.n,[0,-1,.2]],[o.w,[-.25,-.9,.35]]]){_lv.set(src[0],src[1],src[2]).normalize().transformDirection(parent.matrixWorld);
+        _lv2.copy(_lv).transformDirection(_im.copy(inst.inner.matrixWorld).invert());dst[0]=_lv2.x;dst[1]=_lv2.y;dst[2]=_lv2.z}
+    }else if(k.L==='grip'||!AN[k.L]){
+      const g=inst.gripL,wd=(WRIST[id]&&WRIST[id].L)||[-.45,-.75,.5];
+      o.p[0]=g.x+lo[0];o.p[1]=g.y+lo[1];o.p[2]=g.z+lo[2];o.n[0]=0;o.n[1]=-1;o.n[2]=0;o.w[0]=wd[0];o.w[1]=wd[1];o.w[2]=wd[2];
+    }else{
+      const a=AN[k.L],nl=Math.hypot(...a.n)||1;
+      for(let j=0;j<3;j++){o.n[j]=a.n[j]/nl;o.p[j]=a.p[j]+o.n[j]*hr+lo[j];o.w[j]=a.w[j]}
+    }
+    return o;
+  };
+  const info=evalLeft(INSP.tl,INSP.t,res,_lp,_lw);
+  outPt.set(_lp[0],_lp[1],_lp[2]);inst.inner.localToWorld(outPt);parent.worldToLocal(outPt);
+  outDir.set(_lw[0],_lw[1],_lw[2]).normalize().transformDirection(inst.inner.matrixWorld).transformDirection(_im.copy(parent.matrixWorld).invert());
+  return info;
+}
+const _im=new THREE.Matrix4();
+// IK z nadgarstkiem: łokieć tam, gdzie przedramię najlepiej pokrywa się z kierunkiem wDir (od dłoni do łokcia)
+const _wE=V3(),_wP=V3(),_wq=V3(),_wd=V3(),_wp=V3(),_wp0=V3();
+function ikWrist(arm,S,T,wDir,poleDef,k,c0){
+  if(!(k>0)){ikArm(arm,S,T,poleDef,null,null,c0);return}
+  ikArm(arm,S,T,poleDef,_wE,_wP,c0);
+  const u=arm.userData,l2=u.def.l2*u.s;
+  _wd.copy(T).sub(_wP).normalize();
+  _wq.copy(T).addScaledVector(wDir,l2).sub(_wP);_wq.addScaledVector(_wd,-_wq.dot(_wd));
+  _wp0.copy(poleDef).addScaledVector(_wd,-poleDef.dot(_wd));
+  const ql=_wq.length(),pl=_wp0.length();
+  if(ql<.004||pl<1e-4){ikArm(arm,S,T,poleDef,null,null,c0);return}
+  const kk=k*Math.min(1,ql/.02);                  // łokieć blisko linii bark–dłoń: kierunek nieokreślony, zostaje domyślny
+  _wp.copy(_wp0).multiplyScalar((1-kk)/pl).addScaledVector(_wq,kk/ql);
+  ikArm(arm,S,T,_wp,null,null,c0);
+}
+// zmierz naturalne kierunki przedramion w układzie broni (poza z biodra) – start oglądania nie zmienia ułożenia rąk
+function measureWrist(inst){
+  inst.inner.updateWorldMatrix(true,false);const W=WRIST[inst.id]||(WRIST[inst.id]={});
+  for(const [nm,arm] of [['R',fpsArmR],['L',fpsArmL]]){
+    arm.updateWorldMatrix(true,true);const u=arm.userData,D=u.def;
+    const H=_lv.copy(D.d2).multiplyScalar(D.l2);u.b2.localToWorld(H);const E=u.b2.getWorldPosition(_lv2);
+    inst.inner.worldToLocal(H);inst.inner.worldToLocal(E);E.sub(H).normalize();W[nm]=[E.x,E.y,E.z];
+  }
+}
+function inspSound(k){
+  if(!AC)return;const t=AC.currentTime,nb=noise();
+  const burst=(f,q,g,d,t0=0,type='bandpass')=>{const s=AC.createBufferSource();s.buffer=nb;const fl=AC.createBiquadFilter();fl.type=type;fl.frequency.value=f;fl.Q.value=q;
+    const gg=AC.createGain();gg.gain.setValueAtTime(.0001,t+t0);gg.gain.linearRampToValueAtTime(g,t+t0+Math.min(.02,d*.3));gg.gain.exponentialRampToValueAtTime(.0001,t+t0+d);
+    s.connect(fl).connect(gg).connect(master);s.start(t+t0,Math.random()*.2);s.stop(t+t0+d+.05)};
+  if(k==='cloth'){burst(850,.6,.045,.26);burst(2200,.8,.015,.18,.05)}
+  else if(k==='grab'){burst(420,1.2,.07,.09);burst(2600,4,.025,.035,.012)}
+  else if(k==='tap'){burst(3300,7,.09,.035);burst(900,2,.04,.05)}
+  else if(k==='click'){burst(4300,9,.12,.028);burst(1600,5,.05,.05,.014)}
+  else if(k==='slide'){burst(2400,2,.06,.13);burst(5200,10,.09,.022,.11)}
+  else if(k==='ratchet'){for(let i=0;i<5;i++)burst(3400+i*140,11,.045,.022,i*.048)}
 }
 // wspólna poza broni: przeładowanie i zmiana broni
 function weaponPose(){
@@ -863,8 +945,14 @@ function leftHandTarget(inst,rp,parent,out,pouchTorso){
   else{if(rp.hand==='pouch')pouchPoint(inst,_lt3);else magGrabPoint(inst,rp.magOff,_lt3);inst.group.localToWorld(_lt3);parent.worldToLocal(_lt3)}
   return out.copy(_lt2).lerp(_lt3,rp.handBlend);
 }
+function vmLayout(){
+  const k=rifle.pistol?'pistol':'rifle',o=window.__vmOverride&&window.__vmOverride[k];if(!o)return VM[k];
+  const L=Object.assign({},VM[k]);for(const f in o)L[f]=Array.isArray(o[f])?V3(...o[f]):o[f];
+  if(o.cR)L.cR.normalize();if(o.cL)L.cL.normalize();
+  L.shR=L.pR.clone().addScaledVector(L.cR,-armR.l0*.85);L.shL=L.pL.clone().addScaledVector(L.cL,-armL.l0*.85);return L;
+}
 function poseViewmodel(dt){
-  const L=VM[rifle.pistol?'pistol':'rifle'],st=WEAPON_STATS[inv[curW].id],{rp,dp}=weaponPose();
+  const L=vmLayout(),st=WEAPON_STATS[inv[curW].id],{rp,dp}=weaponPose();
   const ads=player.ads*(rp||gun.switching>0?0:1),s=L.scale,sR=rifle.anchors.sightRear;
   // celowanie: oko na linii celownika; karabin – oko przy kolbie, pistolet – na wyciągniętych rękach
   const relief=rifle.pistol?st.relief:Math.max(.05,(rifle.cheekZ-sR.z)*s);
@@ -879,17 +967,39 @@ function poseViewmodel(dt){
   rifle.group.position.set(base.x+gun.sway.x*sw,base.y+gun.sway.y*sw+gun.kick.y*.6,base.z+gun.kick.z);
   rifle.group.rotation.set(L.pitch*(1-ads)+gun.kickRot+dp.pitch+(rp?rp.pitch:0)+gun.sway.y*1.2*sw,L.yaw*(1-ads)-gun.sway.x*1.5*sw+(rp?rp.yaw:0),(rp?rp.roll:0)+dp.roll,'XYZ');
   rifle.group.scale.setScalar(s);
-  const ip=inspectPose();applyInspect(rifle.group,ip,1,s);
+  const ip=inspNow();
+  if(ip){_iq0.copy(rifle.group.quaternion);applyInspect(rifle.group,ip,1)}
   for(const m of rifle.rear)m.visible=ads<.6;
-  applyParts(rifle,rp?rp.magOff:null,rp?rp.magVisible:true,rp?rp.magRot:0);
-  // ręce: barki poza kadrem, prawa dłoń na chwycie, lewa na łożu / magazynku
+  if(ip&&ip.sl>0&&!rifle.slideLocked)rifle.slideBack=Math.max(rifle.slideBack,ip.sl*st.recoilTravel);
+  applyParts(rifle,ip&&ip.mg>0?_gm.copy(rifle.magDir).multiplyScalar(ip.mg).add(rp?rp.magOff:_gm0):rp?rp.magOff:null,rp?rp.magVisible:true,rp?rp.magRot:0);
+  // ręce: barki poza kadrem, prawa dłoń na chwycie, lewa na łożu / magazynku / częściach broni (oglądanie)
   rifle.group.updateWorldMatrix(true,false);viewModel.updateWorldMatrix(true,false);
   _gr.copy(rifle.gripR);rifle.group.localToWorld(_gr);viewModel.worldToLocal(_gr);
   leftHandTarget(rifle,rp,viewModel,_gl,null);
-  if(ip&&ip[8]>0)_gl.lerp(V3t3.set(L.shL.x+.03,L.shL.y+.06,L.shL.z-.12),ip[8]);   // pistolet: lewa ręka opada w dół kadru
-  ikArm(fpsArmR,L.shR,_gr,L.poleR);
-  ikArm(fpsArmL,L.shL,_gl,L.poleL);
+  const shR=_shR.copy(L.shR),shL=_shL.copy(L.shL);
+  if(!ip){
+    ikArm(fpsArmR,shR,_gr,L.poleR,null,null,L.cR);ikArm(fpsArmL,shL,_gl,L.poleL,null,null,L.cL);
+    if(!rp&&gun.switching<=0&&ads<.01)measureWrist(rifle);
+    DBG.hasW=false;
+  }else{
+    const w=ip.w;
+    for(const sh of [shR,shL]){sh.x+=ip.p[0]*.3+ip.sh[0];sh.y+=ip.p[1]*.3+ip.sh[1];sh.z+=ip.p[2]*.3+ip.sh[2]}
+    // prawa: przechył broni robi nadgarstek i obrót przedramienia (niewidoczny na rurce), więc kierunek przedramienia
+    // z biodra obraca się tylko o część skrętu i pochylenia broni
+    const W=WRIST[rifle.id]||{R:[.25,-.5,.85],L:[-.45,-.75,.5]};
+    _wR.set(...W.R).applyQuaternion(_iq0);
+    _wR.applyAxisAngle(_AX,ip.r[0]*ip.wk).applyAxisAngle(_AY,ip.r[1]*ip.wk).normalize();
+    _poR.set(ip.rp[0],ip.rp[1],ip.rp[2]);_poL.set(ip.lp[0],ip.lp[1],ip.lp[2]);
+    // lewa: kotwica z choreografii, z wagą przerwania; przy ponownym F przejście od poprzedniego celu
+    inspLeft(rifle,viewModel,'fps',fpsArmL.userData.s,_glI,_wL);
+    _gl.lerp(_glI,w);if(ip.sw>0)_gl.lerp(insSnapL,ip.sw);
+    ikWrist(fpsArmR,shR,_gr,_wR,_poR,w*.8,L.cR);
+    ikWrist(fpsArmL,shL,_gl,_wL,_poL,w*ip.lwk,L.cL);
+    DBG.wR.copy(_wR);DBG.wL.copy(_wL);DBG.hasW=true;
+  }
+  DBG.TR.copy(_gr);DBG.TL.copy(_gl);DBG.SR.copy(shR);DBG.SL.copy(shL);
 }
+const _shR=V3(),_shL=V3(),_wR=V3(),_wR0=V3(),_wL=V3(),_glI=V3(),_gm=V3(),_gm0=V3(),_poR=V3(),_poL=V3();
 function poseThirdPerson(dt){
   const p=player,ud=me.userData;
   me.position.copy(p.pos);me.rotation.y=p.yaw;
@@ -906,13 +1016,14 @@ function poseThirdPerson(dt){
   meHolder.rotation.set(0,0,0);                            // broń nie podąża za patrzeniem w górę/dół (na razie wyłączone)
   const {rp,dp}=weaponPose();
   placeTP(rifle,gun.kick.y*.4-dp.drop*.7+(rp?rp.lift:0),gun.kick.z*.6,gun.kickRot*.6+dp.pitch*.7+(rp?rp.pitch:0),(rp?rp.roll:0)+dp.roll*.7,rp?rp.side:0);
-  const ip=inspectPose();applyInspect(rifle.group,ip,.75,rifle.group.scale.x);
+  const ip=inspNow();if(ip)applyInspect(rifle.group,ip,.8);
   keepRifleOut(ud,rifle.group);
-  applyParts(rifle,rp?rp.magOff:null,rp?rp.magVisible:true,rp?rp.magRot:0);
+  if(ip&&ip.sl>0&&!rifle.slideLocked)rifle.slideBack=Math.max(rifle.slideBack,ip.sl*WEAPON_STATS[rifle.id].recoilTravel);
+  applyParts(rifle,ip&&ip.mg>0?_gm.copy(rifle.magDir).multiplyScalar(ip.mg).add(rp?rp.magOff:_gm0):rp?rp.magOff:null,rp?rp.magVisible:true,rp?rp.magRot:0);
   me.updateWorldMatrix(true,true);
   _gr.copy(rifle.gripR);rifle.group.localToWorld(_gr);ud.torso.worldToLocal(_gr);
   leftHandTarget(rifle,rp,ud.torso,_gl,null);
-  if(ip&&ip[8]>0)_gl.lerp(V3t3.set(-.36,.62,-.12),ip[8]);   // lewa ręka opuszczona przy boku
+  if(ip){inspLeft(rifle,ud.torso,'tp',1,_glI,_wL);_gl.lerp(_glI,ip.w)}
   poseArmsTo(ud,_gr,_gl);
 }
 function stepEnemies(dt){
@@ -1154,7 +1265,50 @@ $('toLobby').addEventListener('click',e=>{
 function armJoints(arm){arm.updateWorldMatrix(true,true);const u=arm.userData,D=u.def;const H=V3().copy(D.d2).multiplyScalar(D.l2);u.b2.localToWorld(H);
   return{S:arm.getWorldPosition(V3()),P:u.b1.getWorldPosition(V3()),E:u.b2.getWorldPosition(V3()),H}}
 function bodyHit(ud,w,m=0){const q=ud.torso.worldToLocal(w.clone());return inBody3(q.x,q.y,q.z,m)}
-window.__game={armJoints,bodyHit,inv,selectWeapon,get curW(){return curW},get rifle(){return rifle},solveArm,armR,armL,TP_HOLD,VM,me,poseArmsTo,makeBean,scene,keepRifleOut,placeTP,createWeapon,lobby,duel,setMode,player,gun,enemies,camera,setView:attachRifle,startPlay,start:()=>{playing=true;$('overlay').style.display='none'},fire:()=>{if(gun.mag>0&&gun.cd<=0&&gun.reloading<=0)fireShot()},reload:startReload,inspect:startInspect,setAds:v=>adsHeld=v,keys};
+// pomiary jakości oglądania w bieżącej klatce FPS: trafienie dłoni, wyprost, nadgarstek, przenikanie przez broń, kadr
+const _prc=new THREE.Raycaster();_prc.layers.set(1);
+function inspectProbe(){
+  viewModel.updateWorldMatrix(true,true);const vmInv=_im.clone().copy(viewModel.matrixWorld).invert();
+  const meshes=[];rifle.inner.traverse(o=>{if(o.isMesh&&o.visible)meshes.push(o)});
+  const out={t:+INSP.t.toFixed(3),on:INSP.on,arms:{}},segs={};
+  for(const [nm,arm] of [['R',fpsArmR],['L',fpsArmL]]){
+    const j=armJoints(arm),u=arm.userData,s=u.s,D=u.def,reach=(D.l0+D.l1+D.l2)*s;
+    const T=nm==='R'?DBG.TR:DBG.TL,Sx=nm==='R'?DBG.SR:DBG.SL,wd=nm==='R'?DBG.wR:DBG.wL;
+    const toVm=v=>v.clone().applyMatrix4(vmInv);const S=toVm(j.S),P=toVm(j.P),E=toVm(j.E),H=toVm(j.H);
+    const fore=E.clone().sub(H).normalize(),a1=P.clone().sub(E).normalize(),a2=H.clone().sub(E).normalize();
+    const r={err:+(H.distanceTo(T)*100).toFixed(2),ext:+(P.distanceTo(T)/((D.l1+D.l2)*s)).toFixed(3),
+      elbow:Math.round(Math.acos(clamp(a1.dot(a2),-1,1))*180/Math.PI),
+      align:DBG.hasW?Math.round(Math.acos(clamp(fore.dot(wd),-1,1))*180/Math.PI):null,E:E.toArray().map(x=>+x.toFixed(3))};
+    // przenikanie: oś rurki i 4 linie na jej obwodzie (60% promienia), bez ostatnich 4 cm przy dłoni
+    const rad=ARM_TIP_R*s*.6;let clip=0;const W=[S,P,E,H].map(v=>v.clone().applyMatrix4(viewModel.matrixWorld));
+    for(let k=0;k<3;k++){const A=W[k],B=W[k+1].clone();const len=A.distanceTo(B);if(len<1e-4)continue;
+      const dir=B.clone().sub(A).normalize();const lim=k===2?len-.04:len;if(lim<=0)continue;
+      const side=V3().crossVectors(dir,V3(0,1,0));if(side.lengthSq()<1e-6)side.set(1,0,0);side.normalize();const up=V3().crossVectors(side,dir);
+      const Tw=T.clone().applyMatrix4(viewModel.matrixWorld),excl=nm==='R'?.06:.035;
+      for(const off of [[0,0],[1,0],[-1,0],[0,1],[0,-1]]){const o=A.clone().addScaledVector(side,off[0]*rad).addScaledVector(up,off[1]*rad);
+        _prc.set(o,dir);_prc.far=lim;const h=_prc.intersectObjects(meshes,false).filter(x=>x.point.distanceTo(Tw)>excl);if(h.length){clip++;break}}}
+    // łokieć w kadrze; ręka wychodząca z ekranu bokiem na wysokości środka (powinna dołem / dolnym rogiem)
+    const Ep=W[2].clone().project(vmCam);r.elbowVisible=Math.abs(Ep.x)<1&&Math.abs(Ep.y)<1&&Ep.z<1?1:0;
+    let exit=null;for(const [a,b] of [[3,2],[2,1],[1,0]]){for(let t=0;t<=1.001;t+=.05){const q=W[a].clone().lerp(W[b],t).project(vmCam);
+      if(!(Math.abs(q.x)<1&&Math.abs(q.y)<1&&q.z<1)){exit=q;break}}if(exit)break}
+    r.sideExit=exit&&Math.abs(exit.x)>=1&&exit.y>-.55?1:0;
+    r.clip=clip;out.arms[nm]=r;segs[nm]=[S,P,E,H];
+  }
+  // odstęp między rękami (próbkowanie odcinków), w promieniach rurki
+  let md=1e9;const pts=a=>{const o=[];for(let k=0;k<3;k++)for(let t=0;t<=1.001;t+=.125)o.push(a[k].clone().lerp(a[k+1],t));return o};
+  const pr=pts(segs.R),pl=pts(segs.L);for(const a of pr)for(const b of pl)md=Math.min(md,a.distanceTo(b));
+  out.armGap=+(md/(ARM_TIP_R*fpsArmR.userData.s)).toFixed(2);
+  // kadr: rogi bryły broni w kamerze broni; barki poza ekranem
+  vmCam.updateMatrixWorld(true);const bb=rifle.bboxInner||(rifle.bboxInner=(()=>{const b=new THREE.Box3(),m=new THREE.Matrix4().copy(rifle.inner.matrixWorld).invert();
+    rifle.inner.traverse(o=>{if(o.isMesh){o.geometry.computeBoundingBox();const g=o.geometry.boundingBox.clone().applyMatrix4(o.matrixWorld).applyMatrix4(m);b.union(g)}});return b})());
+  let inside=0;const ndc=[];for(let i=0;i<8;i++){const c=V3(i&1?bb.max.x:bb.min.x,i&2?bb.max.y:bb.min.y,i&4?bb.max.z:bb.min.z);rifle.inner.localToWorld(c);c.project(vmCam);ndc.push(c);
+    if(Math.abs(c.x)<=1&&Math.abs(c.y)<=1&&c.z<1&&c.z>-1)inside++}
+  out.onScreen=inside/8;const cx=ndc.reduce((a,c)=>a+c.x,0)/8,cy=ndc.reduce((a,c)=>a+c.y,0)/8;out.center=[+cx.toFixed(2),+cy.toFixed(2)];
+  let shVis=0;for(const nm of ['R','L']){const s0=segs[nm][0].clone().applyMatrix4(viewModel.matrixWorld).project(vmCam);if(Math.abs(s0.x)<1&&Math.abs(s0.y)<1&&s0.z<1)shVis++}
+  out.shoulderVisible=shVis;out.sl=+rifle.slideBack.toFixed(4);
+  return out;
+}
+window.__game={armJoints,bodyHit,inv,selectWeapon,get curW(){return curW},get rifle(){return rifle},solveArm,armR,armL,TP_HOLD,VM,me,poseArmsTo,makeBean,scene,keepRifleOut,placeTP,createWeapon,lobby,duel,setMode,player,gun,enemies,camera,setView:attachRifle,startPlay,start:()=>{playing=true;$('overlay').style.display='none'},fire:()=>{if(gun.mag>0&&gun.cd<=0&&gun.reloading<=0)fireShot()},reload:startReload,inspect:startInspect,inspectProbe,INSP,fpsArms:[fpsArmR,fpsArmL],viewModel,vmCam,WRIST,setAds:v=>adsHeld=v,keys};
 $('loading').remove();window.__ready=true;frame();
 </script>
 
