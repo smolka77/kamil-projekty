@@ -371,16 +371,6 @@ const CSS = `
 #lb-ui .lb-skin span{font:600 12.5px/1.1 Inter,sans-serif;text-align:center}
 #lb-ui .lb-skin small{font:700 8.5px/1 Inter,sans-serif;letter-spacing:.12em;color:var(--acc);min-height:9px}
 #lb-ui .lb-skins .lb-btn{align-self:flex-start;margin-top:auto}
-/* ---- panel admina ---- */
-#lb-ui .lb-adm label{display:flex;gap:10px;align-items:flex-start;padding:11px 12px;border:1px solid var(--line);border-radius:11px;margin-bottom:8px;cursor:pointer}
-#lb-ui .lb-adm label:hover{background:rgba(255,255,255,.04)}
-#lb-ui .lb-adm label:has(input:checked){border-color:var(--acc);background:rgba(255,198,41,.07)}
-#lb-ui .lb-adm input{margin-top:3px;accent-color:var(--acc)}
-#lb-ui .lb-adm label b{display:block;font-weight:600}
-#lb-ui .lb-adm label small{color:var(--mut);font-size:12px}
-#lb-ui .lb-adm h4{margin:0 0 8px;font:700 11px Inter,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
-#lb-ui .lb-adm .row{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
-#lb-ui .lb-adm .row .lb-btn{width:auto;padding:0 16px}
 @media (max-width:640px){
   #lb-ui .lb-dock{left:12px;right:12px;width:auto;bottom:max(12px,env(safe-area-inset-bottom))}
   #lb-ui .lb-card{padding:10px}
@@ -448,7 +438,6 @@ const HTML = `
   <button type="button" role="menuitem" data-act="wallet">${IC.wallet}<span data-i18n="menu.wallet"></span></button>
   <button type="button" role="menuitem" data-act="auth">${IC.user}<span></span></button>
   <hr>
-  <button type="button" role="menuitem" data-act="admin">${IC.shield}<span data-i18n="menu.admin"></span></button>
   <button type="button" role="menuitem" data-act="logout" class="danger">${IC.logout}<span data-i18n="menu.logout"></span></button>
 </nav>
 <div class="lb-plate" id="lb-plate"><span id="lb-plate-name"></span><small data-i18n="plate.ready"></small><em data-i18n="plate.skin"></em></div>
@@ -561,12 +550,6 @@ const HTML = `
     <button class="lb-btn pri" type="submit" data-i18n="w.doWithdraw"></button>
   </form>
   <div data-pane="history" hidden><ul class="lb-hist" id="lb-hist"></ul></div>
-</div></div>
-<div class="lb-modal" id="lb-admin" hidden><div class="lb-dlg lb-adm" role="dialog" aria-modal="true">
-  <div class="lb-dh"><h3>Panel admina</h3>${X_BTN}</div>
-  <p class="lb-note" style="margin:-8px 0 14px">Ustawienia zapisują się w tej przeglądarce.</p>
-  <h4>Mapa lobby</h4><div id="lb-admin-maps"></div>
-  <div class="row"><button class="lb-btn" id="lb-admin-cancel" type="button">Anuluj</button><button class="lb-btn pri" id="lb-admin-save" type="button">Zapisz i przeładuj lobby</button></div>
 </div></div>
 <div class="lb-draw" id="lb-draw" hidden>
   <small class="lb-dsub">1 v 1</small>
@@ -1168,17 +1151,7 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
   addEventListener('keydown', e => { if (e.key === 'Escape' && !skinPanel.hidden) { closeSkins(); e.stopPropagation(); } }, true);
   let hopT = -1;
   setSkin(skin);
-  // panel admina: wybór mapy lobby (zmiana wymaga przeładowania strony)
-  const admin = $('lb-admin'), adminMaps = $('lb-admin-maps');
-  LOBBY_MAPS.forEach(m => { const l = document.createElement('label'); l.innerHTML = '<input type="radio" name="lb-lmap"><div><b></b><small></small></div>';
-    const inp = l.querySelector('input'); inp.value = m.id; inp.checked = m.id === LOBBY_MAP; l.querySelector('b').textContent = m.name; l.querySelector('small').textContent = m.desc; adminMaps.appendChild(l); });
-  const openAdmin = () => { adminMaps.querySelectorAll('input').forEach(i => i.checked = i.value === LOBBY_MAP); admin.hidden = false; };
-  $('lb-admin-cancel').addEventListener('click', () => admin.hidden = true);
-  admin.addEventListener('click', e => { if (e.target === admin) admin.hidden = true; });
-  admin.querySelector('.lb-x').addEventListener('click', () => admin.hidden = true);
-  $('lb-admin-save').addEventListener('click', () => { const v = adminMaps.querySelector('input:checked').value; store.set('fasolka-lobby-map', v); if (v !== LOBBY_MAP) location.reload(); else admin.hidden = true; });
-  addEventListener('keydown', e => { if (!active) return; if (e.ctrlKey && e.shiftKey && e.code === 'KeyA') { e.preventDefault(); admin.hidden ? openAdmin() : (admin.hidden = true); }
-    if (e.key === 'Escape' && !admin.hidden) { admin.hidden = true; e.stopPropagation(); } }, true);
+  // panel admina (wybór mapy lobby, statystyki) jest teraz osobny: admin.js, link z #admin – patrz lobby-ui.js
   bean.rotation.y = Math.PI;                 // model patrzy w -Z, kamera stoi na +Z
   bean.traverse(o => { if (o.isMesh) o.castShadow = true; });
 
@@ -1219,7 +1192,7 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
 
   // ---------- interfejs: menu, ustawienia, konto, portfel, stawki, losowanie mapy ----------
   uiApi = initLobbyUI({
-    ui, $, openAdmin,
+    ui, $, lobbyMap: LOBBY_MAP, lobbyMaps: LOBBY_MAPS.map(m => m.id), isActive: () => active,
     getMode: () => mode.id,
     setName: n => { plateName.textContent = n; },
     play: (id, opts) => { if (active) onPlay(id, opts); },
@@ -1256,7 +1229,7 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
   }
 
   function show() { active = true; ui.classList.remove('lb-hidden'); uiApi.onShow(); }
-  function hide() { active = false; dragging = false; beanHover = false; picker.hidden = true; skinPanel.hidden = true; admin.hidden = true; uiApi.closeAll(); canvas.style.cursor = ''; ui.classList.add('lb-hidden'); }
+  function hide() { active = false; dragging = false; beanHover = false; picker.hidden = true; skinPanel.hidden = true; uiApi.closeAll(); canvas.style.cursor = ''; ui.classList.add('lb-hidden'); }
 
   return { scene, camera, update, show, hide, get active() { return active; }, get mode() { return mode.id; }, get skin() { return skin; }, ui };
 }
