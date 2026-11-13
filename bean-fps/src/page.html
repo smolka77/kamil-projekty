@@ -735,7 +735,7 @@ function stepPlayer(dt){
     const inside=player.pos.x>b.minX&&player.pos.x<b.maxX&&player.pos.z>b.minZ&&player.pos.z<b.maxZ;
     if(!(inside||d2<R*R))continue;
     if(b.bottom>.05&&prevY+1.75<=b.bottom+.02){if(player.onLadder)continue;player.pos.y=b.bottom-1.75;if(player.vel.y>0)player.vel.y=0;continue}   // sufit
-    if((prevY>=b.top-.1||(wasGround&&b.top>prevY&&b.top-prevY<=.5))&&player.vel.y<=0){player.pos.y=b.top;player.vel.y=0;player.onGround=true;continue}
+    if(((prevY>=b.top-.1&&player.pos.y<=b.top+.001)||(wasGround&&b.top>prevY&&b.top-prevY<=.5))&&player.vel.y<=0){player.pos.y=b.top;player.vel.y=0;player.onGround=true;continue}   // lądowanie tylko gdy stopy dolatują do wierzchu (inaczej w połowie skoku ściągało na każdą niższą bryłę pod graczem)
     if(player.pos.y<b.top-.05){
       if(inside){const l=player.pos.x-b.minX,r=b.maxX-player.pos.x,t=player.pos.z-b.minZ,bt=b.maxZ-player.pos.z,m=Math.min(l,r,t,bt);
         if(m===l)player.pos.x=b.minX-R;else if(m===r)player.pos.x=b.maxX+R;else if(m===t)player.pos.z=b.minZ-R;else player.pos.z=b.maxZ+R}
