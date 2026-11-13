@@ -1093,6 +1093,7 @@ function frame(){
   if(playing){stepPlayer(dt);stepGun(dt);applyRecoil()}else{gun.firing=false}
   stepEnemies(dt);
   if(player.view==='fps'){poseViewmodel(dt);me.visible=false}else{poseThirdPerson(dt)}
+  if(window.__frameHook)window.__frameHook(dt);          // testy: odczyt pozy broni po każdej klatce
   updateCamera(dt);updateFx(dt);shells.update(dt,0);updateCross();
   sun.position.set(player.pos.x+14,26,player.pos.z+10);sun.target.position.copy(player.pos);
   // świat, a potem broń z pierwszej osoby z wyczyszczoną głębią – broń nigdy nie wchodzi w ściany
