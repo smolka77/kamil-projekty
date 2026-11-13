@@ -13,7 +13,7 @@ const DICT = {
     'tag.range': 'SOLO', 'tag.1v1': '1 NA 1', 'soon': 'WKRÓTCE',
     'stake.label': 'Stawka', 'stake.custom': 'Własna', 'stake.win': 'Możliwa wygrana', 'stake.free': 'Trening – bez stawki', 'stake.range': 'Kwota 1–1000 USDT', 'stake.invalid': 'Podaj stawkę od 1 do 1000 USDT',
     'play': 'GRAJ', 'picker.title': 'Wybierz tryb', 'done': 'Gotowe', 'skins.title': 'Skiny', 'close': 'Zamknij',
-    'set.title': 'Ustawienia', 'set.general': 'Ogólne', 'set.audio': 'Dźwięk i obraz', 'set.controls': 'Sterowanie', 'set.lang': 'Język', 'set.volume': 'Głośność', 'set.fov': 'Pole widzenia (FOV)',
+    'set.title': 'Ustawienia', 'set.general': 'Ogólne', 'set.audio': 'Dźwięk', 'set.controls': 'Sterowanie', 'set.lang': 'Język', 'set.volume': 'Głośność', 'set.fov': 'Pole widzenia (FOV)',
     'set.bindHint': 'Kliknij akcję (albo klawisz na klawiaturze) i naciśnij nowy klawisz. Esc anuluje.', 'set.press': 'Naciśnij klawisz…', 'set.reset': 'Przywróć domyślne', 'set.mouse': 'Strzał: lewy przycisk myszy · Celowanie: prawy',
     'act.fwd': 'Do przodu', 'act.back': 'Do tyłu', 'act.left': 'W lewo', 'act.right': 'W prawo', 'act.sprint': 'Bieg', 'act.jump': 'Skok', 'act.crouch': 'Kucanie / slide',
     'act.reload': 'Przeładowanie', 'act.inspect': 'Oglądanie broni', 'act.prev': 'Poprzednia broń', 'act.view': 'Zmiana widoku', 'act.mute': 'Wycisz dźwięk',
@@ -30,7 +30,7 @@ const DICT = {
     'tx.deposit': 'Wpłata (test)', 'tx.withdraw': 'Wypłata (test)', 'tx.stake': 'Stawka 1v1', 'tx.win': 'Wygrana 1v1', 'tx.loss': 'Przegrana 1v1',
     'err.loginToPlay': 'Zaloguj się, aby grać o stawkę', 'err.funds': 'Za mało środków na stawkę – doładuj portfel', 'err.rematchFunds': 'Za mało środków na kolejny mecz',
     'draw.title': 'Losowanie mapy', 'draw.map': 'Mapa',
-    'stake.fee': 'Prowizja (10%)', 'tx.fee': 'prowizja {a}', 'set.reserved': 'Ten klawisz jest zarezerwowany (bronie 1–4 i Esc)', 'kb.move': 'Ruch', 'kb.fight': 'Walka', 'kb.sys': 'Inne', 'kb.lmb': 'LPM', 'kb.rmb': 'PPM', 'kb.mmb': 'Kółko', 'kb.fire': 'Strzał', 'kb.aim': 'Celowanie', 'kb.wheel': 'Zmiana broni', 'kb.weapons': 'Broń 1–4', 'kb.pause': 'Pauza', 'kb.alt': 'zapasowy',
+    'stake.fee': 'Prowizja (10%)', 'set.vMaster': 'Głośność ogólna', 'set.vMasterD': 'Wszystkie dźwięki', 'set.vMenu': 'Dźwięki w menu', 'set.vMenuD': 'Kliknięcia, okna, losowanie mapy', 'set.vGame': 'Dźwięki w grze', 'set.vGameD': 'Strzały, trafienia, przeładowanie', 'set.preview': 'Odsłuchaj', 'set.secView': 'Widok', 'set.secKeys': 'Klawisze', 'set.fovD': 'Szerszy kąt = więcej widać, mniejsze obiekty', 'tx.fee': 'prowizja {a}', 'set.reserved': 'Ten klawisz jest zarezerwowany (bronie 1–4 i Esc)', 'kb.move': 'Ruch', 'kb.fight': 'Walka', 'kb.sys': 'Inne', 'kb.lmb': 'LPM', 'kb.rmb': 'PPM', 'kb.mmb': 'Kółko', 'kb.fire': 'Strzał', 'kb.aim': 'Celowanie', 'kb.wheel': 'Zmiana broni', 'kb.weapons': 'Broń 1–4', 'kb.pause': 'Pauza', 'kb.alt': 'zapasowy',
   },
   en: {
     'menu.settings': 'Settings', 'menu.wallet': 'Wallet', 'menu.login': 'Log in', 'menu.account': 'Account', 'menu.logout': 'Log out', 'menu.admin': 'Admin panel',
@@ -41,7 +41,7 @@ const DICT = {
     'tag.range': 'SOLO', 'tag.1v1': '1 VS 1', 'soon': 'SOON',
     'stake.label': 'Stake', 'stake.custom': 'Custom', 'stake.win': 'Potential win', 'stake.free': 'Practice – no stake', 'stake.range': 'Amount 1–1000 USDT', 'stake.invalid': 'Enter a stake between 1 and 1000 USDT',
     'play': 'PLAY', 'picker.title': 'Choose mode', 'done': 'Done', 'skins.title': 'Skins', 'close': 'Close',
-    'set.title': 'Settings', 'set.general': 'General', 'set.audio': 'Audio & video', 'set.controls': 'Controls', 'set.lang': 'Language', 'set.volume': 'Volume', 'set.fov': 'Field of view (FOV)',
+    'set.title': 'Settings', 'set.general': 'General', 'set.audio': 'Audio', 'set.controls': 'Controls', 'set.lang': 'Language', 'set.volume': 'Volume', 'set.fov': 'Field of view (FOV)',
     'set.bindHint': 'Click an action (or a key on the keyboard) and press a new key. Esc cancels.', 'set.press': 'Press a key…', 'set.reset': 'Restore defaults', 'set.mouse': 'Fire: left mouse button · Aim: right',
     'act.fwd': 'Forward', 'act.back': 'Back', 'act.left': 'Left', 'act.right': 'Right', 'act.sprint': 'Sprint', 'act.jump': 'Jump', 'act.crouch': 'Crouch / slide',
     'act.reload': 'Reload', 'act.inspect': 'Inspect weapon', 'act.prev': 'Previous weapon', 'act.view': 'Change view', 'act.mute': 'Mute sound',
@@ -58,7 +58,7 @@ const DICT = {
     'tx.deposit': 'Deposit (test)', 'tx.withdraw': 'Withdrawal (test)', 'tx.stake': '1v1 stake', 'tx.win': '1v1 win', 'tx.loss': '1v1 loss',
     'err.loginToPlay': 'Log in to play for a stake', 'err.funds': 'Not enough funds for this stake – top up your wallet', 'err.rematchFunds': 'Not enough funds for another match',
     'draw.title': 'Map draw', 'draw.map': 'Map',
-    'stake.fee': 'House fee (10%)', 'tx.fee': 'fee {a}', 'set.reserved': 'This key is reserved (weapons 1–4 and Esc)', 'kb.move': 'Movement', 'kb.fight': 'Combat', 'kb.sys': 'Other', 'kb.lmb': 'LMB', 'kb.rmb': 'RMB', 'kb.mmb': 'Wheel', 'kb.fire': 'Fire', 'kb.aim': 'Aim', 'kb.wheel': 'Switch weapon', 'kb.weapons': 'Weapon 1–4', 'kb.pause': 'Pause', 'kb.alt': 'alternate',
+    'stake.fee': 'House fee (10%)', 'set.vMaster': 'Master volume', 'set.vMasterD': 'All sounds', 'set.vMenu': 'Menu sounds', 'set.vMenuD': 'Clicks, windows, map draw', 'set.vGame': 'Game sounds', 'set.vGameD': 'Shots, hits, reloads', 'set.preview': 'Preview', 'set.secView': 'View', 'set.secKeys': 'Keys', 'set.fovD': 'Wider angle = see more, smaller objects', 'tx.fee': 'fee {a}', 'set.reserved': 'This key is reserved (weapons 1–4 and Esc)', 'kb.move': 'Movement', 'kb.fight': 'Combat', 'kb.sys': 'Other', 'kb.lmb': 'LMB', 'kb.rmb': 'RMB', 'kb.mmb': 'Wheel', 'kb.fire': 'Fire', 'kb.aim': 'Aim', 'kb.wheel': 'Switch weapon', 'kb.weapons': 'Weapon 1–4', 'kb.pause': 'Pause', 'kb.alt': 'alternate',
   },
   ru: {
     'menu.settings': 'Настройки', 'menu.wallet': 'Кошелёк', 'menu.login': 'Войти', 'menu.account': 'Аккаунт', 'menu.logout': 'Выйти', 'menu.admin': 'Админ-панель',
@@ -69,7 +69,7 @@ const DICT = {
     'tag.range': 'СОЛО', 'tag.1v1': '1 НА 1', 'soon': 'СКОРО',
     'stake.label': 'Ставка', 'stake.custom': 'Своя', 'stake.win': 'Возможный выигрыш', 'stake.free': 'Тренировка – без ставки', 'stake.range': 'Сумма 1–1000 USDT', 'stake.invalid': 'Введите ставку от 1 до 1000 USDT',
     'play': 'ИГРАТЬ', 'picker.title': 'Выбери режим', 'done': 'Готово', 'skins.title': 'Скины', 'close': 'Закрыть',
-    'set.title': 'Настройки', 'set.general': 'Общие', 'set.audio': 'Звук и графика', 'set.controls': 'Управление', 'set.lang': 'Язык', 'set.volume': 'Громкость', 'set.fov': 'Поле зрения (FOV)',
+    'set.title': 'Настройки', 'set.general': 'Общие', 'set.audio': 'Звук', 'set.controls': 'Управление', 'set.lang': 'Язык', 'set.volume': 'Громкость', 'set.fov': 'Поле зрения (FOV)',
     'set.bindHint': 'Нажми на действие (или клавишу на схеме) и выбери новую клавишу. Esc – отмена.', 'set.press': 'Нажми клавишу…', 'set.reset': 'Сбросить', 'set.mouse': 'Выстрел: левая кнопка мыши · Прицел: правая',
     'act.fwd': 'Вперёд', 'act.back': 'Назад', 'act.left': 'Влево', 'act.right': 'Вправо', 'act.sprint': 'Бег', 'act.jump': 'Прыжок', 'act.crouch': 'Присед / подкат',
     'act.reload': 'Перезарядка', 'act.inspect': 'Осмотр оружия', 'act.prev': 'Предыдущее оружие', 'act.view': 'Смена вида', 'act.mute': 'Выключить звук',
@@ -86,7 +86,7 @@ const DICT = {
     'tx.deposit': 'Пополнение (тест)', 'tx.withdraw': 'Вывод (тест)', 'tx.stake': 'Ставка 1v1', 'tx.win': 'Победа 1v1', 'tx.loss': 'Поражение 1v1',
     'err.loginToPlay': 'Войди, чтобы играть на ставку', 'err.funds': 'Недостаточно средств для ставки – пополни кошелёк', 'err.rematchFunds': 'Недостаточно средств для следующего матча',
     'draw.title': 'Выбор карты', 'draw.map': 'Карта',
-    'stake.fee': 'Комиссия (10%)', 'tx.fee': 'комиссия {a}', 'set.reserved': 'Эта клавиша зарезервирована (оружие 1–4 и Esc)', 'kb.move': 'Движение', 'kb.fight': 'Бой', 'kb.sys': 'Прочее', 'kb.lmb': 'ЛКМ', 'kb.rmb': 'ПКМ', 'kb.mmb': 'Колесо', 'kb.fire': 'Выстрел', 'kb.aim': 'Прицел', 'kb.wheel': 'Смена оружия', 'kb.weapons': 'Оружие 1–4', 'kb.pause': 'Пауза', 'kb.alt': 'запасная',
+    'stake.fee': 'Комиссия (10%)', 'set.vMaster': 'Общая громкость', 'set.vMasterD': 'Все звуки', 'set.vMenu': 'Звуки меню', 'set.vMenuD': 'Клики, окна, выбор карты', 'set.vGame': 'Звуки в игре', 'set.vGameD': 'Выстрелы, попадания, перезарядка', 'set.preview': 'Прослушать', 'set.secView': 'Обзор', 'set.secKeys': 'Клавиши', 'set.fovD': 'Шире угол – больше видно, объекты меньше', 'tx.fee': 'комиссия {a}', 'set.reserved': 'Эта клавиша зарезервирована (оружие 1–4 и Esc)', 'kb.move': 'Движение', 'kb.fight': 'Бой', 'kb.sys': 'Прочее', 'kb.lmb': 'ЛКМ', 'kb.rmb': 'ПКМ', 'kb.mmb': 'Колесо', 'kb.fire': 'Выстрел', 'kb.aim': 'Прицел', 'kb.wheel': 'Смена оружия', 'kb.weapons': 'Оружие 1–4', 'kb.pause': 'Пауза', 'kb.alt': 'запасная',
   },
   es: {
     'menu.settings': 'Ajustes', 'menu.wallet': 'Cartera', 'menu.login': 'Iniciar sesión', 'menu.account': 'Cuenta', 'menu.logout': 'Cerrar sesión', 'menu.admin': 'Panel de admin',
@@ -97,7 +97,7 @@ const DICT = {
     'tag.range': 'SOLO', 'tag.1v1': '1 VS 1', 'soon': 'PRONTO',
     'stake.label': 'Apuesta', 'stake.custom': 'Otra', 'stake.win': 'Ganancia posible', 'stake.free': 'Práctica – sin apuesta', 'stake.range': 'Importe 1–1000 USDT', 'stake.invalid': 'Introduce una apuesta entre 1 y 1000 USDT',
     'play': 'JUGAR', 'picker.title': 'Elige modo', 'done': 'Listo', 'skins.title': 'Skins', 'close': 'Cerrar',
-    'set.title': 'Ajustes', 'set.general': 'General', 'set.audio': 'Sonido e imagen', 'set.controls': 'Controles', 'set.lang': 'Idioma', 'set.volume': 'Volumen', 'set.fov': 'Campo de visión (FOV)',
+    'set.title': 'Ajustes', 'set.general': 'General', 'set.audio': 'Sonido', 'set.controls': 'Controles', 'set.lang': 'Idioma', 'set.volume': 'Volumen', 'set.fov': 'Campo de visión (FOV)',
     'set.bindHint': 'Haz clic en una acción (o en una tecla del teclado) y pulsa una tecla nueva. Esc cancela.', 'set.press': 'Pulsa una tecla…', 'set.reset': 'Restablecer', 'set.mouse': 'Disparo: botón izquierdo · Apuntar: derecho',
     'act.fwd': 'Adelante', 'act.back': 'Atrás', 'act.left': 'Izquierda', 'act.right': 'Derecha', 'act.sprint': 'Correr', 'act.jump': 'Saltar', 'act.crouch': 'Agacharse / deslizar',
     'act.reload': 'Recargar', 'act.inspect': 'Inspeccionar arma', 'act.prev': 'Arma anterior', 'act.view': 'Cambiar vista', 'act.mute': 'Silenciar',
@@ -114,7 +114,7 @@ const DICT = {
     'tx.deposit': 'Depósito (prueba)', 'tx.withdraw': 'Retiro (prueba)', 'tx.stake': 'Apuesta 1v1', 'tx.win': 'Victoria 1v1', 'tx.loss': 'Derrota 1v1',
     'err.loginToPlay': 'Inicia sesión para jugar con apuesta', 'err.funds': 'Fondos insuficientes para la apuesta – recarga la cartera', 'err.rematchFunds': 'Fondos insuficientes para otra partida',
     'draw.title': 'Sorteo del mapa', 'draw.map': 'Mapa',
-    'stake.fee': 'Comisión (10%)', 'tx.fee': 'comisión {a}', 'set.reserved': 'Esta tecla está reservada (armas 1–4 y Esc)', 'kb.move': 'Movimiento', 'kb.fight': 'Combate', 'kb.sys': 'Otros', 'kb.lmb': 'Clic izq.', 'kb.rmb': 'Clic der.', 'kb.mmb': 'Rueda', 'kb.fire': 'Disparo', 'kb.aim': 'Apuntar', 'kb.wheel': 'Cambiar arma', 'kb.weapons': 'Arma 1–4', 'kb.pause': 'Pausa', 'kb.alt': 'alternativa',
+    'stake.fee': 'Comisión (10%)', 'set.vMaster': 'Volumen general', 'set.vMasterD': 'Todos los sonidos', 'set.vMenu': 'Sonidos del menú', 'set.vMenuD': 'Clics, ventanas, sorteo del mapa', 'set.vGame': 'Sonidos del juego', 'set.vGameD': 'Disparos, impactos, recargas', 'set.preview': 'Escuchar', 'set.secView': 'Vista', 'set.secKeys': 'Teclas', 'set.fovD': 'Más ángulo = ves más, objetos más pequeños', 'tx.fee': 'comisión {a}', 'set.reserved': 'Esta tecla está reservada (armas 1–4 y Esc)', 'kb.move': 'Movimiento', 'kb.fight': 'Combate', 'kb.sys': 'Otros', 'kb.lmb': 'Clic izq.', 'kb.rmb': 'Clic der.', 'kb.mmb': 'Rueda', 'kb.fire': 'Disparo', 'kb.aim': 'Apuntar', 'kb.wheel': 'Cambiar arma', 'kb.weapons': 'Arma 1–4', 'kb.pause': 'Pausa', 'kb.alt': 'alternativa',
   },
 };
 const SKIN_NAMES = {
@@ -123,6 +123,12 @@ const SKIN_NAMES = {
   es: { klasyk: 'Clásica', kamuflaz: 'Camuflaje', pustynia: 'Desierto', arbuz: 'Sandía', truskawka: 'Fresa', jagoda: 'Arándano', mieta: 'Menta', wegiel: 'Carbón', lawa: 'Lava', zlota: 'Dorada', teczowa: 'Arcoíris', arktyka: 'Ártico' },
 };
 export const LANGS = [{ id: 'pl', name: 'Polski' }, { id: 'en', name: 'English' }, { id: 'ru', name: 'Русский' }, { id: 'es', name: 'Español' }];
+const FLAGS = {
+  pl: '<svg viewBox="0 0 30 20"><rect width="30" height="10" fill="#fff"/><rect y="10" width="30" height="10" fill="#dc143c"/></svg>',
+  en: '<svg viewBox="0 0 60 30" preserveAspectRatio="xMidYMid slice"><clipPath id="lbuk1"><path d="M0 0v30h60V0z"/></clipPath><clipPath id="lbuk2"><path d="M30 15h30v15zv15H0zH0V0zV0h30z"/></clipPath><g clip-path="url(#lbuk1)"><path d="M0 0v30h60V0z" fill="#012169"/><path d="M0 0l60 30m0-30L0 30" stroke="#fff" stroke-width="6"/><path d="M0 0l60 30m0-30L0 30" clip-path="url(#lbuk2)" stroke="#c8102e" stroke-width="4"/><path d="M30 0v30M0 15h60" stroke="#fff" stroke-width="10"/><path d="M30 0v30M0 15h60" stroke="#c8102e" stroke-width="6"/></g></svg>',
+  ru: '<svg viewBox="0 0 30 20"><rect width="30" height="7" fill="#fff"/><rect y="6.67" width="30" height="6.67" fill="#0039a6"/><rect y="13.33" width="30" height="6.67" fill="#d52b1e"/></svg>',
+  es: '<svg viewBox="0 0 30 20"><rect width="30" height="20" fill="#aa151b"/><rect y="5" width="30" height="10" fill="#f1bf00"/><rect x="7" y="7.2" width="3.4" height="5.6" rx=".9" fill="#aa151b" opacity=".85"/></svg>',
+};
 let LANG = 'pl';
 export function t(key, vars) { let s = (DICT[LANG] && DICT[LANG][key]) ?? DICT.pl[key] ?? key; if (vars) for (const k in vars) s = s.replace('{' + k + '}', vars[k]); return s; }
 export function skinName(sk) { return (SKIN_NAMES[LANG] && SKIN_NAMES[LANG][sk.id]) || sk.name; }
@@ -171,17 +177,18 @@ const MAP_ART = {
     <path d="M0 92 Q40 78 90 88 T200 84 V124 H0Z" fill="#e7c48a"/><path d="M0 104 Q60 92 120 102 T200 98 V124 H0Z" fill="#d9ad6c"/>
     <g fill="#f6f0e4" stroke="#c9b28a" stroke-width="1"><rect x="40" y="58" width="34" height="34"/><rect x="78" y="66" width="26" height="26"/><rect x="108" y="54" width="30" height="38"/></g>
     <path d="M118 54 a10 9 0 0 1 20 0z" fill="#4f8fc9"/><g fill="#7a5a3c"><rect x="50" y="72" width="7" height="12"/><rect x="118" y="70" width="8" height="10"/></g>
-    <path d="M160 92 q2-26 -4-40" stroke="#7a4f2a" stroke-width="4" fill="none"/><g fill="#3e8a3a"><path d="M156 52 q-18-6-26 6 q14-4 26-6z"/><path d="M156 52 q16-10 28-2 q-14 0-28 2z"/><path d="M156 52 q-4-16 8-22 q-6 12-8 22z"/></g>
-    <text x="12" y="112" font-family="Rajdhani,Oswald,Arial" font-weight="700" font-size="20" fill="#5a3b1c" letter-spacing="2">OAZA</text></svg>`,
+    <path d="M160 92 q2-26 -4-40" stroke="#7a4f2a" stroke-width="4" fill="none"/><g fill="#3e8a3a"><path d="M156 52 q-18-6-26 6 q14-4 26-6z"/><path d="M156 52 q16-10 28-2 q-14 0-28 2z"/><path d="M156 52 q-4-16 8-22 q-6 12-8 22z"/></g></svg>`,
   Magazyn: n => `<svg viewBox="0 0 200 124" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="mg${n}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a2f3a"/><stop offset="1" stop-color="#4a4f5a"/></linearGradient></defs>
     <rect width="200" height="124" fill="url(#mg${n})"/><g stroke="#5c6472" stroke-width="2">${Array.from({ length: 7 }, (_, i) => `<line x1="${i * 34}" y1="0" x2="${i * 34 + 17}" y2="22"/><line x1="${i * 34 + 34}" y1="0" x2="${i * 34 + 17}" y2="22"/>`).join('')}<line x1="0" y1="22" x2="200" y2="22"/></g>
     <g fill="#bfe6ff" opacity=".7"><rect x="30" y="2" width="30" height="8"/><rect x="120" y="2" width="30" height="8"/></g>
     <rect x="0" y="96" width="200" height="28" fill="#3a3f48"/>
     <g><rect x="12" y="58" width="70" height="38" fill="#b0362c"/><rect x="88" y="66" width="56" height="30" fill="#2f5aa8"/><rect x="100" y="38" width="56" height="28" fill="#d9a521"/><rect x="150" y="62" width="44" height="34" fill="#3d7a46"/></g>
-    <g stroke="rgba(0,0,0,.28)" stroke-width="2">${[18, 28, 38, 48, 58, 68].map(x => `<line x1="${x}" y1="60" x2="${x}" y2="94"/>`).join('')}${[94, 104, 114, 124, 134].map(x => `<line x1="${x}" y1="68" x2="${x}" y2="94"/>`).join('')}</g>
-    <text x="12" y="116" font-family="Rajdhani,Oswald,Arial" font-weight="700" font-size="20" fill="#e8ecf2" letter-spacing="2">MAGAZYN</text></svg>`,
+    <g stroke="rgba(0,0,0,.28)" stroke-width="2">${[18, 28, 38, 48, 58, 68].map(x => `<line x1="${x}" y1="60" x2="${x}" y2="94"/>`).join('')}${[94, 104, 114, 124, 134].map(x => `<line x1="${x}" y1="68" x2="${x}" y2="94"/>`).join('')}</g></svg>`,
 };
 const DUEL_MAPS = ['Oaza', 'Magazyn'];
+// zrzuty map z lotu ptaka (wyrenderowane z gry); SVG pod spodem zostaje jako zapas, gdyby obrazek się nie wczytał
+const MAP_IMG = { Oaza: new URL('./maps/oaza.jpg', import.meta.url).href, Magazyn: new URL('./maps/magazyn.jpg', import.meta.url).href };
+Object.values(MAP_IMG).forEach(src => { const im = new Image(); im.src = src; });
 export const HOUSE_FEE = 0.10;                          // prowizja od puli (2 × stawka)
 const r2 = v => Math.round(v * 100) / 100;
 export const payout = s => r2(s * 2 * (1 - HOUSE_FEE)), feeOf = s => r2(s * 2 * HOUSE_FEE);
@@ -190,18 +197,64 @@ export const payout = s => r2(s * 2 * (1 - HOUSE_FEE)), feeOf = s => r2(s * 2 * 
 export function initLobbyUI(ctx) {
   const { ui, $ } = ctx;
   const toastEl = $('lb-toast'); let toastT = 0;
-  const toast = (msg, kind = '') => { toastEl.textContent = msg; toastEl.className = 'lb-toast show ' + kind; clearTimeout(toastT); toastT = setTimeout(() => toastEl.className = 'lb-toast', 3200); };
+  const toast = (msg, kind = '') => { if (kind === 'err') SFX.err(); else if (kind === 'ok') SFX.ok(); toastEl.textContent = msg; toastEl.className = 'lb-toast show ' + kind; clearTimeout(toastT); toastT = setTimeout(() => toastEl.className = 'lb-toast', 3200); };
 
   // ---- ustawienia ----
   const defBinds = Object.fromEntries(ACTIONS);
-  let S = { lang: 'pl', volume: 80, fov: 78, binds: { ...defBinds } };
+  let S = { lang: 'pl', volume: 80, vMenu: 70, vGame: 100, fov: 78, binds: { ...defBinds } };
   try { const v = JSON.parse(ls.get('fasolka-settings') || 'null'); if (v) S = { ...S, ...v, binds: { ...defBinds, ...(v.binds || {}) } }; } catch {}
   if (!DICT[S.lang]) S.lang = 'pl';
   LANG = S.lang;
   let pushT = 0;
   const pushSettings = () => { ls.set('fasolka-settings', JSON.stringify(S)); clearTimeout(pushT);
-    pushT = setTimeout(() => dispatchEvent(new CustomEvent('fasolka:settings', { detail: { volume: S.volume / 100, fov: S.fov } })), 30); };
-  setTimeout(() => dispatchEvent(new CustomEvent('fasolka:settings', { detail: { volume: S.volume / 100, fov: S.fov } })), 0);
+    pushT = setTimeout(sendSettings, 30); applyUiVol(); };
+  // gra dostaje głośność = ogólna × dźwięki w grze; dźwięki menu gra lobby (ogólna × menu)
+  const sendSettings = () => dispatchEvent(new CustomEvent('fasolka:settings', { detail: { volume: (S.volume / 100) * (S.vGame / 100), fov: S.fov } }));
+  setTimeout(sendSettings, 0);
+
+  // ---- dźwięki menu (WebAudio, bez plików) ----
+  let AC = null, uiGain = null, gestured = false;
+  const uiVol = () => (S.volume / 100) * (S.vMenu / 100);
+  function applyUiVol() { if (uiGain) uiGain.gain.setTargetAtTime(uiVol(), AC.currentTime, .01); }
+  const audio = () => {
+    if (!gestured) return null;
+    if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); uiGain = AC.createGain(); uiGain.gain.value = uiVol(); uiGain.connect(AC.destination); } catch { return null; } }
+    if (AC.state === 'suspended') AC.resume().catch(() => {});
+    return AC;
+  };
+  addEventListener('pointerdown', () => { gestured = true; }, true); addEventListener('keydown', () => { gestured = true; }, true);
+  function tone({ f = 880, f2 = 0, type = 'sine', d = .06, g = .18, at = 0, out = null }) {
+    const ac = audio(); if (!ac) return; if (!out && uiVol() <= 0) return;
+    const t0 = ac.currentTime + at, o = ac.createOscillator(), v = ac.createGain();
+    o.type = type; o.frequency.setValueAtTime(f, t0); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t0 + d);
+    v.gain.setValueAtTime(0, t0); v.gain.linearRampToValueAtTime(g, t0 + .004); v.gain.exponentialRampToValueAtTime(.0001, t0 + d);
+    o.connect(v).connect(out || uiGain); o.start(t0); o.stop(t0 + d + .03);
+  }
+  function noiseHit(vol) {                            // podgląd „dźwięku w grze”: krótki wystrzał
+    const ac = audio(); if (!ac || vol <= 0) return;
+    const t0 = ac.currentTime, len = Math.floor(ac.sampleRate * .3), buf = ac.createBuffer(1, len, ac.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3);
+    const src = ac.createBufferSource(), lp = ac.createBiquadFilter(), g = ac.createGain();
+    src.buffer = buf; lp.type = 'lowpass'; lp.frequency.setValueAtTime(5000, t0); lp.frequency.exponentialRampToValueAtTime(400, t0 + .25);
+    g.gain.setValueAtTime(.9 * vol, t0); g.gain.exponentialRampToValueAtTime(.001, t0 + .28);
+    src.connect(lp).connect(g).connect(ac.destination); src.start(t0);
+    const o = ac.createOscillator(), og = ac.createGain(); o.frequency.setValueAtTime(140, t0); o.frequency.exponentialRampToValueAtTime(40, t0 + .15);
+    og.gain.setValueAtTime(.8 * vol, t0); og.gain.exponentialRampToValueAtTime(.001, t0 + .18); o.connect(og).connect(ac.destination); o.start(t0); o.stop(t0 + .2);
+  }
+  const SFX = {
+    hover: () => tone({ f: 1500, d: .025, g: .035, type: 'triangle' }),
+    click: () => { tone({ f: 640, f2: 430, d: .06, g: .12, type: 'triangle' }); tone({ f: 2400, d: .015, g: .03, type: 'square' }); },
+    open: () => { tone({ f: 330, f2: 660, d: .13, g: .07 }); tone({ f: 990, d: .08, g: .03, at: .05, type: 'triangle' }); },
+    close: () => tone({ f: 620, f2: 300, d: .11, g: .06 }),
+    tick: () => tone({ f: 2100, f2: 1600, d: .022, g: .06, type: 'square' }),
+    reveal: () => [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone({ f, d: .5, g: .09, type: 'triangle', at: i * .075 })),
+    ok: () => { tone({ f: 988, d: .09, g: .09, type: 'square' }); tone({ f: 1319, d: .22, g: .08, type: 'square', at: .07 }); },
+    err: () => { tone({ f: 200, f2: 150, d: .16, g: .1, type: 'sawtooth' }); },
+    play: () => { tone({ f: 180, f2: 720, d: .3, g: .1, type: 'sawtooth' }); [392, 523.25, 659.25].forEach((f, i) => tone({ f, d: .4, g: .07, type: 'triangle', at: .12 + i * .04 })); },
+  };
+  const HOVER_SEL = '.lb-stake button,.lb-menu button,.lb-tile:not(.soon),.lb-play,.lb-mode,.lb-chip,.lb-burger,.lb-skin,.lb-tabs button,.lb-seg,.lb-bind,.lb-quick button';
+  ui.addEventListener('pointerover', e => { const el = e.target.closest(HOVER_SEL); if (el && !(e.relatedTarget && el.contains(e.relatedTarget))) SFX.hover(); });
+  ui.addEventListener('pointerdown', e => { gestured = true; const b = e.target.closest('button,.lb-key'); if (b && b.id !== 'lb-play' && !b.closest('.lb-vrow')) SFX.click(); });
 
   // przemapowanie klawiszy: fizyczny klawisz -> klawisz, którego oczekuje gra
   let remap = {}, swallow = new Set(), rebinding = null;
@@ -227,6 +280,7 @@ export function initLobbyUI(ctx) {
     document.documentElement.lang = LANG;
     ui.querySelectorAll('[data-i18n]').forEach(el => el.textContent = t(el.dataset.i18n));
     ui.querySelectorAll('[data-i18n-ph]').forEach(el => el.placeholder = t(el.dataset.i18nPh));
+    ui.querySelectorAll('[data-i18n-title]').forEach(el => { el.title = t(el.dataset.i18nTitle); el.setAttribute('aria-label', el.title); });
     renderTop(); renderStake(); renderSettings(); renderAuth(); renderWallet(); ctx.refresh();
   };
 
@@ -240,8 +294,8 @@ export function initLobbyUI(ctx) {
 
   // ---- okna dialogowe ----
   const modals = ['lb-set', 'lb-auth', 'lb-wallet'].map($);
-  const openModal = id => { modals.forEach(m => m.hidden = m.id !== id); };
-  const closeAll = () => { modals.forEach(m => m.hidden = true); openMenu(false); Object.values(keyEls).forEach(k => k.classList.remove('down')); if (rebinding) { rebinding = null; renderSettings(); } };
+  const openModal = id => { modals.forEach(m => m.hidden = m.id !== id); SFX.open(); };
+  const closeAll = () => { if (modals.some(m => !m.hidden)) SFX.close(); modals.forEach(m => m.hidden = true); openMenu(false); Object.values(keyEls).forEach(k => k.classList.remove('down')); if (rebinding) { rebinding = null; renderSettings(); } };
   const anyOpen = () => modals.some(m => !m.hidden) || !menu.hidden;
   modals.forEach(m => { m.addEventListener('pointerdown', e => { if (e.target === m) closeAll(); }); m.querySelectorAll('.lb-x').forEach(b => b.addEventListener('click', closeAll)); });
   ui.querySelectorAll('.lb-tabs').forEach(tb => tb.addEventListener('click', e => { const b = e.target.closest('button[data-tab]'); if (!b) return;
@@ -251,11 +305,24 @@ export function initLobbyUI(ctx) {
     box.querySelectorAll('[data-pane]').forEach(p => p.hidden = p.dataset.pane !== tab); };
 
   // ---- ustawienia: renderowanie ----
-  const langBox = $('lb-langs'), volR = $('lb-vol'), fovR = $('lb-fov'), bindBox = $('lb-binds');
-  LANGS.forEach(l => { const b = document.createElement('button'); b.type = 'button'; b.className = 'lb-seg'; b.dataset.lang = l.id; b.innerHTML = `<b>${l.id.toUpperCase()}</b><span></span>`;
+  const langBox = $('lb-langs'), fovR = $('lb-fov'), bindBox = $('lb-binds');
+  LANGS.forEach(l => { const b = document.createElement('button'); b.type = 'button'; b.className = 'lb-seg'; b.dataset.lang = l.id; b.innerHTML = `<i class="lb-flag">${FLAGS[l.id]}</i><span></span><b>${l.id.toUpperCase()}</b>`;
     b.querySelector('span').textContent = l.name; b.addEventListener('click', () => { S.lang = l.id; LANG = l.id; pushSettings(); applyI18n(); }); langBox.appendChild(b); });
-  volR.addEventListener('input', () => { S.volume = +volR.value; $('lb-vol-v').textContent = S.volume + '%'; pushSettings(); });
-  fovR.addEventListener('input', () => { S.fov = +fovR.value; $('lb-fov-v').textContent = S.fov + '°'; pushSettings(); });
+  const fillRange = r => r.style.setProperty('--p', ((r.value - r.min) / (r.max - r.min) * 100) + '%');
+  const preview = k => k === 'vGame' ? noiseHit((S.volume / 100) * (S.vGame / 100)) : k === 'vMenu' ? SFX.reveal() : (tone({ f: 660, d: .12, g: .5, type: 'triangle', out: masterOut() }));
+  const masterOut = () => { const ac = audio(); if (!ac) return null; const g = ac.createGain(); g.gain.value = S.volume / 100 * .3; g.connect(ac.destination); return g; };
+  ui.querySelectorAll('.lb-vrow').forEach(row => { const k = row.dataset.k, r = row.querySelector('input'), last = { v: S[k] || 80 };
+    r.addEventListener('input', () => { S[k] = +r.value; if (S[k]) last.v = S[k]; renderVol(); pushSettings(); });
+    r.addEventListener('change', () => preview(k));
+    row.querySelector('.lb-vic').addEventListener('click', () => { S[k] = S[k] ? 0 : last.v; renderVol(); pushSettings(); if (S[k]) preview(k); });
+    row.querySelector('.lb-vplay').addEventListener('click', () => preview(k)); });
+  function renderVol() { ui.querySelectorAll('.lb-vrow').forEach(row => { const k = row.dataset.k, r = row.querySelector('input'); r.value = S[k]; fillRange(r);
+    row.querySelector('.lb-vval').textContent = S[k] + '%'; row.classList.toggle('muted', !S[k]); }); }
+  const wedge = $('lb-fov-wedge');
+  function renderFov() { fovR.value = S.fov; fillRange(fovR); $('lb-fov-v').textContent = S.fov + '°';
+    const h = S.fov / 2 * Math.PI / 180, R = 52, x1 = 60 - R * Math.sin(h), x2 = 60 + R * Math.sin(h), y = 58 - R * Math.cos(h);
+    wedge.setAttribute('d', `M60 58L${x1.toFixed(1)} ${y.toFixed(1)}A${R} ${R} 0 0 1 ${x2.toFixed(1)} ${y.toFixed(1)}Z`); }
+  fovR.addEventListener('input', () => { S.fov = +fovR.value; renderFov(); pushSettings(); });
   $('lb-bind-reset').addEventListener('click', () => { S.binds = { ...defBinds }; buildRemap(); pushSettings(); renderSettings(); });
   const finishRebind = code => { const id = rebinding; rebinding = null;
     if (code !== 'Escape') {
@@ -314,7 +381,7 @@ export function initLobbyUI(ctx) {
 
   function renderSettings() {
     langBox.querySelectorAll('.lb-seg').forEach(b => b.classList.toggle('on', b.dataset.lang === S.lang));
-    volR.value = S.volume; fovR.value = S.fov; $('lb-vol-v').textContent = S.volume + '%'; $('lb-fov-v').textContent = S.fov + '°';
+    renderVol(); renderFov();
     bindBox.innerHTML = '';
     for (const [id, def] of ACTIONS) { const row = document.createElement('button'); row.type = 'button'; row.dataset.id = id;
       row.className = 'lb-bind c-' + CAT[id] + (rebinding === id ? ' wait' : '');
@@ -419,14 +486,21 @@ export function initLobbyUI(ctx) {
   function runDraw(stake, cb) {
     const N = 32, win = N - 4, pick = DUEL_MAPS[Math.floor(Math.random() * DUEL_MAPS.length)];
     const seq = Array.from({ length: N }, (_, i) => i === win ? pick : DUEL_MAPS[(i + Math.floor(Math.random() * 2)) % DUEL_MAPS.length]);
-    reel.innerHTML = seq.map((m, i) => `<div class="lb-mcard" data-i="${i}">${MAP_ART[m](i)}<span>${m.toUpperCase()}</span></div>`).join('');
+    reel.innerHTML = seq.map((m, i) => `<div class="lb-mcard" data-i="${i}">${MAP_ART[m](i)}<img src="${MAP_IMG[m]}" alt="" draggable="false" onerror="this.remove()"><span><i>1v1</i>${m.toUpperCase()}</span></div>`).join('');
     $('lb-draw-res').textContent = ''; draw.classList.remove('done'); draw.hidden = false;
     $('lb-draw-stake').innerHTML = `${t('stake.label')}: <b>${money(stake)} USDT</b> · ${t('stake.win')}: <b>${money(payout(stake))} USDT</b>`;
     reel.style.transition = 'none'; reel.style.transform = 'translateX(0)';
-    const cardW = 214, view = reel.parentElement.clientWidth, target = win * cardW - (view / 2 - 100) + (Math.random() * 120 - 60);
+    const c0 = reel.firstElementChild, cw = c0.offsetWidth, cardW = cw + (parseFloat(getComputedStyle(reel).columnGap) || 16), view = reel.parentElement.clientWidth;
+    const stop = win * cardW - (view / 2 - cw / 2), target = stop + (Math.random() - .5) * cw * .6;
     requestAnimationFrame(() => requestAnimationFrame(() => { reel.style.transition = 'transform 4.2s cubic-bezier(.08,.62,.1,1)'; reel.style.transform = `translateX(${-target}px)`; }));
-    setTimeout(() => { reel.style.transition = 'transform .35s ease'; reel.style.transform = `translateX(${-(win * cardW - (view / 2 - 100))}px)`; }, 4300);
-    setTimeout(() => { reel.querySelector(`[data-i="${win}"]`).classList.add('win'); draw.classList.add('done'); $('lb-draw-res').textContent = t('draw.map') + ': ' + pick.toUpperCase(); }, 4700);
+    let lastIdx = -1; const t0 = performance.now();
+    (function tickLoop() {                               // tyknięcie przy każdej karcie mijającej wskaźnik
+      const m = getComputedStyle(reel).transform, x = m && m !== 'none' ? new DOMMatrixReadOnly(m).m41 : 0, idx = Math.floor((-x + view / 2) / cardW);
+      if (idx !== lastIdx) { if (lastIdx >= 0) SFX.tick(); lastIdx = idx; }
+      if (performance.now() - t0 < 4600 && !draw.hidden) requestAnimationFrame(tickLoop);
+    })();
+    setTimeout(() => { reel.style.transition = 'transform .35s ease'; reel.style.transform = `translateX(${-stop}px)`; }, 4300);
+    setTimeout(() => { SFX.reveal(); reel.querySelector(`[data-i="${win}"]`).classList.add('win'); draw.classList.add('done'); $('lb-draw-res').textContent = t('draw.map') + ': ' + pick.toUpperCase(); }, 4700);
     setTimeout(() => { draw.hidden = true; cb(pick); }, 6100);
   }
 
@@ -435,14 +509,14 @@ export function initLobbyUI(ctx) {
   async function requestPlay() {
     if (busy) return;
     const m = ctx.getMode();
-    if (m !== '1v1') { lastStake = 0; ctx.play(m, {}); return; }
+    if (m !== '1v1') { lastStake = 0; SFX.play(); ctx.play(m, {}); return; }
     const s = getStake();
     if (!(s >= 1 && s <= 1000)) return toast(t('stake.invalid'), 'err');
     if (!acct) { toast(t('err.loginToPlay')); openModal('lb-auth'); showTab('lb-auth', 'login'); return; }
     if (acct.balance < s) { toast(t('err.funds'), 'err'); openWallet('deposit'); return; }
     busy = true;
     try { await addTx(-s, 'stake'); activeStake = lastStake = s; } catch { busy = false; return toast(t('auth.errDb'), 'err'); }
-    runDraw(s, map => { busy = false; ctx.play(m, { map, stake: s }); });
+    SFX.play(); runDraw(s, map => { busy = false; ctx.play(m, { map, stake: s }); });
   }
   addEventListener('fasolka:match', async e => {
     if (!activeStake || !acct) return; const s = activeStake; activeStake = 0;

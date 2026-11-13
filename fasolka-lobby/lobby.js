@@ -154,7 +154,42 @@ const CSS = `
 #lb-ui .lb-field i{display:block;font:500 11.5px/1.3 Inter,sans-serif;font-style:normal;color:var(--mut);margin-top:6px}
 #lb-ui .lb-row{display:flex;justify-content:space-between;align-items:baseline}
 #lb-ui .lb-row b{font:700 17px/1 Rajdhani,Oswald,sans-serif;color:var(--acc)}
-#lb-ui input[type=range]{width:100%;height:24px;margin:4px 0 0;accent-color:var(--acc);cursor:pointer}
+#lb-ui input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:22px;margin:0;background:none;cursor:pointer;--p:50%}
+#lb-ui input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:6px;background:linear-gradient(90deg,color-mix(in srgb,var(--c,var(--acc)) 55%,#000) 0,var(--c,var(--acc)) var(--p),rgba(255,255,255,.1) var(--p))}
+#lb-ui input[type=range]::-moz-range-track{height:6px;border-radius:6px;background:rgba(255,255,255,.1)}
+#lb-ui input[type=range]::-moz-range-progress{height:6px;border-radius:6px;background:var(--c,var(--acc))}
+#lb-ui input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;margin-top:-6px;border-radius:50%;background:#fff;border:3px solid var(--c,var(--acc));
+  box-shadow:0 0 0 4px color-mix(in srgb,var(--c,var(--acc)) 18%,transparent),0 2px 6px rgba(0,0,0,.5);transition:box-shadow .12s}
+#lb-ui input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:#fff;border:3px solid var(--c,var(--acc))}
+#lb-ui input[type=range]:hover::-webkit-slider-thumb,#lb-ui input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 7px color-mix(in srgb,var(--c,var(--acc)) 25%,transparent),0 2px 6px rgba(0,0,0,.5)}
+#lb-ui input[type=range]:focus-visible{outline:none}
+#lb-ui .lb-vrow{display:grid;grid-template-columns:48px minmax(0,1fr) auto;align-items:center;gap:10px 14px;padding:14px 16px;margin-bottom:10px;border-radius:16px;
+  background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.015));border:1px solid var(--line)}
+#lb-ui .lb-vrow:first-child{border-color:color-mix(in srgb,var(--c) 30%,transparent)}
+#lb-ui .lb-vic{grid-row:span 2;width:48px;height:48px;border-radius:14px;border:1px solid color-mix(in srgb,var(--c) 35%,transparent);cursor:pointer;display:grid;place-items:center;
+  background:color-mix(in srgb,var(--c) 12%,transparent);color:var(--c);box-shadow:0 0 18px color-mix(in srgb,var(--c) 14%,transparent);transition:background .12s}
+#lb-ui .lb-vic:hover{background:color-mix(in srgb,var(--c) 22%,transparent)}
+#lb-ui .lb-vic svg{width:22px;height:22px;grid-area:1/1}
+#lb-ui .lb-vic svg:last-child,#lb-ui .lb-vrow.muted .lb-vic svg:first-child{display:none}
+#lb-ui .lb-vrow.muted .lb-vic svg:last-child{display:block}
+#lb-ui .lb-vrow.muted .lb-vic{color:var(--mut);background:rgba(255,255,255,.04);border-color:var(--line2);box-shadow:none}
+#lb-ui .lb-vtt b{display:block;font:600 14.5px/1.2 Inter,sans-serif}
+#lb-ui .lb-vtt small{display:block;font:500 12px/1.3 Inter,sans-serif;color:var(--mut);margin-top:2px}
+#lb-ui .lb-vval{font:700 20px/1 Rajdhani,Oswald,sans-serif;color:var(--c);min-width:54px;text-align:right}
+#lb-ui .lb-vrow.muted .lb-vval{color:var(--mut)}
+#lb-ui .lb-vsl{grid-column:2/4;display:flex;align-items:center;gap:12px}
+#lb-ui .lb-vplay{width:32px;height:32px;flex:none;border-radius:50%;border:1px solid var(--line2);background:rgba(255,255,255,.05);color:#fff;cursor:pointer;display:grid;place-items:center}
+#lb-ui .lb-vplay:hover{border-color:var(--c);color:var(--c)}
+#lb-ui .lb-vplay svg{width:13px;height:13px;margin-left:2px}
+#lb-ui .lb-sec{margin:0 0 10px;font:700 11px/1 Inter,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}
+#lb-ui .lb-sec:not(:first-child){margin-top:18px}
+#lb-ui .lb-sec+.lb-note{margin:-2px 0 10px}
+#lb-ui .lb-fovcard{display:flex;align-items:center;gap:18px;padding:12px 16px;border-radius:16px;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.015));border:1px solid var(--line)}
+#lb-ui .lb-fovsvg{width:120px;height:64px;flex:none}
+#lb-ui .lb-fovmain{flex:1;min-width:0}
+#lb-ui .lb-fovmain small{display:block;font:500 12px/1.3 Inter,sans-serif;color:var(--mut);margin:3px 0 6px}
+#lb-ui .lb-flag{width:30px;height:20px;flex:none;display:block;border-radius:4px;overflow:hidden;box-shadow:0 0 0 1px rgba(255,255,255,.2),0 2px 6px rgba(0,0,0,.45)}
+#lb-ui .lb-flag svg{display:block;width:100%;height:100%}
 #lb-ui .lb-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:46px;border-radius:11px;border:1px solid var(--line2);
   background:rgba(255,255,255,.05);cursor:pointer;font:700 14px/1 Inter,sans-serif;letter-spacing:.02em;transition:filter .12s,background .12s,transform .12s}
 #lb-ui .lb-btn:hover{background:rgba(255,255,255,.1)}
@@ -170,7 +205,7 @@ const CSS = `
 #lb-ui .lb-seg{display:flex;align-items:center;gap:12px;height:54px;padding:0 14px;border-radius:12px;border:1px solid var(--line2);background:rgba(255,255,255,.04);cursor:pointer;text-align:left}
 #lb-ui .lb-seg:hover{background:rgba(255,255,255,.08)}
 #lb-ui .lb-seg b{width:34px;height:26px;border-radius:6px;display:grid;place-items:center;background:rgba(255,255,255,.08);font:700 13px/1 Rajdhani,Oswald,sans-serif;letter-spacing:.06em}
-#lb-ui .lb-seg span{font:600 14px Inter,sans-serif}
+#lb-ui .lb-seg span{flex:1;font:600 14px Inter,sans-serif}
 #lb-ui .lb-seg.on{border-color:var(--acc);background:rgba(255,198,41,.1)}
 #lb-ui .lb-seg.on b{background:var(--acc);color:#1d1300}
 #lb-ui .c-move{--c:#ffc629}
@@ -273,17 +308,20 @@ const CSS = `
 #lb-ui .lb-dsub{font:700 12px/1 Inter,sans-serif;letter-spacing:.42em;text-transform:uppercase;color:var(--mut);padding-left:.42em}
 #lb-ui .lb-dtitle{margin:-12px 0 0;font:400 clamp(34px,5vw,54px)/1 Anton,Oswald,Impact,sans-serif;letter-spacing:.06em;transform:skewX(-6deg)}
 #lb-ui .lb-dtitle b{color:var(--acc);font-weight:400}
-#lb-ui .lb-reelwin{position:relative;width:min(900px,100%);height:150px;overflow:hidden;
-  -webkit-mask-image:linear-gradient(90deg,transparent,#000 14%,#000 86%,transparent);mask-image:linear-gradient(90deg,transparent,#000 14%,#000 86%,transparent)}
+#lb-ui .lb-reelwin{position:relative;width:min(1240px,100%);height:280px;overflow:hidden;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent)}
 #lb-ui .lb-reelwin::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:3px;margin-left:-1.5px;background:var(--acc);z-index:2;box-shadow:0 0 14px var(--acc),0 0 30px rgba(255,198,41,.6)}
-#lb-ui .lb-reelwin::after{content:"";position:absolute;left:50%;top:0;margin-left:-9px;border:9px solid transparent;border-top-color:var(--acc);z-index:2}
-#lb-ui .lb-reel{display:flex;gap:14px;padding:13px 0;will-change:transform}
-#lb-ui .lb-mcard{position:relative;flex:none;width:200px;height:124px;border-radius:12px;overflow:hidden;box-shadow:0 0 0 1px rgba(255,255,255,.18),0 10px 24px rgba(0,0,0,.45);
-  transition:transform .3s ease,box-shadow .3s ease,opacity .3s ease,filter .3s ease}
-#lb-ui .lb-mcard svg{display:block;width:100%;height:100%}
-#lb-ui .lb-mcard span{display:none}
-#lb-ui .lb-draw.done .lb-mcard{opacity:.28;filter:grayscale(.7)}
-#lb-ui .lb-draw.done .lb-mcard.win{opacity:1;filter:none;transform:scale(1.07);box-shadow:0 0 0 3px var(--acc),0 0 46px rgba(255,198,41,.55),0 14px 30px rgba(0,0,0,.5)}
+#lb-ui .lb-reelwin::after{content:"";position:absolute;left:50%;top:0;margin-left:-11px;border:11px solid transparent;border-top-color:var(--acc);z-index:2;filter:drop-shadow(0 0 6px var(--acc))}
+#lb-ui .lb-reel{display:flex;gap:16px;padding:20px 0;will-change:transform}
+#lb-ui .lb-mcard{position:relative;flex:none;width:384px;height:240px;border-radius:16px;overflow:hidden;background:#1a2030;
+  box-shadow:0 0 0 1px rgba(255,255,255,.2),0 16px 34px rgba(0,0,0,.5);transition:transform .3s ease,box-shadow .3s ease,opacity .3s ease,filter .3s ease}
+#lb-ui .lb-mcard svg,#lb-ui .lb-mcard img{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:cover}
+#lb-ui .lb-mcard::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 50%,rgba(4,7,14,.82) 100%);pointer-events:none}
+#lb-ui .lb-mcard span{position:absolute;left:16px;bottom:13px;z-index:1;display:flex;align-items:center;gap:10px;font:700 30px/1 Rajdhani,Oswald,sans-serif;letter-spacing:.08em;color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.6)}
+#lb-ui .lb-mcard span i{font:700 10px/1 Inter,sans-serif;font-style:normal;letter-spacing:.12em;color:#1d1300;background:var(--acc);padding:4px 6px;border-radius:5px;text-shadow:none}
+#lb-ui .lb-draw.done .lb-mcard{opacity:.25;filter:grayscale(.75)}
+#lb-ui .lb-draw.done .lb-mcard.win{opacity:1;filter:none;transform:scale(1.06);box-shadow:0 0 0 3px var(--acc),0 0 60px rgba(255,198,41,.5),0 18px 40px rgba(0,0,0,.55)}
+#lb-ui .lb-draw.done .lb-mcard.win span{color:var(--acc)}
 #lb-ui .lb-dres{min-height:44px;font:400 clamp(28px,4vw,40px)/1 Anton,Oswald,Impact,sans-serif;letter-spacing:.06em;color:var(--acc);text-shadow:0 0 28px rgba(255,198,41,.45);
   opacity:0;transform:translateY(8px) scale(.96);transition:opacity .3s,transform .3s}
 #lb-ui .lb-draw.done .lb-dres{opacity:1;transform:none}
@@ -367,7 +405,9 @@ const CSS = `
   #lb-ui .lb-msvg{width:40px;height:62px}
   #lb-ui .lb-kbfoot{flex-direction:column;align-items:stretch}
   #lb-ui .lb-dlg{padding:16px}
-  #lb-ui .lb-reelwin{height:122px}
+  #lb-ui .lb-reelwin{height:196px}
+  #lb-ui .lb-mcard{width:256px;height:160px;border-radius:12px}
+  #lb-ui .lb-mcard span{font-size:22px;left:12px;bottom:10px}
   #lb-ui .lb-phantom{position:static;margin-top:12px}
 }
 @media (max-width:520px){#lb-ui .lb-binds{grid-template-columns:minmax(0,1fr)}}
@@ -379,12 +419,20 @@ const IC = {
   user: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
   shield: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>',
   logout: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>',
+  vol: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>',
+  menu: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M12 12l5 9 1.5-3.5L22 16z" fill="currentColor"/></svg>',
+  cross: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="7"/><path d="M12 2v5M12 17v5M2 12h5M17 12h5"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg>',
+  mute: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H3v6h3l5 4z"/><path d="M16 9l5 6M21 9l-5 6"/></svg>',
+  play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.5.9l10-6.5a1 1 0 0 0 0-1.7l-10-6.5A1 1 0 0 0 8 5.5z"/></svg>',
   x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
   info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>',
   warn: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9L2 18a2 2 0 0 0 1.7 3h16.6a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>',
   sol: '<svg viewBox="0 0 32 26"><defs><linearGradient id="lbsol" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#9945ff"/><stop offset="1" stop-color="#14f195"/></linearGradient></defs><g fill="url(#lbsol)"><path d="M6 0h26l-6 6H0z"/><path d="M0 10h26l6 6H6z"/><path d="M6 20h26l-6 6H0z"/></g></svg>',
   ghost: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C6.5 3 3 7.4 3 12.6V20c0 .9 1 1.3 1.6.7l1.4-1.4 1.6 1.6c.4.4 1 .4 1.4 0L12 18l3 2.9c.4.4 1 .4 1.4 0l1.6-1.6 1.4 1.4c.6.6 1.6.2 1.6-.7v-7.4C21 7.4 17.5 3 12 3zm-3 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm6 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/></svg>',
 };
+const VROW = (k, c, icon, l, d) => `<div class="lb-vrow ${c}" data-k="${k}"><button type="button" class="lb-vic">${IC[icon]}${IC.mute}</button>
+  <div class="lb-vtt"><b data-i18n="${l}"></b><small data-i18n="${d}"></small></div><b class="lb-vval"></b>
+  <div class="lb-vsl"><input type="range" min="0" max="100" step="1" data-i18n-title="${l}"><button type="button" class="lb-vplay" data-i18n-title="set.preview">${IC.play}</button></div></div>`;
 const X_BTN = `<button class="lb-x" type="button" aria-label="Zamknij">${IC.x}</button>`;
 const HTML = `
 <div class="lb-shade"></div>
@@ -434,12 +482,21 @@ const HTML = `
 </div>
 <div class="lb-modal" id="lb-set" hidden><div class="lb-dlg lb-wide" role="dialog" aria-modal="true">
   <div class="lb-dh"><h3 data-i18n="set.title"></h3>${X_BTN}</div>
-  <div class="lb-tabs"><button type="button" data-tab="general" class="on" data-i18n="set.audio"></button><button type="button" data-tab="controls" data-i18n="set.controls"></button><button type="button" data-tab="lang" data-i18n="set.lang"></button></div>
-  <div data-pane="general">
-    <div class="lb-field"><div class="lb-row"><label for="lb-vol" data-i18n="set.volume"></label><b id="lb-vol-v"></b></div><input type="range" id="lb-vol" min="0" max="100" step="1"></div>
-    <div class="lb-field"><div class="lb-row"><label for="lb-fov" data-i18n="set.fov"></label><b id="lb-fov-v"></b></div><input type="range" id="lb-fov" min="60" max="110" step="1"></div>
+  <div class="lb-tabs"><button type="button" data-tab="audio" class="on" data-i18n="set.audio"></button><button type="button" data-tab="controls" data-i18n="set.controls"></button><button type="button" data-tab="lang" data-i18n="set.lang"></button></div>
+  <div data-pane="audio">
+    ${VROW('volume', 'c-move', 'vol', 'set.vMaster', 'set.vMasterD')}
+    ${VROW('vMenu', 'c-sys', 'menu', 'set.vMenu', 'set.vMenuD')}
+    ${VROW('vGame', 'c-fight', 'cross', 'set.vGame', 'set.vGameD')}
   </div>
   <div data-pane="controls" hidden>
+    <h5 class="lb-sec" data-i18n="set.secView"></h5>
+    <div class="lb-fovcard">
+      <svg class="lb-fovsvg" viewBox="0 0 120 64" aria-hidden="true"><defs><radialGradient id="lbfovg" cx="60" cy="58" r="56" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ffc629" stop-opacity=".6"/><stop offset="1" stop-color="#ffc629" stop-opacity=".04"/></radialGradient></defs>
+        <path d="M8 58A52 52 0 0 1 112 58" fill="none" stroke="rgba(255,255,255,.1)" stroke-dasharray="2 3"/><path id="lb-fov-wedge" fill="url(#lbfovg)" stroke="#ffc629" stroke-width="1.2" stroke-linejoin="round"/>
+        <circle cx="60" cy="58" r="4.5" fill="#ffc629"/><circle cx="60" cy="58" r="8" fill="none" stroke="rgba(255,198,41,.35)"/></svg>
+      <div class="lb-fovmain"><div class="lb-row"><label for="lb-fov" data-i18n="set.fov"></label><b id="lb-fov-v"></b></div><small data-i18n="set.fovD"></small><input type="range" id="lb-fov" min="60" max="110" step="1"></div>
+    </div>
+    <h5 class="lb-sec" data-i18n="set.secKeys"></h5>
     <p class="lb-note" data-i18n="set.bindHint"></p>
     <div class="lb-binds" id="lb-binds"></div>
     <div class="lb-deck">
