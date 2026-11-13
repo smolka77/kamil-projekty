@@ -1181,9 +1181,9 @@ function stepDuelBot(e,dt){
   _gl.copy(e.rifle.gripLTP);e.rifle.group.localToWorld(_gl);ud.torso.worldToLocal(_gl);
   poseArmsTo(ud,_gr,_gl);
 }
-// ================= mapy 1v1 w rotacji (Oaza, Magazyn) =================
+// ================= mapy 1v1 w rotacji (Oaza, Magazyn, Baza) =================
 const arenaBoxes=boxes.slice(),arenaMeshes=boxMeshes.slice(),arenaGround=window.__ground;
-const MAPS=[{name:'Oaza',src:'./oaza-data.js'},{name:'Magazyn',src:'./magazyn-data.js'}];
+const MAPS=[{name:'Oaza',src:'./oaza-data.js'},{name:'Magazyn',src:'./magazyn-data.js'},{name:'Baza',src:'./baza-data.js'}];
 let mapIdx=-1;
 const oaza={active:false,map:null,boxes:[],meshes:[],spawns:null,ladders:[],bx:17.4,bz:30.4};   // stan aktywnej mapy 1v1
 function segHitsBoxes(a,b,list){                  // odcinek a->b przecina którąś bryłę AABB (test płyt)
