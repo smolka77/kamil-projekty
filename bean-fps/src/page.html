@@ -78,6 +78,7 @@ import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import glbB64 from './bean-data.js';
 import {createLobby} from './lobby.js';
 import {createMatch,ROUNDS_TO_WIN} from './match.js';
+import {createRange} from './range.js';
 import {WEAPON_IDS,WEAPON_STATS,loadWeaponModels,createWeapon,applyParts,reloadPose,drawPose,magGrabPoint,pouchPoint,createShells,weaponSound} from './weaponry.js';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {TIMELINES,ANCHORS,SETTLE,prepareTimeline,newInspectState,evalInspect,evalLeft} from './inspect.js';
@@ -613,7 +614,8 @@ addEventListener('keydown',e=>{
 addEventListener('keyup',e=>keys[e.code]=false);
 addEventListener('blur',()=>{for(const k in keys)keys[k]=false;gun.firing=false});
 let adsHeld=false;
-renderer.domElement.addEventListener('mousedown',e=>{if(!playing)return;if(e.button===0){gun.firing=true;gun.trigger=true}if(e.button===2)adsHeld=true;e.preventDefault()});
+renderer.domElement.addEventListener('mousedown',e=>{if(!playing)return;if(range.active&&e.button===0&&range.press()){e.preventDefault();return}   // strzelnica: celownik na tablicy ustawień = klik w przycisk, nie strzał
+  if(e.button===0){gun.firing=true;gun.trigger=true}if(e.button===2)adsHeld=true;e.preventDefault()});
 addEventListener('mouseup',e=>{if(e.button===0)gun.firing=false;if(e.button===2)adsHeld=false});
 addEventListener('contextmenu',e=>e.preventDefault());
 renderer.domElement.addEventListener('wheel',e=>{if(!playing||Math.abs(e.deltaY)<4)return;const t=gun.switchTo>=0?gun.switchTo:curW;selectWeapon((t+(e.deltaY>0?1:-1)+inv.length)%inv.length)},{passive:true});
@@ -637,6 +639,7 @@ function startReload(){
 function fireShot(){
   const w=inv[curW],st=WEAPON_STATS[w.id],inst=rifle,ads=player.ads>.5;
   w.mag--;gun.cd=60/st.rpm;gun.trigger=false;cancelInspect(true);
+  if(range.active){w.reserve=st.reserve;range.onShot()}      // strzelnica: amunicja bez końca, statystyki celności
   const sp=(ads?st.spread.ads:st.spread.hip)+gun.spread*.018;
   const spreadRad=sp*(1+player.speed01*st.spread.move*1.2)*(player.onGround?1:2.2)*(1-player.crouch*.35);
   camera.getWorldPosition(_o);
@@ -653,6 +656,7 @@ function fireShot(){
     if(en){
       const head=(h.point.y-en.root.position.y)>1.12;
       const killed=damageEnemy(en,st.dmg*(head?st.head:1),h.point);
+      if(range.active)range.onHit(en,head,killed);
       spawnSparks(h.point,n,0xff8a7a);sndHit(killed);
       const mk=$('marker');mk.style.opacity=1;mk.querySelector('svg').setAttribute('stroke',killed||head?'#ff5a4d':'#ffffff');
       clearTimeout(window.__mk);window.__mk=setTimeout(()=>mk.style.opacity=0,130);
@@ -1029,7 +1033,19 @@ function poseThirdPerson(dt){
   if(ip){inspLeft(rifle,ud.torso,'tp',1,_glI,_wL);_gl.lerp(_glI,ip.w)}
   poseArmsTo(ud,_gr,_gl);
 }
+// poza celu na strzelnicy: stoi (chodzi=0) albo idzie bokiem (chodzi=1), karabin wycelowany w gracza
+function poseTarget(e,chodzi,dt){
+  const r=e.root,sh=r.userData,dist=Math.hypot(player.pos.x-r.position.x,player.pos.z-r.position.z)||1;
+  e.phase+=dt*9.7*chodzi;poseLegs(sh,e.phase,.42*chodzi,0,0);
+  sh.upper.position.y=Math.abs(Math.sin(e.phase))*.03*chodzi;leanTorso(sh,-.04,0,Math.sin(e.phase)*.04*chodzi);
+  e.holder.rotation.x=clamp(Math.atan2(player.pos.y+1.1-(r.position.y+1.0),dist),-.3,.3);e.holder.rotation.y=0;
+  keepRifleOut(sh,e.rifle.group);r.updateWorldMatrix(true,true);
+  _gr.copy(e.rifle.gripR);e.rifle.group.localToWorld(_gr);sh.torso.worldToLocal(_gr);
+  _gl.copy(e.rifle.gripLTP);e.rifle.group.localToWorld(_gl);sh.torso.worldToLocal(_gl);
+  poseArmsTo(sh,_gr,_gl);
+}
 function stepEnemies(dt){
+  if(range.active){range.update(dt,playing);return}      // Strzelnica (mapa treningowa): cele pojawiają się w punktach mapy
   for(const e of enemies){
     const r=e.root;
     if(MODE==='1v1'){if(e===duel.bot)stepDuelBot(e,dt);continue}
@@ -1118,17 +1134,20 @@ const WIN=5,duel={bot:null,hp:100,botScore:0,inv:0};
 function setPauseText(){$('ovTitle').textContent='Pauza';$('ovText').textContent='Kliknij, aby wrócić do gry. Mysz obraca kamerę, Esc robi pauzę.';$('ovGo').textContent='WZNÓW'}
 function setHp(v){duel.hp=Math.max(0,v);$('hpbar').style.width=duel.hp+'%';$('hpnum').textContent=Math.ceil(duel.hp);$('hp').classList.toggle('low',duel.hp<35)}
 function banner(t,c){const b=$('banner');b.textContent=t;b.style.color=c||'#fff';b.classList.remove('show');void b.offsetWidth;b.classList.add('show')}
-function resetPlayer(){player.pos.set(0,0,-14);player.vel.set(0,0,0);player.yaw=Math.PI;if(oaza.active){const s=oaza.spawns[0];player.pos.set(s.x,0,s.z);player.yaw=s.yaw}player.pitch=0;refillAll();setHud();setHp(100);duel.inv=1.2}
+function resetPlayer(){player.pos.set(0,0,-14);player.vel.set(0,0,0);player.yaw=Math.PI;if(oaza.active){const s=oaza.spawns[0];player.pos.set(s.x,s.y||0,s.z);player.yaw=s.yaw}player.pitch=0;refillAll();setHud();setHp(100);duel.inv=1.2}
 function duelSpawn(e){Object.assign(e,{hp:100,dead:0,fall:0,cd:1,react:.8,strafe:rnd()<.5?1:-1,turn:1.5,counted:false});e.root.rotation.z=0;if(oaza.active){const s=oaza.spawns[1];e.root.position.set(s.x+(rnd()-.5)*2,0,s.z-rnd()*2)}else e.root.position.set((rnd()-.5)*16,0,12+rnd()*8)}
 function setMode(m,mi,quiet){
+  range.leave();
   MODE=m==='1v1'?'1v1':'range';document.body.classList.toggle('duel',MODE==='1v1');
   kills=0;duel.botScore=0;duel.bot=enemies[0];
-  $('score').innerHTML=MODE==='1v1'?'Ty <b id="kills">0</b> : <b id="botScore">0</b> Bot <small>do 5</small>':'Trafione fasolki <b id="kills">0</b>';
+  const rm=MODE==='range'&&RANGE_MAP.ready?RANGE_MAP:null;      // Strzelnica gra na własnej mapie, gdy się już wczytała (w tle); inaczej stara arena
+  $('score').innerHTML=MODE==='1v1'?'Ty <b id="kills">0</b> : <b id="botScore">0</b> Bot <small>do 5</small>':'Trafione fasolki <b id="kills">0</b>'+(rm?' <small id="rgAcc"></small>':'');
   for(const e of enemies){const on=MODE==='range'||e===duel.bot;e.off=!on;e.root.visible=on;e.hp=100;e.dead=0;e.fall=0;e.root.rotation.z=0;e.root.position.y=0;if(on&&MODE==='range')e.root.position.copy(spawnPos())}
   if(MODE==='1v1'){if(mi!=null&&mi>=0&&MAPS[mi]&&MAPS[mi].ready)mapIdx=mi;else nextMap()}
-  useOaza(MODE==='1v1');
+  useOaza(MODE==='1v1'||!!rm,rm);
   if(oaza.active&&!quiet)setTimeout(()=>banner('MAPA: '+oaza.map.name.toUpperCase(),'#ffe14a'),600);
   if(MODE==='1v1'){duelSpawn(duel.bot);resetPlayer()}
+  if(rm){range.enter(rm);resetPlayer()}
   setPauseText();
 }
 function sndFar(){
@@ -1191,6 +1210,12 @@ function stepDuelBot(e,dt){
 // ================= mapy 1v1 w rotacji (Oaza, Magazyn, Baza) =================
 const arenaBoxes=boxes.slice(),arenaMeshes=boxMeshes.slice(),arenaGround=window.__ground;
 const MAPS=[{name:'Oaza',src:'./oaza-data.js'},{name:'Magazyn',src:'./magazyn-data.js'},{name:'Baza',src:'./baza-data.js'}];
+// Strzelnica: mapa treningowa trybu solo (nie wchodzi do rotacji 1v1). Cele, tablica ustawień i statystyki: range.js
+const RANGE_MAP={name:'Strzelnica',src:'./strzelnica-data.js',range:true};
+const ALLMAPS=[...MAPS,RANGE_MAP];
+const range=createRange({scene,camera,player,enemies,pose:poseTarget,click:()=>sndClick(2400,.03,.12),
+  isSound:()=>!muted,setSound:on=>{initAudio();setMuted(!on)},resetKills:()=>{kills=0;$('kills').textContent=0}});
+window.__range=range;
 let mapIdx=-1,mapsSettled=false;const thumbQ=[];
 const oaza={active:false,map:null,boxes:[],meshes:[],spawns:null,ladders:[],bx:17.4,bz:30.4};   // stan aktywnej mapy 1v1
 function segHitsBoxes(a,b,list){                  // odcinek a->b przecina którąś bryłę AABB (test płyt)
@@ -1209,11 +1234,11 @@ function nextMap(){                                 // kolejna mapa z rotacji (p
   for(let k=1;k<=MAPS.length;k++){const i=(mapIdx+k)%MAPS.length;if(MAPS[i].ready){mapIdx=i;return MAPS[i]}}
   return null;
 }
-function useOaza(on){
-  let m=on&&mapIdx>=0&&MAPS[mapIdx].ready?MAPS[mapIdx]:null;
+function useOaza(on,forced){                         // forced: konkretna mapa (Strzelnica), inaczej mapa z rotacji 1v1
+  let m=forced||(on&&mapIdx>=0&&MAPS[mapIdx].ready?MAPS[mapIdx]:null);
   if(on&&!m)m=nextMap();
   on=!!m;oaza.active=on;oaza.map=m;
-  for(const M of MAPS)if(M.group)M.group.visible=M===m;
+  for(const M of ALLMAPS)if(M.group)M.group.visible=M===m;
   boxes.length=0;boxes.push(...(on?m.boxes:arenaBoxes));
   boxMeshes.length=0;boxMeshes.push(...(on?m.meshes:arenaMeshes));
   for(const a of arenaMeshes)a.visible=!on;arenaGround.visible=!on;
@@ -1223,7 +1248,7 @@ function useOaza(on){
 const loadMaps=(async()=>{                         // mapy ładują się w tle, żeby nie opóźniać startu gry
   const {MeshoptDecoder}=await import('three/addons/libs/meshopt_decoder.module.js');
   const ld=new GLTFLoader();ld.setMeshoptDecoder(MeshoptDecoder);
-  await Promise.all(MAPS.map(async M=>{
+  await Promise.all(ALLMAPS.map(async M=>{
     try{
       const mod=await import(M.src),D=mod.MAP||mod.OAZA,B=mod.GLB||mod.OAZA_GLB;
       const g=await new Promise((res,rej)=>ld.parse(Uint8Array.from(atob(B),c=>c.charCodeAt(0)).buffer,'',res,rej));
@@ -1234,10 +1259,12 @@ const loadMaps=(async()=>{                         // mapy ładują się w tle, 
         o.castShadow=!inRoof;o.receiveShadow=true;M.meshes.push(o)});   // dach nie rzuca cienia – w hali jest jasno
       M.ground=M.meshes.find(o=>/floor|ground|teren/i.test(o.name))||M.meshes[0];
       g.scene.visible=false;scene.add(g.scene);M.group=g.scene;M.spawns=D.spawns;
-      M.boxes=D.colliders.map(([x0,y0,z0,x1,y1,z1])=>({minX:x0,maxX:x1,minZ:z0,maxZ:z1,top:y1,bottom:y0}));
+      M.boxes=D.colliders.concat(D.clips||[]).map(([x0,y0,z0,x1,y1,z1])=>({minX:x0,maxX:x1,minZ:z0,maxZ:z1,top:y1,bottom:y0}));   // clips: blokady ruchu gracza (kule i tak lecą po siatce mapy)
+      M.targets=D.targets||[];M.panel=D.panel||null;
       M.ladders=(D.ladders||[]).map(([x0,y0,z0,x1,y1,z1,nx,nz])=>({x0,y0,z0,x1,y1,z1,nx,nz}));
       M.bx=Math.max(...D.colliders.map(c=>Math.max(-c[0],c[3])))-.6;M.bz=Math.max(...D.colliders.map(c=>Math.max(-c[2],c[5])))-.6;
-      M.ready=true;thumbQ.push(M);
+      M.ready=true;if(!M.range)thumbQ.push(M);          // miniatury tylko dla map z rotacji 1v1
+      if(M.range&&MODE==='range'&&!oaza.active&&!lobby.active&&!match.on&&!match.lobbyPhase)setMode('range',null,true);   // Strzelnica wczytała się już po wejściu w tryb: przenieś grę na jej mapę
       if(MODE==='1v1'&&!oaza.active&&!match.on&&!match.lobbyPhase){if(mapIdx<0)nextMap();useOaza(true);duelSpawn(duel.bot);resetPlayer();banner('MAPA: '+oaza.map.name.toUpperCase(),'#ffe14a')}
     }catch(e){console.warn('Mapa '+M.name+':',e)}
   }));
