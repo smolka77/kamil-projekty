@@ -32,7 +32,7 @@ addEventListener('resize', () => renderer.setSize(innerWidth, innerHeight));
 
 // prosta fasolka (przodem do -Z, ~1,5 m)
 const skin = new THREE.MeshStandardMaterial({ color: 0xf0b440, roughness: .55 });
-const bean = new THREE.Group();
+const bean = new THREE.Group(); bean.userData.mats = { skin };   // lobby zmienia skin tylko na tym materiale
 const body = new THREE.Group(); bean.add(body);
 const torso = new THREE.Mesh(new THREE.CapsuleGeometry(.36, .52, 12, 32), skin);
 torso.position.y = .78; body.add(torso);

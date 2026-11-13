@@ -86,6 +86,25 @@ const CSS = `
   background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.85),rgba(255,255,255,0));animation:lb-shine 3.2s ease-in-out infinite}
 @keyframes lb-shine{0%,62%{left:-40%}100%{left:130%}}
 #lb-ui .lb-play:focus-visible{outline:4px solid #fff;outline-offset:-8px}
+#lb-ui .lb-plate em{display:block;font:800 10px/1 system-ui,sans-serif;font-style:normal;letter-spacing:.14em;color:#2a1c00;background:#ffe14a;
+  border-radius:4px;padding:4px 7px;margin-top:3px;opacity:0;transform:translateY(4px);transition:opacity .15s,transform .15s;text-shadow:none}
+#lb-ui .lb-plate.hov em{opacity:1;transform:none}
+#lb-ui.bean-hover{cursor:pointer}
+#lb-ui .lb-skins{position:absolute;left:max(16px,env(safe-area-inset-left));top:86px;bottom:24px;width:min(330px,calc(100vw - 32px));pointer-events:auto;
+  display:flex;flex-direction:column;gap:12px;padding:16px;background:rgba(8,14,32,.78);border:2px solid rgba(255,255,255,.14);border-radius:12px;
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);animation:lb-in .18s ease}
+#lb-ui .lb-skins[hidden]{display:none}
+#lb-ui .lb-skins h2{margin:0;font-weight:400;font-size:30px;letter-spacing:.04em;transform:skewX(-8deg);text-shadow:0 3px 0 #1b4fa8}
+#lb-ui .lb-skins .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;overflow-y:auto;padding:4px 2px}
+#lb-ui .lb-skin{font:inherit;color:#fff;cursor:pointer;border:0;border-radius:8px;padding:8px 4px 7px;background:rgba(255,255,255,.07);
+  box-shadow:0 0 0 2px rgba(255,255,255,.12);display:flex;flex-direction:column;align-items:center;gap:5px;transition:transform .12s,box-shadow .12s,background .12s}
+#lb-ui .lb-skin:hover{transform:translateY(-3px);background:rgba(255,255,255,.13);box-shadow:0 0 0 2px rgba(255,255,255,.45)}
+#lb-ui .lb-skin.sel{box-shadow:0 0 0 3px #ffe14a,0 0 18px rgba(255,214,60,.45);background:rgba(255,225,74,.12)}
+#lb-ui .lb-skin svg{width:44px;height:58px;display:block}
+#lb-ui .lb-skin span{font-size:15px;letter-spacing:.03em;line-height:1}
+#lb-ui .lb-skin small{font:700 9px/1 system-ui,sans-serif;letter-spacing:.12em;color:#ffe14a;min-height:9px}
+#lb-ui .lb-skins .lb-close{align-self:flex-start;margin-top:auto}
+@media (max-width:640px){#lb-ui .lb-skins{top:auto;bottom:16px;height:52vh;left:16px;right:16px;width:auto}#lb-ui .lb-skins .grid{grid-template-columns:repeat(4,1fr)}}
 #lb-ui .lb-hint{position:absolute;left:max(20px,env(safe-area-inset-left));bottom:max(24px,env(safe-area-inset-bottom));
   font:500 13px/1.4 system-ui,sans-serif;color:rgba(255,255,255,.82);text-shadow:0 1px 3px rgba(0,0,0,.5)}
 @media (max-width:640px){
@@ -107,13 +126,18 @@ const HTML = `
   <div class="lb-player"><div class="lb-avatar"><svg viewBox="0 0 24 24" width="22" height="22"><rect x="6" y="2" width="12" height="20" rx="6" fill="#fff6dc"/><rect x="8" y="6.5" width="8" height="4" rx="2" fill="#5a3500"/></svg></div><div><label for="lb-nick">Gracz</label>
     <input class="lb-nick" id="lb-nick" maxlength="14" placeholder="Wpisz nick" autocomplete="off"></div></div>
 </div>
-<div class="lb-plate" id="lb-plate"><span id="lb-plate-name">Gracz</span><small>GOTOWY</small></div>
+<div class="lb-plate" id="lb-plate"><span id="lb-plate-name">Gracz</span><small>GOTOWY</small><em>KLIKNIJ, BY ZMIENIĆ SKIN</em></div>
 <div class="lb-dock">
   <button class="lb-mode" id="lb-mode" type="button" aria-haspopup="dialog"><div class="lb-thumb" id="lb-mode-ic"></div>
     <div><small>TRYB GRY</small><span id="lb-mode-name"></span><em id="lb-mode-desc"></em></div><i class="lb-chev">ZMIEŃ ›</i></button>
   <div class="lb-playwrap"><button class="lb-play" id="lb-play" type="button"><span>GRAJ</span></button></div>
 </div>
-<div class="lb-hint">Przeciągnij, aby obrócić postać</div>
+<div class="lb-hint">Przeciągnij, aby obrócić postać · kliknij fasolkę, aby zmienić skin</div>
+<div class="lb-skins" id="lb-skins" role="dialog" aria-label="Wybór skina" hidden>
+  <h2>SKINY</h2>
+  <div class="grid" id="lb-skin-grid"></div>
+  <button class="lb-close" id="lb-skin-close" type="button">GOTOWE</button>
+</div>
 <div class="lb-picker" id="lb-picker" role="dialog" aria-label="Wybór trybu" hidden>
   <h2>WYBIERZ TRYB</h2>
   <div class="lb-tiles" id="lb-tiles"></div>
@@ -209,6 +233,67 @@ const ART = {
       ${finish(u)}</svg>`;
   },
 };
+export const SKINS = [
+  { id: 'klasyk', name: 'Klasyczna', c: 0xf0b440 },
+  { id: 'kamuflaz', name: 'Kamuflaż', c: 0x5a6438, c2: 0x7f7548, c3: 0x2f3524, p: 1, tag: 'WOJSKO' },
+  { id: 'pustynia', name: 'Pustynia', c: 0xc9b07a, c2: 0x9c7e4f, c3: 0x6e5a3a, p: 1, tag: 'WOJSKO' },
+  { id: 'arbuz', name: 'Arbuz', c: 0x3f9a3a, c2: 0x1f5e22, p: 2 },
+  { id: 'truskawka', name: 'Truskawka', c: 0xe0343a, c2: 0xffe66b, p: 3 },
+  { id: 'jagoda', name: 'Jagoda', c: 0x4f5fd6 },
+  { id: 'mieta', name: 'Mięta', c: 0x7fe0c0 },
+  { id: 'wegiel', name: 'Węgiel', c: 0x34363b },
+  { id: 'lawa', name: 'Lawa', c: 0x2a1c18, c2: 0xff6a1a, p: 5, tag: 'RZADKI' },
+  { id: 'zlota', name: 'Złota', c: 0xffc23a, metal: true, tag: 'LEGENDA' },
+  { id: 'teczowa', name: 'Tęczowa', c: 0xffffff, p: 4, tag: 'RZADKI' },
+  { id: 'arktyka', name: 'Arktyka', c: 0xe8eef2, c2: 0xb9c7d2, c3: 0x8a9aa8, p: 1, tag: 'WOJSKO' },
+];
+const SKIN_GLSL = `uniform float uPat,uRim;uniform vec3 uC2,uC3,uRimC;varying vec3 vObj;
+  float h3(vec3 p){return fract(sin(dot(p,vec3(127.1,311.7,74.7)))*43758.5453);}
+  float vn(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);
+    return mix(mix(mix(h3(i),h3(i+vec3(1,0,0)),f.x),mix(h3(i+vec3(0,1,0)),h3(i+vec3(1,1,0)),f.x),f.y),
+               mix(mix(h3(i+vec3(0,0,1)),h3(i+vec3(1,0,1)),f.x),mix(h3(i+vec3(0,1,1)),h3(i+vec3(1,1,1)),f.x),f.y),f.z);}`;
+// Nakłada skin na materiał skóry fasolki (kolor + wzór + metal). Działa też na postaci w grze.
+export function applySkin(mat, skin) {
+  if (!mat.userData.skinU) {
+    const U = { uPat: { value: 0 }, uC2: { value: new THREE.Color() }, uC3: { value: new THREE.Color() }, uRim: { value: 0 }, uRimC: { value: new THREE.Color(0xfff0a8) } };
+    mat.userData.skinU = U;
+    mat.onBeforeCompile = sh => {
+      Object.assign(sh.uniforms, U);
+      sh.vertexShader = 'varying vec3 vObj;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nvObj = position;');
+      sh.fragmentShader = SKIN_GLSL + '\n' + sh.fragmentShader
+        .replace('#include <color_fragment>', `#include <color_fragment>
+          float lavaGlow = 0.; vec3 P = vObj;
+          if (uPat > .5 && uPat < 1.5) { float n = vn(P * 4.2) * .65 + vn(P * 9.) * .35; diffuseColor.rgb = n < .43 ? diffuseColor.rgb : (n < .58 ? uC2 : uC3); }
+          else if (uPat > 1.5 && uPat < 2.5) { float a = atan(P.z, P.x); float st = step(.5, fract(a * 1.6 + vn(P * 7.) * .18)); diffuseColor.rgb = mix(diffuseColor.rgb, uC2, st); }
+          else if (uPat > 2.5 && uPat < 3.5) { vec3 q = P * 15.; float d = length(fract(q) - .5); diffuseColor.rgb = mix(diffuseColor.rgb, uC2, step(d, .17) * step(.55, h3(floor(q)))); }
+          else if (uPat > 3.5 && uPat < 4.5) { diffuseColor.rgb = .55 + .45 * cos(6.2832 * (P.y * 1.1 + vec3(0., .33, .67))); }
+          else if (uPat > 4.5) { float n = vn(P * 6.5) * .7 + vn(P * 13.) * .3; lavaGlow = 1. - smoothstep(.0, .07, abs(n - .5)); diffuseColor.rgb = mix(diffuseColor.rgb, uC2, lavaGlow); }`)
+        .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+          totalEmissiveRadiance += uC2 * lavaGlow * 2.2;
+          float rimK = 1. - abs(dot(normalize(normal), normalize(vViewPosition)));
+          totalEmissiveRadiance += uRimC * pow(rimK, 2.6) * uRim * 1.2 + uRimC * uRim * .02;
+          if (uPat < -.5) totalEmissiveRadiance += diffuseColor.rgb * (.18 + .5 * pow(rimK, 3.));`);
+    };
+    mat.customProgramCacheKey = () => 'fasolka-skin';
+    mat.needsUpdate = true;
+  }
+  const U = mat.userData.skinU, P = { 1: 1, 2: 2, 3: 3, 4: 4, 5: 5 };
+  mat.color.set(skin.c); U.uPat.value = skin.metal ? -1 : (P[skin.p] || 0); U.uC2.value.set(skin.c2 ?? skin.c); U.uC3.value.set(skin.c3 ?? skin.c);
+  mat.metalness = skin.metal ? .35 : 0; mat.roughness = skin.metal ? .3 : .55;
+}
+// ikona fasolki do kafelka (SVG z kolorem/wzorem)
+function skinIcon(sk) {
+  const hex = c => '#' + new THREE.Color(c).getHexString(), c1 = hex(sk.c), c2 = hex(sk.c2 ?? sk.c), c3 = hex(sk.c3 ?? sk.c), id = 'sk' + sk.id;
+  let fill = c1, defs = '';
+  if (sk.p === 1) { defs = `<pattern id="${id}" width="24" height="24" patternUnits="userSpaceOnUse"><rect width="24" height="24" fill="${c1}"/><path d="M2 4c6-3 9 2 7 6s-7 3-8 0z" fill="${c2}"/><path d="M14 13c5-2 9 1 8 5s-6 4-9 1z" fill="${c3}"/><path d="M12 1c3 0 4 3 2 4s-4 0-2-4z" fill="${c3}"/><path d="M1 16c3-1 5 2 3 4s-4 0-3-4z" fill="${c2}"/></pattern>`; fill = `url(#${id})`; }
+  if (sk.p === 2) { defs = `<pattern id="${id}" width="10" height="10" patternUnits="userSpaceOnUse"><rect width="10" height="10" fill="${c1}"/><rect width="4" height="10" fill="${c2}"/></pattern>`; fill = `url(#${id})`; }
+  if (sk.p === 3) { defs = `<pattern id="${id}" width="8" height="9" patternUnits="userSpaceOnUse"><rect width="8" height="9" fill="${c1}"/><ellipse cx="3" cy="3" rx="1" ry="1.4" fill="${c2}"/><ellipse cx="7" cy="7.5" rx="1" ry="1.4" fill="${c2}"/></pattern>`; fill = `url(#${id})`; }
+  if (sk.p === 4) { defs = `<linearGradient id="${id}" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ff5a5a"/><stop offset=".25" stop-color="#ffc83a"/><stop offset=".5" stop-color="#5fe36a"/><stop offset=".75" stop-color="#4aa3ff"/><stop offset="1" stop-color="#b56cff"/></linearGradient>`; fill = `url(#${id})`; }
+  if (sk.p === 5) { defs = `<pattern id="${id}" width="20" height="20" patternUnits="userSpaceOnUse"><rect width="20" height="20" fill="${c1}"/><path d="M0 6l6 2 4-5 5 4 5-2M3 20l3-7 6 1 3-5 5 3" stroke="${c2}" stroke-width="1.6" fill="none"/></pattern>`; fill = `url(#${id})`; }
+  if (sk.metal) { defs = `<linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3c0"/><stop offset=".45" stop-color="#ffc23a"/><stop offset="1" stop-color="#a86d0e"/></linearGradient>`; fill = `url(#${id})`; }
+  return `<svg viewBox="0 0 44 58"><defs>${defs}</defs><rect x="15" y="40" width="5" height="15" rx="2.5" fill="${fill}"/><rect x="24" y="40" width="5" height="15" rx="2.5" fill="${fill}"/>
+    <rect x="8" y="3" width="28" height="44" rx="14" fill="${fill}" stroke="rgba(0,0,0,.35)" stroke-width="1.2"/><ellipse cx="16" cy="13" rx="3.5" ry="5" fill="#fff" opacity=".35"/></svg>`;
+}
 const DEFAULT_MODES = [
   { id: 'range', name: 'Strzelnica', desc: 'Solo · zestrzel czerwone fasolki', icon: 'range', tag: 'SOLO' },
   { id: '1v1', name: '1v1', desc: 'Mapa Oaza · bot · do 5 trafień', icon: 'duel', tag: '1 NA 1' },
@@ -218,7 +303,7 @@ const DEFAULT_MODES = [
 // deterministyczny generator losowy, żeby las wyglądał zawsze tak samo
 function rng(seed) { return () => (seed = (seed * 16807) % 2147483647) / 2147483647; }
 
-export function createLobby({ renderer, bean, animate = () => {}, onPlay = () => {}, modes = DEFAULT_MODES }) {
+export function createLobby({ renderer, bean, animate = () => {}, onPlay = () => {}, onSkin = () => {}, modes = DEFAULT_MODES, skins = SKINS }) {
   const rnd = rng(7);
   const R = (a, b) => a + (b - a) * rnd();
 
@@ -579,8 +664,36 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
   })();
   scene.add(blob);
 
+  // świecące koło pod fasolką (pulsuje po najechaniu)
+  const ringTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 256; const x = c.getContext('2d');
+    const g = x.createRadialGradient(128, 128, 60, 128, 128, 128); g.addColorStop(0, 'rgba(255,225,120,0)'); g.addColorStop(.72, 'rgba(255,215,90,.18)'); g.addColorStop(.86, 'rgba(255,230,140,.95)');
+    g.addColorStop(.92, 'rgba(255,200,70,.55)'); g.addColorStop(1, 'rgba(255,190,60,0)'); x.fillStyle = g; x.fillRect(0, 0, 256, 256);
+    x.strokeStyle = 'rgba(255,240,180,.75)'; x.lineWidth = 5; for (let i = 0; i < 12; i++) { x.beginPath(); x.arc(128, 128, 96, i * Math.PI / 6, i * Math.PI / 6 + .32); x.stroke(); }
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })();
+  const ringM = new THREE.MeshBasicMaterial({ map: ringTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: .75, toneMapped: false });
+  const ring = new THREE.Mesh(new THREE.PlaneGeometry(2.1, 2.1), ringM); ring.rotation.x = -Math.PI / 2; ring.position.y = .03; scene.add(ring);
+  const discM = new THREE.MeshBasicMaterial({ color: 0x1a1408, transparent: true, opacity: .28, depthWrite: false });
+  const disc = new THREE.Mesh(new THREE.CircleGeometry(.92, 40), discM); disc.rotation.x = -Math.PI / 2; disc.position.y = .02; scene.add(disc);
+
   // fasolka
   const holder = new THREE.Group(); holder.add(bean); scene.add(holder);
+  const hitProxy = new THREE.Mesh(new THREE.CylinderGeometry(.48, .48, 1.75, 10), new THREE.MeshBasicMaterial({ visible: false })); hitProxy.position.y = .87; holder.add(hitProxy);
+  const skinMats = [];                                   // materiały skóry fasolki (z gry: userData.mats.skin, inaczej wszystkie)
+  if (bean.userData.mats && bean.userData.mats.skin) skinMats.push(bean.userData.mats.skin);
+  else bean.traverse(o => { if (o.isMesh && o.material && !skinMats.includes(o.material)) skinMats.push(o.material); });
+  let skin = skins.find(k => k.id === store.get('fasolka-skin')) || skins[0];
+  const setSkin = k => { skin = k; skinMats.forEach(m => applySkin(m, k)); store.set('fasolka-skin', k.id); onSkin(k);
+    skinGrid.querySelectorAll('.lb-skin').forEach(b => b.classList.toggle('sel', b.dataset.id === k.id)); };
+  const skinPanel = $('lb-skins'), skinGrid = $('lb-skin-grid');
+  skins.forEach(k => { const b = document.createElement('button'); b.type = 'button'; b.className = 'lb-skin'; b.dataset.id = k.id;
+    b.innerHTML = skinIcon(k) + '<span></span><small></small>'; b.querySelector('span').textContent = k.name; b.querySelector('small').textContent = k.tag || '';
+    b.addEventListener('click', () => { setSkin(k); hopT = 0; }); skinGrid.appendChild(b); });
+  const openSkins = () => { skinPanel.hidden = false; picker.hidden = true; };
+  const closeSkins = () => { skinPanel.hidden = true; };
+  $('lb-skin-close').addEventListener('click', closeSkins);
+  addEventListener('keydown', e => { if (e.key === 'Escape' && !skinPanel.hidden) { closeSkins(); e.stopPropagation(); } }, true);
+  let hopT = -1;
+  setSkin(skin);
   bean.rotation.y = Math.PI;                 // model patrzy w -Z, kamera stoi na +Z
   bean.traverse(o => { if (o.isMesh) o.castShadow = true; });
 
@@ -599,13 +712,22 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
 
   const canvas = renderer.domElement;
   let active = true, dragging = false, lastX = 0, rotY = 0, rotVel = 0, mx = 0, my = 0, cmx = 0, cmy = 0, wave = 0, hover = false;
-  canvas.addEventListener('pointerdown', e => { if (!active) return; dragging = true; lastX = e.clientX; try { canvas.setPointerCapture(e.pointerId); } catch {} });
+  let beanHover = false, hoverK = 0, downX = 0, downY = 0, moved = 0;
+  const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+  const overBean = e => { const r = canvas.getBoundingClientRect(); ndc.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1);
+    ray.setFromCamera(ndc, camera); return ray.intersectObject(hitProxy, false).length > 0; };
+  canvas.addEventListener('pointerdown', e => { if (!active) return; dragging = true; lastX = downX = e.clientX; downY = e.clientY; moved = 0; try { canvas.setPointerCapture(e.pointerId); } catch {} });
   addEventListener('pointermove', e => {
     mx = e.clientX / innerWidth * 2 - 1; my = e.clientY / innerHeight * 2 - 1;
-    if (!active || !dragging) return;
+    if (!active) return;
+    beanHover = e.target === canvas && overBean(e); ui.classList.toggle('bean-hover', beanHover); plate.classList.toggle('hov', beanHover);
+    if (!dragging) return;
+    moved = Math.max(moved, Math.hypot(e.clientX - downX, e.clientY - downY));
     const dx = e.clientX - lastX; lastX = e.clientX; rotVel = dx * .012; rotY += rotVel;
   });
-  addEventListener('pointerup', () => { dragging = false; });
+  addEventListener('pointerup', e => { if (dragging && active && moved < 6 && e.target === canvas && overBean(e)) { openSkins(); hopT = 0; } dragging = false; });
+  canvas.style.cursor = '';
+  const syncCursor = () => { canvas.style.cursor = active && beanHover ? 'pointer' : ''; };
 
   const play = $('lb-play'), wrap = ui.querySelector('.lb-playwrap');
   wrap.addEventListener('pointerenter', () => hover = true);
@@ -623,6 +745,11 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
     wave = THREE.MathUtils.damp(wave, hover ? 1 : 0, 6, dt);
     state.wave = wave; state.dragging = dragging;
     animate(bean, t, dt, state);
+    hoverK = THREE.MathUtils.damp(hoverK, beanHover ? 1 : !skinPanel.hidden ? .35 : 0, 10, dt); syncCursor();
+    skinMats.forEach(m => { if (m.userData.skinU) m.userData.skinU.uRim.value = hoverK * (.75 + .25 * Math.sin(t * 6)); });
+    ring.rotation.z = t * .25; ring.scale.setScalar(1 + hoverK * (.1 + .04 * Math.sin(t * 6)));
+    ringM.opacity = .55 + .45 * hoverK; disc.scale.setScalar(1 + hoverK * .08);
+    if (hopT >= 0) { hopT += dt * 2.8; const k = Math.min(hopT, 1); holder.position.y = Math.sin(k * Math.PI) * .35; if (hopT >= 1) { hopT = -1; holder.position.y = 0; } }
 
     cmx = THREE.MathUtils.damp(cmx, mx, 2.5, dt); cmy = THREE.MathUtils.damp(cmy, my, 2.5, dt);
     camera.position.set(cmx * .35, .8 - cmy * .1, camZ);
@@ -655,7 +782,7 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
   }
 
   function show() { active = true; ui.classList.remove('lb-hidden'); }
-  function hide() { active = false; dragging = false; hover = false; picker.hidden = true; ui.classList.add('lb-hidden'); }
+  function hide() { active = false; dragging = false; hover = false; beanHover = false; picker.hidden = true; skinPanel.hidden = true; canvas.style.cursor = ''; ui.classList.add('lb-hidden'); }
 
-  return { scene, camera, update, show, hide, get active() { return active; }, get mode() { return mode.id; }, ui };
+  return { scene, camera, update, show, hide, get active() { return active; }, get mode() { return mode.id; }, get skin() { return skin; }, ui };
 }
