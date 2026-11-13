@@ -19,9 +19,9 @@ export function buildHangar(scene, renderer) {
 
   const pmrem = new THREE.PMREMGenerator(renderer);
   scene.environment = pmrem.fromScene(new RoomEnvironment(), .04).texture;
-  scene.environmentIntensity = 1;
-  scene.background = new THREE.Color(0xd8dce1);
-  scene.fog = new THREE.FogExp2(0xd8dce1, .006);
+  scene.environmentIntensity = .25;
+  scene.background = new THREE.Color(0x15181d);
+  scene.fog = new THREE.FogExp2(0x15181d, .028);
 
   const add = (geo, mat, x, y, z, o = {}) => {
     const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z);
@@ -34,14 +34,14 @@ export function buildHangar(scene, renderer) {
 
   // ---------- posadzka: lustro + półprzezroczysta żywica z dużymi płytami ----------
   const [mw, mh] = mirrorSize();
-  const mirror = new Reflector(new THREE.PlaneGeometry(2 * W, FRONT - BACK), { clipBias: .003, color: 0x8d9299, textureWidth: mw, textureHeight: mh });
+  const mirror = new Reflector(new THREE.PlaneGeometry(2 * W, FRONT - BACK), { clipBias: .003, color: 0x5a5e64, textureWidth: mw, textureHeight: mh });
   mirror.rotation.x = -Math.PI / 2; mirror.position.set(0, -.002, (FRONT + BACK) / 2); scene.add(mirror);
   const floorTex = canvasTex(512, 512, (x, w, h) => {
     x.fillStyle = '#b9bec4'; x.fillRect(0, 0, w, h); const r = rng(11);
     for (let i = 0; i < 900; i++) { x.fillStyle = `rgba(${r() < .5 ? '120,126,134' : '230,233,236'},${.03 + r() * .05})`; x.beginPath(); x.arc(r() * w, r() * h, 3 + r() * 30, 0, 7); x.fill(); }
     x.strokeStyle = 'rgba(80,86,94,.45)'; x.lineWidth = 3; x.strokeRect(0, 0, w, h);
   }, { repeat: [8, 7.5] });
-  add(new THREE.PlaneGeometry(2 * W, FRONT - BACK), std(0xc4c9cf, .24, 0, { map: floorTex, transparent: true, opacity: .8 }), 0, 0, (FRONT + BACK) / 2, { rx: -Math.PI / 2, cast: false });
+  add(new THREE.PlaneGeometry(2 * W, FRONT - BACK), std(0x5e636a, .3, 0, { map: floorTex, transparent: true, opacity: .86 }), 0, 0, (FRONT + BACK) / 2, { rx: -Math.PI / 2, cast: false });
   const lineM = std(0xf4f4f0, .5);
   const bay = (cx, cz, ry) => { const g = new THREE.Group(); g.position.set(cx, .003, cz); g.rotation.y = ry; scene.add(g);
     for (const z of [-1.55, 1.55]) add(box(6, .004, .1), lineM, 0, 0, z, { parent: g, cast: false });
@@ -49,7 +49,7 @@ export function buildHangar(scene, renderer) {
 
   // ---------- ściany: biała blacha, cokół, słupy, rygle, stężenia w X ----------
   const wallTex = canvasTex(256, 256, (x, w, h) => {
-    x.fillStyle = '#dfe3e8'; x.fillRect(0, 0, w, h);
+    x.fillStyle = '#7d848c'; x.fillRect(0, 0, w, h);
     for (let i = 0; i < w; i += 16) { x.fillStyle = 'rgba(150,158,168,.18)'; x.fillRect(i, 0, 3, h); x.fillStyle = 'rgba(255,255,255,.35)'; x.fillRect(i + 4, 0, 2, h); }
   }, { repeat: [16, 4] });
   const wallM = std(0xffffff, .55, .15, { map: wallTex });
@@ -69,7 +69,7 @@ export function buildHangar(scene, renderer) {
   for (const s of [-1, 1]) for (const z of [-16, -10, -4, 2]) add(box(.45, H, .45), steelW, s * (W - .25), H / 2, z);
 
   // ---------- dach: kratownice i panele LED ----------
-  const ledM = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  const ledM = new THREE.MeshBasicMaterial({ color: 0x8a8f96 });   // wygaszone panele
   for (const z of [-19, -13, -7, -1, 5]) {
     add(box(2 * W, .3, .3), steelW, 0, H - 1.6, z, { cast: false }); add(box(2 * W, .3, .3), steelW, 0, H - .25, z, { cast: false });
     for (let i = 0; i < 16; i++) { const x0 = -W + i * 2; rod(V(x0, H - 1.6, z), V(x0 + 1, H - .25, z), .05, steelW); rod(V(x0 + 1, H - .25, z), V(x0 + 2, H - 1.6, z), .05, steelW); }
@@ -85,7 +85,16 @@ export function buildHangar(scene, renderer) {
   add(new THREE.PlaneGeometry(9, 2.25), new THREE.MeshStandardMaterial({ map: logoTex, transparent: true, roughness: .6 }), -1, 7.8, BACK + .6, { cast: false });
 
   // ---------- ściana z bronią (prawa strona tylnej ściany) ----------
-  const ars = new THREE.Group(); ars.position.set(10.8, 0, BACK + .35); scene.add(ars);
+  const ars = new THREE.Group(); ars.position.set(0, 0, -12); scene.add(ars);
+  for (const x of [-3.3, 3.3]) add(box(.25, .08, 1.4), std(0x15171b, .4, .7), x, .04, 0, { parent: ars });   // stopy wolnostojącej ściany
+  add(box(7.2, 1.05, .12), std(0x1d2025, .6, .4), 0, .52, 0, { parent: ars });
+  const tubeM = new THREE.MeshBasicMaterial({ color: 0xd8fff4, toneMapped: false });
+  for (const y of [5.75, 5.95]) add(new THREE.CylinderGeometry(.035, .035, 6.6, 8), tubeM, 0, y, .45, { parent: ars, rz: Math.PI / 2, cast: false });   // świetlówki
+  add(box(7, .08, .5), std(0x1a1c20, .5, .6), 0, 6.1, .4, { parent: ars });
+  for (const x of [-2.4, 0, 2.4]) { const l = new THREE.PointLight(0xb8ffe8, 9, 6, 1.4); l.position.set(x, 5.2, 1.2); ars.add(l); }
+  const glowF = new THREE.Sprite(new THREE.SpriteMaterial({ color: 0x9effe0, transparent: true, opacity: .35, depthWrite: false, blending: THREE.AdditiveBlending,
+    map: canvasTex(64, 32, (x, w, h) => { const g = x.createRadialGradient(32, 16, 0, 32, 16, 32); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, w, h); }) }));
+  glowF.position.set(0, 5.85, .7); glowF.scale.set(9, 1.6, 1); ars.add(glowF);
   const peg = canvasTex(256, 256, (x, w, h) => { x.fillStyle = '#23272e'; x.fillRect(0, 0, w, h); x.fillStyle = '#121418';
     for (let i = 8; i < w; i += 16) for (let j = 8; j < h; j += 16) { x.beginPath(); x.arc(i, j, 2.4, 0, 7); x.fill(); } }, { repeat: [3, 2] });
   add(box(7, 4.2, .15), std(0xffffff, .8, .2, { map: peg }), 0, 3.2, 0, { parent: ars });
@@ -119,10 +128,9 @@ export function buildHangar(scene, renderer) {
   });
   const crateM = std(0xffffff, .85, 0, { map: crateTex });
   const crate = (s, x, y, z, ry = 0) => add(box(s, s, s), crateM, x, y + s / 2, z, { ry });
-  for (const [x, z, s, y, ry] of [[-13.5, -19.5, 1.4, 0, 0], [-12, -19.6, 1.4, 0, .04], [-12.8, -19.5, 1.3, 1.4, -.06], [-14.2, -17.9, 1.2, 0, .1], [-10.6, -19.7, 1.1, 0, 0]]) crate(s, x, y, z, ry);
-  for (const [x, z, s, y, ry] of [[6.2, -20.6, 1.2, 0, .05], [6.4, -19.2, 1.1, 0, -.08]]) crate(s, x, y, z, ry);
-  crate(1.1, 6.2, 0, -2.9, -.2); crate(1, 6.15, 1.1, -2.9, -.05); crate(.8, 7.2, 0, -2.1, .3);
-  crate(1.1, -6.3, 0, -3.1, .15); crate(.9, -6.2, 1.1, -3.05, .35); crate(.8, -7.3, 0, -2.2, -.2);
+  // stos skrzyń ok. 5 m za graczem (po bokach, żeby nie zasłaniać fasolki)
+  for (const [x, z, s, y, ry] of [[-2.6, -5.2, 1.3, 0, .05], [-3.95, -5.4, 1.3, 0, -.06], [-3.3, -5.3, 1.2, 1.3, .12], [-5.1, -4.6, 1.0, 0, .3],
+    [2.7, -5.4, 1.3, 0, -.08], [4.05, -5.2, 1.2, 0, .1], [3.3, -5.3, 1.1, 1.3, -.15], [5.2, -4.4, .9, 0, -.25], [1.6, -4.6, .7, 0, .4]]) crate(s, x, y, z, ry);
 
   // ---------- gotówka: paleta z pakietami banknotów i czarne torby sportowe ----------
   const cashTex = canvasTex(128, 64, (x, w, h) => { x.fillStyle = '#5c8a57'; x.fillRect(0, 0, w, h); x.fillStyle = '#7fa874'; x.fillRect(6, 6, w - 12, h - 12);
@@ -284,18 +292,15 @@ export function buildHangar(scene, renderer) {
 
   // ustawienie: zaparkowane za graczem, nieruchome
   const park = (g, x, z, ry) => { g.position.set(x, 0, z); g.rotation.y = ry; scene.add(g); bay(x, z, ry); };
-  park(wedgeCar(0xff4a0a), -4.9, -6.6, 2.62);
-  park(hyperCar(0x86acd8, 0x1a2a55), 5.2, -6.9, .52);
-  park(luxSedan(0xc6ab84, 0x4a1322), 1.2, -12.2, .45);
 
   // ---------- światło ----------
-  scene.add(new THREE.HemisphereLight(0xffffff, 0xa7adb5, 1.35));
-  const sun = new THREE.DirectionalLight(0xffffff, 1.7);
+  scene.add(new THREE.HemisphereLight(0x8a94a8, 0x2a2c30, .45));
+  const sun = new THREE.DirectionalLight(0xcfd8ff, .35);
   sun.position.set(4, 18, 8); sun.target.position.set(0, 0, -6); sun.castShadow = true;
   sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -.0004; sun.shadow.normalBias = .02;
   Object.assign(sun.shadow.camera, { left: -14, right: 14, top: 14, bottom: -14, near: 2, far: 45 });
   scene.add(sun, sun.target);
-  const key = new THREE.SpotLight(0xfff6ea, 25, 16, .45, .7, 1.2); key.position.set(0, 9, 3); key.target.position.set(0, .6, 0); scene.add(key, key.target);
+  const key = new THREE.SpotLight(0xfff0dc, 40, 16, .4, .65, 1.2); key.position.set(0, 9, 3); key.target.position.set(0, .6, 0); scene.add(key, key.target);
 
   addEventListener('resize', () => mirror.getRenderTarget().setSize(...mirrorSize()));
   return { update() {} };
