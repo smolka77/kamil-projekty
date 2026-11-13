@@ -308,11 +308,11 @@ const CSS = `
 #lb-ui .lb-dsub{font:700 12px/1 Inter,sans-serif;letter-spacing:.42em;text-transform:uppercase;color:var(--mut);padding-left:.42em}
 #lb-ui .lb-dtitle{margin:-12px 0 0;font:400 clamp(34px,5vw,54px)/1 Anton,Oswald,Impact,sans-serif;letter-spacing:.06em;transform:skewX(-6deg)}
 #lb-ui .lb-dtitle b{color:var(--acc);font-weight:400}
-#lb-ui .lb-reelwin{position:relative;width:min(1240px,100%);height:280px;overflow:hidden;
+#lb-ui .lb-reelwin{position:relative;width:min(1240px,100%);height:360px;overflow:hidden;
   -webkit-mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent)}
 #lb-ui .lb-reelwin::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:3px;margin-left:-1.5px;background:var(--acc);z-index:2;box-shadow:0 0 14px var(--acc),0 0 30px rgba(255,198,41,.6)}
 #lb-ui .lb-reelwin::after{content:"";position:absolute;left:50%;top:0;margin-left:-11px;border:11px solid transparent;border-top-color:var(--acc);z-index:2;filter:drop-shadow(0 0 6px var(--acc))}
-#lb-ui .lb-reel{display:flex;gap:16px;padding:20px 0;will-change:transform}
+#lb-ui .lb-reel{display:flex;gap:16px;padding:60px 0;will-change:transform}
 #lb-ui .lb-mcard{position:relative;flex:none;width:384px;height:240px;border-radius:16px;overflow:hidden;background:#1a2030;
   box-shadow:0 0 0 1px rgba(255,255,255,.2),0 16px 34px rgba(0,0,0,.5);transition:transform .3s ease,box-shadow .3s ease,opacity .3s ease,filter .3s ease}
 #lb-ui .lb-mcard svg,#lb-ui .lb-mcard img{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:cover}
@@ -395,7 +395,8 @@ const CSS = `
   #lb-ui .lb-msvg{width:40px;height:62px}
   #lb-ui .lb-kbfoot{flex-direction:column;align-items:stretch}
   #lb-ui .lb-dlg{padding:16px}
-  #lb-ui .lb-reelwin{height:196px}
+  #lb-ui .lb-reelwin{height:260px}
+  #lb-ui .lb-reel{padding:50px 0}
   #lb-ui .lb-mcard{width:256px;height:160px;border-radius:12px}
   #lb-ui .lb-mcard span{font-size:22px;left:12px;bottom:10px}
   #lb-ui .lb-phantom{position:static;margin-top:12px}
