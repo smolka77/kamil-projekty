@@ -208,6 +208,89 @@ export function buildHangar(scene, renderer) {
     return m;
   };
 
+  // ---------- supersportowe w stylu Aventadora: fasetowa bryła z przekrojów (loft), przód = -X ----------
+  function loft(stations, caps = true) {          // stations: tablica przekrojów, każdy = punkty [x, z, y] połowy auta (od dołu środka do góry środka)
+    const pos = [], P = (q, s) => [q[0], q[2], s * q[1]], tri = (a, b, c) => pos.push(...a, ...b, ...c);
+    for (let i = 0; i < stations.length - 1; i++) for (let k = 0; k < stations[i].length - 1; k++) for (const s of [1, -1]) {
+      const a = P(stations[i][k], s), b = P(stations[i][k + 1], s), c = P(stations[i + 1][k + 1], s), d = P(stations[i + 1][k], s);
+      tri(a, b, c); tri(a, c, d);
+    }
+    if (caps) for (const st of [stations[0], stations[stations.length - 1]]) {
+      const ring = [...st.map(q => P(q, 1)), ...st.slice().reverse().map(q => P(q, -1))], c = ring.reduce((m, q) => [m[0] + q[0] / ring.length, m[1] + q[1] / ring.length, m[2] + q[2] / ring.length], [0, 0, 0]);
+      for (let k = 0; k < ring.length; k++) tri(c, ring[k], ring[(k + 1) % ring.length]);
+    }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.computeVertexNormals(); return g;
+  }
+  function plateAt(g, pts, mat, z, s) {           // płaska wstawka na boku: pts [x, y] w płaszczyźnie boku
+    const sh = new THREE.Shape(); sh.moveTo(...pts[0]); pts.slice(1).forEach(q => sh.lineTo(...q));
+    const m = add(new THREE.ShapeGeometry(sh), mat, 0, 0, s * z, { parent: g, cast: false }); if (s < 0) { m.scale.z = -1; } return m;
+  }
+  function lamboCar(color) {
+    const g = new THREE.Group();
+    const body = new THREE.MeshPhysicalMaterial({ color, metalness: .45, roughness: .25, clearcoat: 1, clearcoatRoughness: .05, flatShading: true, side: THREE.DoubleSide });
+    const carbon = std(0x0b0c0e, .45, .4, { flatShading: true, side: THREE.DoubleSide }), glassF = new THREE.MeshPhysicalMaterial({ color: 0x0a0d12, metalness: .6, roughness: .05, clearcoat: 1, flatShading: true, side: THREE.DoubleSide });
+    // nadwozie: nos spiczasty w rzucie z góry, wysokie błotniki, wcięty bok, szeroki tył
+    const ST = [
+      [[-2.44, 0, .27], [-2.36, .42, .26], [-2.18, .8, .3], [-2.1, .9, .4], [-2.14, .84, .5], [-2.3, .5, .52], [-2.44, 0, .5]],
+      [[-1.8, 0, .17], [-1.8, .8, .17], [-1.8, .96, .3], [-1.8, 1.0, .5], [-1.8, .98, .66], [-1.8, .74, .71], [-1.8, 0, .64]],
+      [[-1.05, 0, .17], [-1.05, .8, .17], [-1.05, .95, .3], [-1.05, .99, .52], [-1.05, .96, .75], [-1.05, .74, .81], [-1.05, 0, .8]],
+      [[0, 0, .17], [0, .82, .17], [0, .89, .3], [0, .9, .48], [0, .94, .77], [0, .8, .87], [0, 0, .87]],
+      [[1.0, 0, .17], [1.0, .84, .17], [1.0, .97, .3], [1.0, 1.04, .52], [1.0, 1.01, .83], [1.0, .78, .93], [1.0, 0, .93]],
+      [[1.75, 0, .19], [1.75, .84, .19], [1.75, .99, .32], [1.75, 1.04, .56], [1.75, .99, .85], [1.75, .76, .91], [1.75, 0, .9]],
+      [[2.36, 0, .3], [2.36, .74, .3], [2.4, .9, .38], [2.42, .95, .56], [2.38, .92, .8], [2.32, .7, .86], [2.32, 0, .86]],
+    ];
+    add(loft(ST), body, 0, 0, 0, { parent: g });
+    const halfAt = (st, y) => { const pts = st.slice(1, 6); if (y <= pts[0][2]) return pts[0][1]; for (let k = 0; k < pts.length - 1; k++) { const [, z0, y0] = pts[k], [, z1, y1] = pts[k + 1];
+      if (y <= y1) return z0 + (z1 - z0) * (y - y0) / (y1 - y0); } return pts[pts.length - 1][1]; };
+    const surfZ = (x, y) => { let i = 0; while (i < ST.length - 2 && ST[i + 1][3][0] < x) i++; const xa = ST[i][3][0], xb = ST[i + 1][3][0], t = Math.min(1, Math.max(0, (x - xa) / (xb - xa)));
+      return halfAt(ST[i], y) * (1 - t) + halfAt(ST[i + 1], y) * t; };
+    const hug = (geo, mat, s, dx = 0, dy = 0, off = .008) => { const p = geo.attributes.position; for (let i = 0; i < p.count; i++) p.setZ(i, s * (surfZ(p.getX(i) + dx, p.getY(i) + dy) + off));
+      geo.translate(dx, dy, 0); geo.computeVertexNormals(); return add(geo, mat, 0, 0, 0, { parent: g, cast: false }); };
+    const shapeG = pts => { const sh = new THREE.Shape(); sh.moveTo(...pts[0]); pts.slice(1).forEach(q => sh.lineTo(...q)); const geo = new THREE.ShapeGeometry(sh); return geo; };
+
+    // kabina ze szkła + lakierowany dach
+    add(loft([
+      [[-1.08, .73, .8], [-1.08, .6, .82], [-1.08, 0, .84]],
+      [[-.22, .8, .86], [-.18, .56, 1.1], [-.18, 0, 1.13]],
+      [[.55, .82, .88], [.55, .56, 1.1], [.55, 0, 1.12]],
+      [[1.4, .74, .92], [1.4, .5, .97], [1.4, 0, .98]],
+    ]), glassF, 0, 0, 0, { parent: g });
+    add(loft([[[-.2, .5, 1.105], [-.2, 0, 1.135]], [[.57, .5, 1.105], [.57, 0, 1.125]]]), body, 0, .006, 0, { parent: g });
+    for (let i = 0; i < 5; i++) add(box(.09, .02, .78 - i * .06), carbon, 1.55 + i * .16, .93 - i * .012, 0, { parent: g, cast: false });   // żaluzje nad silnikiem
+    add(box(.06, .02, 1.6), carbon, 2.28, .88, 0, { parent: g, rz: .25 });                                   // spojler
+    for (const s of [-1, 1]) {
+      // duży wlot za drzwiami i mniejszy nad tylnym kołem
+      hug(shapeG([[.25, .34], [.95, .36], [1.0, .78], [.62, .74]]), carbon, s);
+      hug(shapeG([[1.12, .82], [1.18, .74], [1.55, .74], [1.62, .84]]), carbon, s);
+      // sześciokątne nadkola (ciemne tło za kołem)
+      for (const wx of [-1.42, 1.36]) hug(new THREE.CircleGeometry(.47, 6, 0, Math.PI), carbon, s, wx, .3, .006);   // sześciokątne nadkola
+      add(box(2.0, .07, .06), carbon, .0, .22, s * .9, { parent: g });                                      // próg
+      // przód: kanciaste wloty, światła Y
+      add(box(.1, .13, .34), carbon, -2.24, .34, s * .58, { parent: g, ry: s * .55, cast: false });         // kanciaste wloty z przodu
+      add(box(.1, .05, .22), carbon, -2.18, .43, s * .76, { parent: g, ry: s * 1.0, rz: -.3, cast: false });
+      add(box(.36, .03, .05), headM, -2.16, .49, s * .66, { parent: g, ry: s * .62, rz: .06, cast: false });
+      add(box(.16, .03, .05), headM, -2.25, .45, s * .56, { parent: g, ry: -s * .4, cast: false });
+      add(box(.16, .03, .05), headM, -2.06, .45, s * .78, { parent: g, ry: s * 1.3, cast: false });
+      // tył: światła Y, kratka
+      add(box(.05, .03, .36), tailM, 2.4, .7, s * .64, { parent: g, ry: s * .25, rz: .2, cast: false });
+      add(box(.05, .16, .03), tailM, 2.4, .63, s * .5, { parent: g, rz: .4, cast: false });
+      add(box(.05, .03, .14), tailM, 2.4, .6, s * .78, { parent: g, ry: -s * .3, cast: false });
+      // lusterko na wysięgniku
+      add(box(.04, .03, .14), carbon, -.62, .95, s * .87, { parent: g });
+      add(box(.18, .09, .07), body, -.66, .97, s * .97, { parent: g });
+    }
+    add(box(.4, .04, 1.5), carbon, -2.25, .2, 0, { parent: g });                                            // splitter
+    add(box(.04, .26, 1.4), mesh, 2.42, .52, 0, { parent: g, cast: false });                                // kratka z tyłu
+    for (let i = -3; i <= 3; i++) add(box(.3, .12, .02), carbon, 2.3, .24, i * .2, { parent: g, cast: false });   // dyfuzor
+    add(new THREE.CylinderGeometry(.11, .11, .14, 6), std(0x2a2b2e, .3, .9), 2.43, .34, 0, { parent: g, rz: Math.PI / 2 });   // sześciokątny wydech
+    add(new THREE.CylinderGeometry(.08, .08, .15, 6), std(0x050505, 1), 2.44, .34, 0, { parent: g, rz: Math.PI / 2, cast: false });
+    // koła: duże, czarne felgi z żółtymi zaciskami (bez ciemnych półkoli z addWheels – nadkola są wyżej)
+    for (const s of [-1, 1]) for (const [x, z] of [[-1.42, .9], [1.36, .94]]) {
+      const w = wheel(std(0x141518, .25, .85), 10, { sw: .035, twist: .3, caliper: true, r: .37 }); w.position.set(x, .37, s * z); if (s < 0) w.rotation.y = Math.PI; g.add(w);
+    }
+    return g;
+  }
+
   // 1) klinowe supersportowe (pomarańczowe, jak na zdjęciu nr 1)
   function wedgeCar(color) {
     const g = new THREE.Group(), body = paint(color), D = 1.84, B = .1;
@@ -320,8 +403,8 @@ export function buildHangar(scene, renderer) {
     addWheels(g, [-1.42, 1.38], .9, .44, rimM, 6, { sw: .07, r: .44 });
     return g;
   }
-  const park = (g, x, z, ry) => { g.position.set(x, 0, z); g.rotation.y = ry; scene.add(g); bay(x, z, ry); };
-  park(wedgeCar(0xc81e1e), -4.6, -5.6, 1.99);       // sportowe z przodu, przodem do gracza
+  const park = (g, x, z, ry) => { g.position.set(x, 0, z); g.rotation.y = ry; scene.add(g); };
+  park(lamboCar(0xff5a0a), -4.6, -5.6, 1.99);       // sportowe z przodu, przodem do gracza
   park(gWagon(0x1d1f22), -3.2, -10.2, 2.2);      // terenowe z tyłu
 
   // ---------- światło ----------
