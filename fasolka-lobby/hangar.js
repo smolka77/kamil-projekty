@@ -85,7 +85,7 @@ export function buildHangar(scene, renderer) {
   add(new THREE.PlaneGeometry(9, 2.25), new THREE.MeshStandardMaterial({ map: logoTex, transparent: true, roughness: .6 }), -1, 7.8, BACK + .6, { cast: false });
 
   // ---------- ściana z bronią (prawa strona tylnej ściany) ----------
-  const ars = new THREE.Group(); ars.position.set(2.7, 0, -10.5); ars.rotation.y = -.22; ars.scale.setScalar(.62); scene.add(ars);   // lekko po prawej, przodem do gracza
+  const ars = new THREE.Group(); ars.position.set(3.0, 0, -9.6); ars.rotation.y = -.29; ars.scale.setScalar(.62); scene.add(ars);   // lekko po prawej, przodem do gracza
   for (const x of [-3.3, 3.3]) add(box(.25, .08, 1.4), std(0x15171b, .4, .7), x, .04, 0, { parent: ars });   // stopy wolnostojącej ściany
   add(box(7.2, 1.05, .12), std(0x1d2025, .6, .4), 0, .52, 0, { parent: ars });
   const tubeM = new THREE.MeshBasicMaterial({ color: 0xd8fff4, toneMapped: false });
@@ -159,9 +159,9 @@ export function buildHangar(scene, renderer) {
     return g;
   }
   // 3 skrzynie po prawej od ściany z bronią, na nich 2 torby, trzecia na podłodze
-  crate(.85, 5.55, 0, -10.0, -.3); crate(.85, 6.5, 0, -10.3, -.22); crate(.75, 6.0, .85, -10.15, -.35);
-  moneyBag(5.5, .85, -9.95, -.45, true); moneyBag(6.0, 1.6, -10.15, -.2, true); moneyBag(4.9, 0, -8.9, .35, false);
-  bundle(scene, 5.35, .06, -8.55, .6); bundle(scene, 5.5, .06, -8.45, 1.1); bundle(scene, 5.42, .18, -8.5, .8);
+  crate(.85, 5.85, 0, -8.5, -.3); crate(.85, 6.7, 0, -8.1, -.25); crate(.75, 6.25, .85, -8.3, -.35);
+  moneyBag(5.8, .85, -8.45, -.45, true); moneyBag(6.25, 1.6, -8.3, -.2, true); moneyBag(5.6, 0, -7.2, .35, false);
+  bundle(scene, 6.0, .06, -6.85, .6); bundle(scene, 6.15, .06, -6.75, 1.1); bundle(scene, 6.07, .18, -6.8, .8);
 
   // ---------- auta ----------
   const paint = (c, r = .22) => new THREE.MeshPhysicalMaterial({ color: c, metalness: .55, roughness: r, clearcoat: 1, clearcoatRoughness: .04 });
@@ -321,8 +321,8 @@ export function buildHangar(scene, renderer) {
     return g;
   }
   const park = (g, x, z, ry) => { g.position.set(x, 0, z); g.rotation.y = ry; scene.add(g); bay(x, z, ry); };
-  park(wedgeCar(0xd6d7db), -3.5, -6.3, 2.1);       // sportowe z przodu, przodem do gracza
-  park(gWagon(0x1d1f22), -6.8, -10.6, 2.0);      // terenowe z tyłu
+  park(wedgeCar(0xc81e1e), -4.6, -5.6, 1.99);       // sportowe z przodu, przodem do gracza
+  park(gWagon(0x1d1f22), -3.2, -10.2, 2.2);      // terenowe z tyłu
 
   // ---------- światło ----------
   scene.add(new THREE.HemisphereLight(0x8a94a8, 0x2a2c30, .45));
