@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { buildVillage } from './village.js';
 import { buildBattlefield } from './battlefield.js';
+import { buildHangar } from './hangar.js';
 
 const CSS = `
 #lb-ui{position:fixed;inset:0;z-index:20;pointer-events:none;font-family:'Anton',Impact,'Arial Narrow Bold',sans-serif;color:#fff;
@@ -105,6 +106,26 @@ const CSS = `
 #lb-ui .lb-skin small{font:700 9px/1 system-ui,sans-serif;letter-spacing:.12em;color:#ffe14a;min-height:9px}
 #lb-ui .lb-skins .lb-close{align-self:flex-start;margin-top:auto}
 @media (max-width:640px){#lb-ui .lb-skins{top:auto;bottom:16px;height:52vh;left:16px;right:16px;width:auto}#lb-ui .lb-skins .grid{grid-template-columns:repeat(4,1fr)}}
+#lb-ui .lb-gear{position:absolute;left:max(20px,env(safe-area-inset-left));top:78px;pointer-events:auto;width:36px;height:36px;border-radius:9px;cursor:pointer;
+  border:2px solid rgba(255,255,255,.18);background:rgba(10,22,48,.55);color:#cfe0ff;display:grid;place-items:center;transition:background .15s,color .15s}
+#lb-ui .lb-gear:hover{background:rgba(20,40,82,.8);color:#ffe14a}
+#lb-ui .lb-gear svg{width:20px;height:20px}
+#lb-ui .lb-admin{position:absolute;inset:0;pointer-events:auto;display:grid;place-items:center;background:rgba(4,8,20,.6);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+#lb-ui .lb-admin[hidden]{display:none}
+#lb-ui .lb-admin .box{width:min(460px,calc(100vw - 32px));background:#121a2e;border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:20px 22px;
+  font:14px/1.4 system-ui,sans-serif;color:#dfe6f5;box-shadow:0 20px 50px rgba(0,0,0,.5)}
+#lb-ui .lb-admin h3{margin:0 0 2px;font:700 18px system-ui,sans-serif;color:#fff}
+#lb-ui .lb-admin .sub{margin:0 0 16px;color:#8d9bb8;font-size:12px}
+#lb-ui .lb-admin h4{margin:0 0 8px;font:600 12px system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#8d9bb8}
+#lb-ui .lb-admin label{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid rgba(255,255,255,.1);border-radius:8px;margin-bottom:8px;cursor:pointer}
+#lb-ui .lb-admin label:hover{background:rgba(255,255,255,.04)}
+#lb-ui .lb-admin label:has(input:checked){border-color:#ffe14a;background:rgba(255,225,74,.07)}
+#lb-ui .lb-admin input{margin-top:3px;accent-color:#ffe14a}
+#lb-ui .lb-admin label b{display:block;color:#fff;font-weight:600}
+#lb-ui .lb-admin label small{color:#8d9bb8}
+#lb-ui .lb-admin .row{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+#lb-ui .lb-admin button.btn{font:600 13px system-ui,sans-serif;border-radius:7px;padding:8px 14px;cursor:pointer;border:1px solid rgba(255,255,255,.18);background:transparent;color:#dfe6f5}
+#lb-ui .lb-admin button.btn.pri{background:#ffe14a;border-color:#ffe14a;color:#1d1400}
 #lb-ui .lb-hint{position:absolute;left:max(20px,env(safe-area-inset-left));bottom:max(24px,env(safe-area-inset-bottom));
   font:500 13px/1.4 system-ui,sans-serif;color:rgba(255,255,255,.82);text-shadow:0 1px 3px rgba(0,0,0,.5)}
 @media (max-width:640px){
@@ -132,6 +153,12 @@ const HTML = `
     <div><small>TRYB GRY</small><span id="lb-mode-name"></span><em id="lb-mode-desc"></em></div><i class="lb-chev">ZMIEŃ ›</i></button>
   <div class="lb-playwrap"><button class="lb-play" id="lb-play" type="button"><span>GRAJ</span></button></div>
 </div>
+<button class="lb-gear" id="lb-gear" type="button" title="Panel admina (Ctrl+Shift+A)" aria-label="Panel admina"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+<div class="lb-admin" id="lb-admin" role="dialog" aria-label="Panel admina" hidden><div class="box">
+  <h3>Panel admina</h3><p class="sub">Ustawienia zapisują się w tej przeglądarce.</p>
+  <h4>Mapa lobby</h4><div id="lb-admin-maps"></div>
+  <div class="row"><button class="btn" id="lb-admin-cancel" type="button">Anuluj</button><button class="btn pri" id="lb-admin-save" type="button">Zapisz i przeładuj lobby</button></div>
+</div></div>
 <div class="lb-hint">Przeciągnij, aby obrócić postać · kliknij fasolkę, aby zmienić skin</div>
 <div class="lb-skins" id="lb-skins" role="dialog" aria-label="Wybór skina" hidden>
   <h2>SKINY</h2>
@@ -233,6 +260,11 @@ const ART = {
       ${finish(u)}</svg>`;
   },
 };
+export const LOBBY_MAPS = [
+  { id: 'pole-bitwy', name: 'Pole bitwy', desc: 'Zachód słońca, okopy, czołgi i wioska' },
+  { id: 'las', name: 'Las', desc: 'Dzień, gęsty las i wioska, bez czołgów' },
+  { id: 'hangar', name: 'Hangar', desc: 'Jasny hangar z autami i arsenałem' },
+];
 export const SKINS = [
   { id: 'klasyk', name: 'Klasyczna', c: 0xf0b440 },
   { id: 'kamuflaz', name: 'Kamuflaż', c: 0x5a6438, c2: 0x7f7548, c3: 0x2f3524, p: 1, tag: 'WOJSKO' },
@@ -360,12 +392,13 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
 
   // ---------- scena ----------
   const scene = new THREE.Scene();
-  const HORIZON = new THREE.Color(0xf4a46e);                        // zachód słońca: ciepły horyzont
+  // ---------- mapa lobby: las (dzień), pole bitwy (zachód, okopy, czołgi) albo hangar ----------
+  function buildForest(SUNSET) {
+  const HORIZON = new THREE.Color(SUNSET ? 0xf4a46e : 0xcfe9ff);   // zachód słońca albo dzień
   scene.fog = new THREE.FogExp2(HORIZON, 0.0105);   // lekka mgła: przy postaci niewidoczna, gęstnieje z odległością
-  const camera = new THREE.PerspectiveCamera(32, innerWidth / innerHeight, 0.1, 1200);
 
   // niebo: gradient na kuli
-  const skyU = { top: { value: new THREE.Color(0x2b2f6b) }, mid: { value: new THREE.Color(0xc8657c) }, bot: { value: HORIZON } };
+  const skyU = { top: { value: new THREE.Color(SUNSET ? 0x2b2f6b : 0x1d63d8) }, mid: { value: new THREE.Color(SUNSET ? 0xc8657c : 0x5fb0ff) }, bot: { value: HORIZON } };
   const SKY_GLSL = `uniform vec3 top,mid,bot;
     vec3 skyCol(float h){vec3 c=mix(bot,mid,smoothstep(0.,.18,h));return mix(c,top,smoothstep(.18,.75,h));}`;
   scene.add(new THREE.Mesh(new THREE.SphereGeometry(600, 32, 16), new THREE.ShaderMaterial({
@@ -377,7 +410,7 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
       }`,
   })));
   // materiał gór "za mgłą": kolor nieba w tym kierunku zmieszany z barwą góry (amt = ile góry widać)
-  const SUN_DIR = new THREE.Vector3(-.55, .32, -.77).normalize();   // nisko, z lewej za wioską
+  const SUN_DIR = (SUNSET ? new THREE.Vector3(-.55, .32, -.77) : new THREE.Vector3(7, 13, 6)).normalize();   // nisko, z lewej za wioską
   function hazeMat(tint, amt, fullAt) {
     return new THREE.ShaderMaterial({
       fog: false,
@@ -405,13 +438,13 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
     const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
   })();
   const sunSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, fog: false, depthWrite: false, transparent: true }));
-  sunSprite.position.set(-150, 58, -430); sunSprite.scale.setScalar(240); sunSprite.material.color.set(0xffc078); scene.add(sunSprite);
+  if (SUNSET) { sunSprite.position.set(-150, 58, -430); sunSprite.scale.setScalar(240); sunSprite.material.color.set(0xffc078); } else { sunSprite.position.set(150, 150, -420); sunSprite.scale.setScalar(150); } scene.add(sunSprite);
 
   // światła
-  scene.add(new THREE.HemisphereLight(0xffb898, 0x3d3324, 1.15));
-  const sun = new THREE.DirectionalLight(0xff9a52, 2.9);
+  scene.add(SUNSET ? new THREE.HemisphereLight(0xffb898, 0x3d3324, 1.15) : new THREE.HemisphereLight(0xd6ecff, 0x557a33, 1.35));
+  const sun = new THREE.DirectionalLight(SUNSET ? 0xff9a52 : 0xfff0d2, SUNSET ? 2.9 : 2.6);
   sun.target.position.set(0, 0, -10); sun.position.copy(SUN_DIR).multiplyScalar(32).add(sun.target.position); sun.castShadow = true;   // cień obejmuje też wioskę
-  const fillL = new THREE.DirectionalLight(0x9aa6d8, 1.05); fillL.position.set(4, 6, 10); scene.add(fillL);   // chłodne doświetlenie od kamery
+  const fillL = new THREE.DirectionalLight(0x9aa6d8, SUNSET ? 1.05 : 0); fillL.position.set(4, 6, 10); scene.add(fillL);   // chłodne doświetlenie od kamery
   sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -0.0005; sun.shadow.normalBias = 0.02;
   Object.assign(sun.shadow.camera, { left: -20, right: 20, top: 20, bottom: -20, near: 1, far: 60 });
   scene.add(sun, sun.target);
@@ -440,8 +473,8 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
   ground.receiveShadow = true; scene.add(ground);
 
   // góry na horyzoncie (bliższe pasmo, lekko zamglone)
-  const mountMat = hazeMat(0x5b4a6c, .8, 40);
-  const snowMat = hazeMat(0xffcfc0, .82, 40);
+  const mountMat = hazeMat(SUNSET ? 0x5b4a6c : 0x6f9cc0, SUNSET ? .8 : .78, 40);
+  const snowMat = hazeMat(SUNSET ? 0xffcfc0 : 0xf4f8ff, .82, 40);
   for (let i = 0; i < 12; i++) {
     const h = R(28, 52), r = h * R(1.3, 1.8), g = new THREE.Group();
     const m = new THREE.Mesh(new THREE.ConeGeometry(r, h, 9), mountMat); m.position.y = h / 2; g.add(m);
@@ -449,7 +482,7 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
     g.position.set(-330 + i * 60 + R(-20, 20), -6, R(-300, -250)); g.rotation.y = R(0, 6); scene.add(g);
   }
   // dalekie pasmo: ogromne, ledwo widoczne zza mgły
-  const farMat = hazeMat(0x6a4f72, .3, 120), farSnow = hazeMat(0xffd8c8, .22, 120);
+  const farMat = hazeMat(SUNSET ? 0x6a4f72 : 0x4f74a6, SUNSET ? .3 : .26, 120), farSnow = hazeMat(SUNSET ? 0xffd8c8 : 0xffffff, SUNSET ? .22 : .2, 120);
   for (let i = 0; i < 16; i++) {
     const h = R2(80, 150), r = h * R2(1.4, 2.1), g = new THREE.Group();
     const m = new THREE.Mesh(new THREE.ConeGeometry(r, h, 10), farMat); m.position.y = h / 2; g.add(m);
@@ -458,7 +491,7 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
   }
 
   // chmury
-  const cloudMat = new THREE.MeshStandardMaterial({ color: 0xffc9a8, emissive: 0xa0506a, emissiveIntensity: .55, roughness: 1, fog: false });
+  const cloudMat = new THREE.MeshStandardMaterial({ color: SUNSET ? 0xffc9a8 : 0xffffff, emissive: SUNSET ? 0xa0506a : 0x9fb8d8, emissiveIntensity: SUNSET ? .55 : .6, roughness: 1, fog: false });
   const cloudGeo = new THREE.SphereGeometry(1, 18, 12);
   const clouds = [];
   for (let i = 0; i < 16; i++) {
@@ -506,7 +539,7 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
 
   // ---------- wioska ~20 m za graczem ----------
   const village = buildVillage(scene, heightAt);
-  const battle = buildBattlefield(scene, heightAt);
+  const battle = SUNSET ? buildBattlefield(scene, heightAt) : { zones: [], update() {} };
   village.zones.push(...battle.zones);   // drzewa omijają też okopy, czołgi i leje
 
   // ---------- las: gęsty, zwarty, z nieregularnymi koronami (instancje, kołysanie na wietrze) ----------
@@ -606,7 +639,7 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
   // krzaki, kamienie
   const rockMat = new THREE.MeshStandardMaterial({ color: 0x9aa3a8, roughness: 1, flatShading: true });
   const rockGeo = new THREE.DodecahedronGeometry(1, 0);
-  [[-2.8, -2.2, .32], [3.4, -2.8, .45], [2.3, 1.0, .18], [-3.9, .3, .24], [7.4, -8.2, .7]].forEach(([x, z, s]) => {
+  [[-2.8, -2.2, .32], [3.4, -2.8, .45], [2.3, 1.0, .18], [-3.9, .3, .24], [7.4, -8.2, .7], ...(SUNSET ? [] : [[-7, -9, .9]])].forEach(([x, z, s]) => {
     const r = new THREE.Mesh(rockGeo, rockMat); r.scale.set(s * 1.3, s * .8, s); r.position.set(x, s * .35, z);
     r.rotation.set(rnd(), rnd() * 6, rnd()); r.castShadow = r.receiveShadow = true; scene.add(r);
   });
@@ -654,6 +687,33 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
   }));
   scene.add(pollen);
 
+    return (t, dt) => {
+      wind.value = t; village.update(t, dt); battle.update(t, dt);
+      clouds.forEach(c => { c.position.x += c.userData.v * dt; if (c.position.x > 360) c.position.x = -360; });
+      flocks.forEach(f => {
+        const p = f.group.position;
+        p.addScaledVector(f.v, f.speed * dt); p.y = f.y + Math.sin(t * .45 + f.bob) * .8;
+        f.left -= f.speed * dt; if (f.left < 0) launchFlock(f, false);
+        f.birds.forEach(b => {
+          const u = b.userData, glide = THREE.MathUtils.smoothstep(Math.sin(t * .35 + u.ph), .45, .8);
+          const a = THREE.MathUtils.lerp(.15 + Math.sin(t * u.f + u.ph) * .6, .1, glide);
+          u.L.rotation.x = -a; u.R.rotation.x = a; b.position.y += Math.cos(t * u.f + u.ph) * .002;
+        });
+      });
+      const pa = pollenGeo.attributes.position;
+      for (let i = 0; i < POLLEN; i++) {
+        let y = pa.getY(i) + dt * (.12 + (i % 5) * .03); if (y > 5) y = 0;
+        pa.setY(i, y); pa.setX(i, pa.getX(i) + Math.sin(t * .8 + i) * dt * .08);
+      }
+      pa.needsUpdate = true;
+    };
+  }
+  const LOBBY_MAP = LOBBY_MAPS.some(m => m.id === store.get('fasolka-lobby-map')) ? store.get('fasolka-lobby-map') : LOBBY_MAPS[0].id;
+  const camera = new THREE.PerspectiveCamera(32, innerWidth / innerHeight, 0.1, 1200);
+  let envUpdate;
+  if (LOBBY_MAP === 'hangar') { const h = buildHangar(scene, renderer); envUpdate = (t, dt) => h.update(t, dt); }
+  else envUpdate = buildForest(LOBBY_MAP === 'pole-bitwy');
+
   // cień kontaktowy pod fasolką
   const blob = (() => {
     const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d');
@@ -699,6 +759,17 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
   addEventListener('keydown', e => { if (e.key === 'Escape' && !skinPanel.hidden) { closeSkins(); e.stopPropagation(); } }, true);
   let hopT = -1;
   setSkin(skin);
+  // panel admina: wybór mapy lobby (zmiana wymaga przeładowania strony)
+  const admin = $('lb-admin'), adminMaps = $('lb-admin-maps');
+  LOBBY_MAPS.forEach(m => { const l = document.createElement('label'); l.innerHTML = '<input type="radio" name="lb-lmap"><div><b></b><small></small></div>';
+    const inp = l.querySelector('input'); inp.value = m.id; inp.checked = m.id === LOBBY_MAP; l.querySelector('b').textContent = m.name; l.querySelector('small').textContent = m.desc; adminMaps.appendChild(l); });
+  const openAdmin = () => { adminMaps.querySelectorAll('input').forEach(i => i.checked = i.value === LOBBY_MAP); admin.hidden = false; };
+  $('lb-gear').addEventListener('click', openAdmin);
+  $('lb-admin-cancel').addEventListener('click', () => admin.hidden = true);
+  admin.addEventListener('click', e => { if (e.target === admin) admin.hidden = true; });
+  $('lb-admin-save').addEventListener('click', () => { const v = adminMaps.querySelector('input:checked').value; store.set('fasolka-lobby-map', v); if (v !== LOBBY_MAP) location.reload(); else admin.hidden = true; });
+  addEventListener('keydown', e => { if (!active) return; if (e.ctrlKey && e.shiftKey && e.code === 'KeyA') { e.preventDefault(); admin.hidden ? openAdmin() : (admin.hidden = true); }
+    if (e.key === 'Escape' && !admin.hidden) { admin.hidden = true; e.stopPropagation(); } }, true);
   bean.rotation.y = Math.PI;                 // model patrzy w -Z, kamera stoi na +Z
   bean.traverse(o => { if (o.isMesh) o.castShadow = true; });
 
@@ -708,8 +779,8 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
   function frameCamera() {
     camera.aspect = innerWidth / innerHeight;
     const portrait = camera.aspect < 0.8;
-    camera.fov = portrait ? 42 : 30;
-    camZ = portrait ? 6.2 : 6;
+    camera.fov = LOBBY_MAP === 'hangar' ? (portrait ? 44 : 36) : (portrait ? 42 : 30);
+    camZ = LOBBY_MAP === 'hangar' ? (portrait ? 6.0 : 5.3) : (portrait ? 6.2 : 6);
     lookAt.set(0, portrait ? 1.2 : 1.0, 0);
     camera.updateProjectionMatrix();
   }
@@ -760,24 +831,7 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
     camera.position.set(cmx * .35, .8 - cmy * .1, camZ);
     camera.lookAt(lookAt);
 
-    wind.value = t; village.update(t, dt); battle.update(t, dt);
-    clouds.forEach(c => { c.position.x += c.userData.v * dt; if (c.position.x > 360) c.position.x = -360; });
-    flocks.forEach(f => {
-      const p = f.group.position;
-      p.addScaledVector(f.v, f.speed * dt); p.y = f.y + Math.sin(t * .45 + f.bob) * .8;
-      f.left -= f.speed * dt; if (f.left < 0) launchFlock(f, false);
-      f.birds.forEach(b => {
-        const u = b.userData, glide = THREE.MathUtils.smoothstep(Math.sin(t * .35 + u.ph), .45, .8);
-        const a = THREE.MathUtils.lerp(.15 + Math.sin(t * u.f + u.ph) * .6, .1, glide);
-        u.L.rotation.x = -a; u.R.rotation.x = a; b.position.y += Math.cos(t * u.f + u.ph) * .002;
-      });
-    });
-    const pa = pollenGeo.attributes.position;
-    for (let i = 0; i < POLLEN; i++) {
-      let y = pa.getY(i) + dt * (.12 + (i % 5) * .03); if (y > 5) y = 0;
-      pa.setY(i, y); pa.setX(i, pa.getX(i) + Math.sin(t * .8 + i) * dt * .08);
-    }
-    pa.needsUpdate = true;
+    envUpdate(t, dt);
 
     renderer.render(scene, camera);
 

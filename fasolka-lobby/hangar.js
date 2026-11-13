@@ -1,4 +1,4 @@
-// ZAPAS (nieużywany): hangar w tle lobby (jasny, jak hangar lotniczy): białe ściany ze stężeniami, kratownice i panele LED pod dachem,
+// Hangar w tle lobby (mapa lobby „Hangar” w panelu admina) (jasny, jak hangar lotniczy): białe ściany ze stężeniami, kratownice i panele LED pod dachem,
 // lśniąca posadzka z odbiciami, 3 zaparkowane auta za graczem, skrzynie, ściana z bronią, torby i paleta z gotówką.
 // buildHangar(scene, renderer) -> { update(t, dt), resize() }   (fasolka stoi w (0,0,0), kamera patrzy w stronę -Z)
 import * as THREE from 'three';
