@@ -628,7 +628,7 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
     const m = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), sc = new THREE.Vector3(), p = new THREE.Vector3(), col = new THREE.Color();
     const greens = [0x5aa935, 0x6dbd3f, 0x4e9a2e, 0x86cf4f];
     for (let i = 0; i < blades.count; i++) {
-      const a = rnd() * 6.283, r = .55 + Math.pow(rnd(), .7) * 16;
+      const a = rnd() * 6.283, r = .9 + Math.pow(rnd(), .7) * 16;
       p.set(Math.cos(a) * r, 0, Math.sin(a) * r * .9 - 2); if (p.z > 2.5) p.z = R(-12, 2.5); p.y = heightAt(p.x, p.z);
       e.set(R(-.35, .35), rnd() * 6, R(-.35, .35)); q.setFromEuler(e); const s = R(.6, 1.2); sc.set(s, s * R(.8, 1.3), s);
       blades.setMatrixAt(i, m.compose(p, q, sc)); blades.setColorAt(i, col.set(greens[i % 4]));
@@ -664,16 +664,21 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
   })();
   scene.add(blob);
 
-  // świecące koło pod fasolką (pulsuje po najechaniu)
-  const ringTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 256; const x = c.getContext('2d');
-    const g = x.createRadialGradient(128, 128, 60, 128, 128, 128); g.addColorStop(0, 'rgba(255,225,120,0)'); g.addColorStop(.72, 'rgba(255,215,90,.18)'); g.addColorStop(.86, 'rgba(255,230,140,.95)');
-    g.addColorStop(.92, 'rgba(255,200,70,.55)'); g.addColorStop(1, 'rgba(255,190,60,0)'); x.fillStyle = g; x.fillRect(0, 0, 256, 256);
-    x.strokeStyle = 'rgba(255,240,180,.75)'; x.lineWidth = 5; for (let i = 0; i < 12; i++) { x.beginPath(); x.arc(128, 128, 96, i * Math.PI / 6, i * Math.PI / 6 + .32); x.stroke(); }
+  // hologram pod fasolką: mały, cyjanowy, z obracającymi się kreskami i lekkim snopem światła
+  const holoTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 256; const x = c.getContext('2d');
+    x.strokeStyle = 'rgba(120,240,255,.95)'; x.lineWidth = 6; x.beginPath(); x.arc(128, 128, 118, 0, 7); x.stroke();
+    x.lineWidth = 3; x.strokeStyle = 'rgba(120,240,255,.7)'; x.beginPath(); x.arc(128, 128, 96, 0, 7); x.stroke();
+    x.lineWidth = 8; for (let i = 0; i < 8; i++) { x.beginPath(); x.arc(128, 128, 107, i * Math.PI / 4, i * Math.PI / 4 + .45); x.stroke(); }
+    const g = x.createRadialGradient(128, 128, 0, 128, 128, 96); g.addColorStop(0, 'rgba(90,220,255,.28)'); g.addColorStop(1, 'rgba(90,220,255,.05)'); x.fillStyle = g; x.beginPath(); x.arc(128, 128, 96, 0, 7); x.fill();
+    x.fillStyle = 'rgba(160,250,255,.18)'; for (let y = 0; y < 256; y += 6) x.fillRect(0, y, 256, 2);                        // linie skanowania
     const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })();
-  const ringM = new THREE.MeshBasicMaterial({ map: ringTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: .75, toneMapped: false });
-  const ring = new THREE.Mesh(new THREE.PlaneGeometry(2.1, 2.1), ringM); ring.rotation.x = -Math.PI / 2; ring.position.y = .03; scene.add(ring);
-  const discM = new THREE.MeshBasicMaterial({ color: 0x1a1408, transparent: true, opacity: .28, depthWrite: false });
-  const disc = new THREE.Mesh(new THREE.CircleGeometry(.92, 40), discM); disc.rotation.x = -Math.PI / 2; disc.position.y = .02; scene.add(disc);
+  const ringM = new THREE.MeshBasicMaterial({ map: holoTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: .9, toneMapped: false });
+  const ring = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 1.0), ringM); ring.rotation.x = -Math.PI / 2; ring.position.y = .05; scene.add(ring);
+  const beamTex = (() => { const c = document.createElement('canvas'); c.width = 8; c.height = 64; const x = c.getContext('2d');
+    const g = x.createLinearGradient(0, 64, 0, 0); g.addColorStop(0, 'rgba(110,235,255,.45)'); g.addColorStop(1, 'rgba(110,235,255,0)'); x.fillStyle = g; x.fillRect(0, 0, 8, 64);
+    const t = new THREE.CanvasTexture(c); return t; })();
+  const discM = new THREE.MeshBasicMaterial({ map: beamTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, opacity: .35, toneMapped: false });
+  const disc = new THREE.Mesh(new THREE.CylinderGeometry(.42, .46, .5, 32, 1, true), discM); disc.position.y = .27; scene.add(disc);
 
   // fasolka
   const holder = new THREE.Group(); holder.add(bean); scene.add(holder);
@@ -747,8 +752,8 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
     animate(bean, t, dt, state);
     hoverK = THREE.MathUtils.damp(hoverK, beanHover ? 1 : !skinPanel.hidden ? .35 : 0, 10, dt); syncCursor();
     skinMats.forEach(m => { if (m.userData.skinU) m.userData.skinU.uRim.value = hoverK * (.75 + .25 * Math.sin(t * 6)); });
-    ring.rotation.z = t * .25; ring.scale.setScalar(1 + hoverK * (.1 + .04 * Math.sin(t * 6)));
-    ringM.opacity = .55 + .45 * hoverK; disc.scale.setScalar(1 + hoverK * .08);
+    ring.rotation.z = t * .6; ring.scale.setScalar(1 + hoverK * (.08 + .03 * Math.sin(t * 6)));
+    ringM.opacity = (.55 + .45 * hoverK) * (.9 + .1 * Math.sin(t * 23) * Math.sin(t * 3.1)); discM.opacity = .25 + .3 * hoverK; disc.scale.set(1, 1 + hoverK * .6, 1); disc.position.y = .27 * (1 + hoverK * .6);
     if (hopT >= 0) { hopT += dt * 2.8; const k = Math.min(hopT, 1); holder.position.y = Math.sin(k * Math.PI) * .35; if (hopT >= 1) { hopT = -1; holder.position.y = 0; } }
 
     cmx = THREE.MathUtils.damp(cmx, mx, 2.5, dt); cmy = THREE.MathUtils.damp(cmy, my, 2.5, dt);
