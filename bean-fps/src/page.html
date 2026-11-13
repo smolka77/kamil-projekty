@@ -824,16 +824,16 @@ function startInspect(){
     for(const c of ['rp','lp'])for(let j=0;j<3;j++)insSnap[c][j]=insMix[c][j];
     insSnap.piv=insMix.piv;insSnap.pvy=insMix.pvy;insSnap.sl=insMix.sl;insSnap.mg=insMix.mg;insSnap.wk=insMix.wk;insSnap.lwk=insMix.lwk;insSnapL.copy(DBG.TL);INSP.snapW=1;
   }else INSP.snapW=0;
-  INSP.on=true;INSP.t=0;INSP.w=1;INSP.cancel=false;INSP.ev=0;INSP.id=rifle.id;INSP.tl=inspTimeline(rifle.id);
+  INSP.on=true;INSP.t=0;INSP.w=1;INSP.cancel=false;INSP.fast=false;INSP.ev=0;INSP.id=rifle.id;INSP.tl=inspTimeline(rifle.id);
 }
 // przerwanie: krótkie wygaszenie (strzał – natychmiast), bez przeskoku
-function cancelInspect(now){if(!INSP.on)return;INSP.cancel=true;if(now)INSP.w=Math.min(INSP.w,.35)}
+function cancelInspect(now){if(!INSP.on)return;INSP.cancel=true;if(now)INSP.fast=true}      // strzał: szybkie, ale ciągłe wygaszenie (bez skoku pozy)
 function stepInspect(dt){
   if(!INSP.on)return;
   if(INSP.id!==rifle.id){INSP.on=false;return}
   if(adsHeld||gun.reloading>0||gun.switching>0)INSP.cancel=true;
   if(INSP.snapW>0)INSP.snapW=Math.max(0,INSP.snapW-dt/.28);
-  if(INSP.cancel){INSP.w=Math.max(0,INSP.w-dt/.14);if(INSP.w<=0)INSP.on=false;return}
+  if(INSP.cancel){INSP.w=Math.max(0,INSP.w-dt/(INSP.fast?.06:.14));if(INSP.w<=0)INSP.on=false;return}
   const fz=window.__inspectFreeze;
   if(fz!=null){INSP.t=fz;return}
   INSP.t+=dt;
