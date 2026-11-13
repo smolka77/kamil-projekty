@@ -59,8 +59,7 @@ function animate(b, t, dt, st) {
   const br = Math.sin(t * 2.1);
   body.scale.set(1 + br * .015, 1 - br * .02, 1 + br * .015);
   body.rotation.z = Math.sin(t * 1.1) * .03;
-  arms[0].rotation.z = -.12 - br * .03;                                   // ręka po stronie -X luźno
-  arms[1].rotation.z = THREE.MathUtils.lerp(.12 + br * .03, 2.6 + Math.sin(t * 13) * .35, st.wave);   // macha nad GRAJ
+  arms[0].rotation.z = -.12; arms[1].rotation.z = .12;                    // ręce nieruchomo wzdłuż ciała
   if (t > blinkAt) {
     const k = (t - blinkAt) / .15, sy = k < 1 ? .08 * Math.abs(1 - 2 * k) + .01 : .08;
     eyes.forEach(e => e.scale.y = sy);

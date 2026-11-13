@@ -790,7 +790,7 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
     }
     tiles.appendChild(t);
   });
-  const openPicker = () => { picker.hidden = false; hover = false; };
+  const openPicker = () => { picker.hidden = false; };
   const closePicker = () => { picker.hidden = true; };
   $('lb-mode').addEventListener('click', openPicker);
   $('lb-close').addEventListener('click', closePicker);
@@ -1196,7 +1196,7 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
   addEventListener('resize', frameCamera); frameCamera();
 
   const canvas = renderer.domElement;
-  let active = true, dragging = false, lastX = 0, rotY = 0, rotVel = 0, mx = 0, my = 0, cmx = 0, cmy = 0, wave = 0, hover = false;
+  let active = true, dragging = false, lastX = 0, rotY = 0, rotVel = 0, mx = 0, my = 0, cmx = 0, cmy = 0;
   let beanHover = false, hoverK = 0, downX = 0, downY = 0, moved = 0;
   const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
   const overBean = e => { const r = canvas.getBoundingClientRect(); ndc.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1);
@@ -1214,9 +1214,7 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
   canvas.style.cursor = '';
   const syncCursor = () => { canvas.style.cursor = active && beanHover ? 'pointer' : ''; };
 
-  const play = $('lb-play'), wrap = ui.querySelector('.lb-playwrap');
-  wrap.addEventListener('pointerenter', () => hover = true);
-  wrap.addEventListener('pointerleave', () => hover = false);
+  const play = $('lb-play');
   play.addEventListener('click', () => { if (active && !uiApi.open) uiApi.requestPlay(); });
 
   // ---------- interfejs: menu, ustawienia, konto, portfel, stawki, losowanie mapy ----------
@@ -1236,8 +1234,7 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
     t += dt;
     if (!dragging) { rotVel *= .93; rotY += rotVel; rotY += (Math.sin(t * .35) * .3 - rotY) * .008; }
     holder.rotation.y = rotY;
-    wave = THREE.MathUtils.damp(wave, hover ? 1 : 0, 6, dt);
-    state.wave = wave; state.dragging = dragging;
+    state.dragging = dragging;                    // state.wave zostaje 0: postać nie macha
     animate(bean, t, dt, state);
     hoverK = THREE.MathUtils.damp(hoverK, beanHover ? 1 : !skinPanel.hidden ? .35 : 0, 10, dt); syncCursor();
     skinMats.forEach(m => { if (m.userData.skinU) m.userData.skinU.uRim.value = hoverK * (.75 + .25 * Math.sin(t * 6)); });
@@ -1259,7 +1256,7 @@ export function createLobby({ renderer, bean, animate = () => {}, onPlay = () =>
   }
 
   function show() { active = true; ui.classList.remove('lb-hidden'); uiApi.onShow(); }
-  function hide() { active = false; dragging = false; hover = false; beanHover = false; picker.hidden = true; skinPanel.hidden = true; admin.hidden = true; uiApi.closeAll(); canvas.style.cursor = ''; ui.classList.add('lb-hidden'); }
+  function hide() { active = false; dragging = false; beanHover = false; picker.hidden = true; skinPanel.hidden = true; admin.hidden = true; uiApi.closeAll(); canvas.style.cursor = ''; ui.classList.add('lb-hidden'); }
 
   return { scene, camera, update, show, hide, get active() { return active; }, get mode() { return mode.id; }, get skin() { return skin; }, ui };
 }
